@@ -1,7 +1,7 @@
 Http.fs
 =======
 
-An HTTP client library for F#, which wraps HttpWebRequest/Response in a glorious functional jacket
+An HTTP client library for F#, which wraps HttpWebRequest/Response in a glorious functional jacket!
 
 Overview
 --------
@@ -26,31 +26,39 @@ The sort of things I wanted my module to do differently from HttpWebRequest incl
 * sensible defaults (cookies enabled, no exception on a non-200-level response (?!))
 * non-blocking IO
 
-I've since discovered HttpClient, which is better than HttpWebRequest, but still doesn't meet all of the above.  I've tried to keep the underlying technologies hidden anyway.
+I've since discovered HttpClient, which looks better than HttpWebRequest, but still doesn't work quite how I'd like.  I've tried to keep the underlying technologies hidden anyway.
 
 ## How to use it ##
 
 A Request (an immutable record type) is built up in a Fluent Builder stylee as follows:
 
-let request =  
-  createRequest Post "http://somesite.com"  
-  |> withQueryStringItem {name="search"; value="jeebus"}  
-  |> withHeader (UserAgent "Chrome or summat")  
-  |> withHeader (Custom {name="X-My-Header"; value="hi mum"})  
-  |> withCookie {name="session"; value="123"}  
-  |> withBody "Check out my sexy body"  
+    let request =  
+      createRequest Post "http://somesite.com"  
+      |> withQueryStringItem {name="search"; value="jeebus"}  
+      |> withHeader (UserAgent "Chrome or summat")  
+      |> withHeader (Custom {name="X-My-Header"; value="hi mum"})  
+      |> withAutoDecompression DecompressionScheme.GZip  
+      |> withCookie {name="session"; value="123"}  
+      |> withBody "Check out my sexy body"  
   
 The Http response (or a specific part thereof) is retrieved using one of the following:
 
-request |> getResponseCode  
-request |> getResponseBody  
-request |> getResponse  
+    request |> getResponseCode  
+    request |> getResponseBody  
+    request |> getResponse  
 
 If you get the full response (another immutable record), you can get things from it like so:
 
-response.StatusCode  
-response.EntityBody.Value  
-response.Cookies.["cookie1"]  
-response.Headers.[ContentEncoding]  
-response.Headers.[NonStandard("X-New-Fangled-Header")]  
+    response.StatusCode  
+    response.EntityBody.Value  
+    response.Cookies.["cookie1"]  
+    response.Headers.[ContentEncoding]  
+    response.Headers.[NonStandard("X-New-Fangled-Header")]  
 
+## Questions ##
+
+As I said I'm happy for any comments, but a few specific things I've been wondering include:
+1. Is this OK as a module, or would it be better as a type (which, with an interface, would make it easier to mock for unit testing)
+2. Are the types in the API good choices (e.g. the NameValue used for cookies)?
+3. Is it OK to expose things as maps in the response (which means you get a less-than-ideal exception if something doesn't exist)?
+4. Have I actually made all of the IO non-blocking as I intended to?
