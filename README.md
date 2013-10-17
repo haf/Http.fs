@@ -57,8 +57,14 @@ If you get the full response (another immutable record), you can get things from
 
 ## Questions ##
 
-As I said I'm happy for any comments, but a few specific things I've been wondering include:
-1. Is this OK as a module, or would it be better as a type (which, with an interface, would make it easier to mock for unit testing)
-2. Are the types in the API good choices (e.g. the NameValue used for cookies)?
-3. Is it OK to expose things as maps in the response (which means you get a less-than-ideal exception if something doesn't exist)?
-4. Have I actually made all of the IO non-blocking as I intended to?
+As I said I'm happy for any comments, but a few specific things I've been wondering include:  
+1. Is this OK as a module, or would it be better as a type (which, with an interface, would make it easier to mock for unit testing)  
+2. Are the types in the API good choices (e.g. the NameValue used for cookies)?  
+3. Is it OK to expose things as maps in the response (which means you get a less-than-ideal exception if something doesn't exist)?  
+4. Have I actually made all of the IO non-blocking as I intended to?  
+
+## Feedback ##
+
+If you have any pointers for me, just send them over via email to grantac (at) hotmail.com, and I will be eternally grateful!
+
+Grant
