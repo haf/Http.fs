@@ -1,0 +1,36 @@
+# compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.pdb
+*.dll.config
+*.cache
+*.suo
+*.vssscc
+*.vspscc
+# Include dlls if they’re in the NuGet packages directory
+!/packages/*/lib/*.dll
+# VS Upgrade stuff #
+####################
+UpgradeLog.XML
+_UpgradeReport_Files/
+# Directories #
+###############
+bin/
+obj/
+TestResults/
+# Web publish log #
+###################
+*.Publish.xml
+# Resharper #
+#############
+/_ReSharper.*
+*.ReSharper.*
+# OS generated files #
+######################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db

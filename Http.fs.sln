@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HttpClient.UnitTests", "HttpClient.UnitTests\HttpClient.UnitTests.fsproj", "{CCBDC979-337B-4D2F-9E64-9253083C33F8}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HttpClient", "HttpClient\HttpClient.fsproj", "{DC478A22-3190-46CB-A085-88014CC36957}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HttpClient.IntegrationTests", "HttpClient.IntegrationTests\HttpClient.IntegrationTests.fsproj", "{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HttpClient.SampleApplication", "HttpClient.SampleApplication\HttpClient.SampleApplication.fsproj", "{8907FEE4-9689-4988-881C-D768AC5D5A24}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 5
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://relentless.visualstudio.com/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = HttpClient\\HttpClient.fsproj
+		SccProjectName1 = HttpClient
+		SccLocalPath1 = HttpClient
+		SccProjectUniqueName2 = HttpClient.UnitTests\\HttpClient.UnitTests.fsproj
+		SccProjectName2 = HttpClient.UnitTests
+		SccLocalPath2 = HttpClient.UnitTests
+		SccProjectUniqueName3 = HttpClient.IntegrationTests\\HttpClient.IntegrationTests.fsproj
+		SccProjectName3 = HttpClient.IntegrationTests
+		SccLocalPath3 = HttpClient.IntegrationTests
+		SccProjectUniqueName4 = HttpClient.SampleApplication\\HttpClient.SampleApplication.fsproj
+		SccProjectName4 = HttpClient.SampleApplication
+		SccLocalPath4 = HttpClient.SampleApplication
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CCBDC979-337B-4D2F-9E64-9253083C33F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCBDC979-337B-4D2F-9E64-9253083C33F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCBDC979-337B-4D2F-9E64-9253083C33F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCBDC979-337B-4D2F-9E64-9253083C33F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC478A22-3190-46CB-A085-88014CC36957}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC478A22-3190-46CB-A085-88014CC36957}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC478A22-3190-46CB-A085-88014CC36957}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC478A22-3190-46CB-A085-88014CC36957}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
