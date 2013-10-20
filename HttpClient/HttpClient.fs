@@ -83,8 +83,7 @@ let private setHeaders (headers:RequestHeader list option) (webRequest:HttpWebRe
             | ContentType(value) -> webRequest.ContentType <- value
             | Accept(value) -> webRequest.Accept <- value
             | AcceptLanguage(value) -> webRequest.Headers.Add("Accept-Language", value)
-            | Custom( {name=customName; value=customValue}) -> webRequest.Headers.Add(customName, customValue)
-            | x -> failwithf "Unrecognised Header: %A" x)
+            | Custom( {name=customName; value=customValue}) -> webRequest.Headers.Add(customName, customValue))
 
 let private setCookies (cookies:NameValue list option) url (webRequest:HttpWebRequest) =
     if cookies.IsSome then
@@ -183,30 +182,39 @@ let private toHttpWebrequest request =
 // Uses the HttpWebRequest to get the response.
 // HttpWebRequest throws an exception on anything but a 200-level response,
 // so we handle such exceptions and return the response.
-// Does the HTTP call asynchronously.
-let private getResponseNoException (request:HttpWebRequest) =
+let private getResponseNoException (request:HttpWebRequest) = async {
     try
-        async {
-            let! response = request.AsyncGetResponse() 
-            return response :?> HttpWebResponse
-        } |> Async.RunSynchronously
+        let! response = request.AsyncGetResponse() 
+        return response :?> HttpWebResponse
     with
         | :? WebException as wex -> if wex.Response <> null then 
-                                        wex.Response :?> HttpWebResponse 
+                                        return wex.Response :?> HttpWebResponse 
                                     else 
-                                        raise wex
+                                        return raise wex
+}
+
+let getResponseCodeAsync request = async {
+    use! response = request |> toHttpWebrequest |> getResponseNoException
+    return response.StatusCode |> int
+}
 
 let getResponseCode request =
-    use response = request |> toHttpWebrequest |> getResponseNoException
-    response.StatusCode |> int
+    getResponseCodeAsync request |> Async.RunSynchronously
 
-let private readBody (response:HttpWebResponse) =
+let private readBody (response:HttpWebResponse) = async {
     use responseStream = new AsyncStreamReader(response.GetResponseStream(),Encoding.GetEncoding(1252))
-    responseStream.ReadToEnd() |> Async.RunSynchronously
+    let! body = responseStream.ReadToEnd()
+    return body
+}
+
+let getResponseBodyAsync request = async {
+    use! response = request |> toHttpWebrequest |> getResponseNoException
+    let! body = response |> readBody
+    return body
+}
 
 let getResponseBody request =
-    use response = request |> toHttpWebrequest |> getResponseNoException
-    response |> readBody
+    getResponseBodyAsync request |> Async.RunSynchronously
 
 let private getCookiesAsMap (response:HttpWebResponse) = 
     let cookieArray = Array.zeroCreate response.Cookies.Count
@@ -224,11 +232,11 @@ let private getHeadersAsMap (response:HttpWebResponse) =
         headerArray.[index] <- (getResponseHeader response.Headers.Keys.[index], response.Headers.Item(response.Headers.Keys.[index]) )
     Map.ofArray headerArray
 
-let getResponse request =
-    use response = request |> toHttpWebrequest |> getResponseNoException
+let getResponseAsync request = async {
+    use! response = request |> toHttpWebrequest |> getResponseNoException
 
     let code = response.StatusCode |> int
-    let body = response |> readBody
+    let! body = response |> readBody
 
     let entityBody = 
         match body.Length > 0 with
@@ -238,8 +246,13 @@ let getResponse request =
     let cookies = response |> getCookiesAsMap
     let headers = response |> getHeadersAsMap
 
-    {   StatusCode = code;
+    return {   
+        StatusCode = code;
         EntityBody = entityBody;
         Cookies = cookies;
         Headers = headers;
     }
+}
+
+let getResponse request =
+    getResponseAsync request |> Async.RunSynchronously

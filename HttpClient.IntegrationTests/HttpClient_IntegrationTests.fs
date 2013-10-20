@@ -3,12 +3,14 @@
 open System
 open System.IO
 open System.Net
+open System.Net.Cache
 open System.Text
 open NUnit.Framework
 open FsUnit
 open HttpClient
 open Nancy
 open Nancy.Hosting.Self
+open System.Threading
 
 // ? operator to get values from a Nancy DynamicDictionary
 let (?) (parameters:obj) param =
@@ -52,6 +54,16 @@ type FakeServer() as self =
                 recordedPostRequest := self.Request
                 200 :> obj
 
+        self.Get.["SlowCall"] <- 
+            fun _ -> 
+                Thread.Sleep(100)
+                200 :> obj
+
+        self.Get.["OneSecondCall"] <- 
+            fun _ -> 
+                Thread.Sleep(1000)
+                200 :> obj
+
 let nancyHost = new NancyHost(new Uri("http://localhost:1234/TestServer/"))
 
 [<TestFixture>] 
@@ -59,6 +71,7 @@ type ``Integration tests`` ()=
 
     [<TestFixtureSetUp>]
     member x.fixtureSetup() =
+        HttpWebRequest.DefaultCachePolicy <- HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore)
         nancyHost.Start()
 
     [<TestFixtureTearDown>]
@@ -119,3 +132,56 @@ type ``Integration tests`` ()=
         |> getResponseCode |> ignore
         recordedPostRequest |> should not' (equal null)
         recordedPostRequest.Value.Headers.ContentLength |> should equal 6
+
+//    [<Test>]
+//    [<Ignore("Use for perormance testing")>]
+//    member x.``Time requests`` () =
+//        let timer = System.Diagnostics.Stopwatch.StartNew()
+//        {1..1000}
+//        |> Seq.map (fun _ -> createRequest Get "http://localhost:1234/TestServer/GotBody" |> getResponseBody )
+////        |> Async.Parallel
+////        |> Async.RunSynchronously
+//        //|> ignore
+//        |> Seq.iter (fun _ -> ())
+//        timer.ElapsedMilliseconds |> should equal 0
+
+//    [<Test>]
+//    member x.``external Calls can be made concurrently`` () =
+//        let timer = System.Diagnostics.Stopwatch.StartNew()
+//        [
+//            "http://www.google.com"
+//            "http://www.bing.com"
+//            "http://news.bbc.co.uk"
+//            "http://www.facebook.com"
+//            "http://www.twitter.com"
+//            "http://www.yahoo.com"
+//            "http://www.wikipedia.com"
+//            "http://www.stackoverflow.com"
+//
+//        ]
+//        |> List.map (fun url -> createRequest Get url |> asyncGetResponseCode )
+//        |> Async.Parallel
+//        |> Async.RunSynchronously
+//        |> Seq.sum
+//        |> should equal 1600
+//        timer.ElapsedMilliseconds |> should be (lessThan 0)
+//
+//    [<Test>]
+//    member x.``external Calls can be made sequentially`` () =
+//        let timer = System.Diagnostics.Stopwatch.StartNew()
+//        [
+//            "http://www.google.com"
+//            "http://www.bing.com"
+//            "http://news.bbc.co.uk"
+//            "http://www.facebook.com"
+//            "http://www.twitter.com"
+//            "http://www.yahoo.com"
+//            "http://www.wikipedia.com"
+//            "http://www.stackoverflow.com"
+//        ]
+//        |> List.map (fun url -> createRequest Get url |> getResponseCode )
+//        |> Seq.sum
+//        |> should equal 1600
+//        timer.ElapsedMilliseconds |> should be (lessThan 0)
+
+   
