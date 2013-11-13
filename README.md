@@ -1,7 +1,7 @@
 Http.fs
 =======
 
-An HTTP client library for F#, which wraps HttpWebRequest/Response in a glorious functional jacket!
+An HTTP client library for F#, which wraps [HttpWebRequest](http://msdn.microsoft.com/en-us/library/system.net.httpwebrequest(v=vs.110).aspx)/[Response](http://msdn.microsoft.com/en-us/library/system.net.httpwebresponse(v=vs.110).aspx) in a glorious functional jacket!
 
 ## How do I use it? ##
 
