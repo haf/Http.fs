@@ -3,11 +3,6 @@ Http.fs
 
 An HTTP client library for F#, which wraps HttpWebRequest/Response in a glorious functional jacket!
 
-Overview
---------
-
-This is an F# module which provides functions for making and sending HTTP requests and handling the responses.
-
 ## How to use it ##
 
 In it's simplest form, this will get you a web page:
