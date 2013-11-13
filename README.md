@@ -76,7 +76,39 @@ or this:
 
 There's really not that much to it, but if you want to know the details your best bet is the integration and unit tests.  The test names describe the functionality pretty well.
 
-There's also a Sample Application which demonstrates the library being used and unit tested.
+Unit tests describe making the request:
+  * createRequest makes a Request with a Method and URL, and sensible defaults
+  * requests have cookies enabled by default
+  * withAutoDecompression enables the specified decompression methods
+  * withCookiesDisabled disables cookies
+  * withHeader adds header to the request
+  * withHeader Custom adds a custom header to the request
+  * multiple headers of different types can be added, including custom headers with different names
+  * If the same header is added multiple times, throws an exception
+  * If a custom header with the same name is added multiple times, an exception is thrown
+  * withBody sets the request body
+  * withQueryString adds the query string item to the list
+  * withCookie throws an exception if cookies are disabled
+  * withCookie adds the cookie to the request
+  * withAutoFollowRedirectsDisabled turns auto-follow off
+
+Integration tests describe submitting the request and handling the response:
+  * _connection keep-alive header is set automatically on the first request, but not subsequent ones
+  * createRequest should set everything correctly in the HTTP request
+  * getResponseCode should return the http status code for all response types
+  * getResponseBody should return the entity body as a string
+  * getResponseBody should return an empty string when there is no body
+  * all details of the response should be available after a call to getResponse
+  * getResponse should have nothing if the things don't exist
+  * getResponse, given a request with an invalid url, throws an exception
+  * getResponseCode, when called on a non-existant page, returns 404
+  * posts to Nancy without a body don't work
+  * all of the manually-set request headers should get sent to the server
+  * Content-Length header is set automatically for Posts with a body
+  * accept-encoding header is set automatically when decompression scheme is set
+  * all of the response headers should be available after a call to getResponse
+
+There's also a SampleApplication folder with a program which demonstrates the library being used and unit tested.
 
 ## Why on earth would you make such a thing? ##
 
