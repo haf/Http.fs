@@ -23,6 +23,7 @@ type ContentRange = {start:int64; finish:int64 }
 // some headers can't be set with HttpWebRequest, or are set automatically, so are not included.
 // others, such as transfer-encoding, just haven't been implemented.
 type RequestHeader =
+    // TODO: Decide what to do about request & response headers sometimes having the same names
     | Accept of string
     | AcceptCharset of string
     | AcceptDatetime of string
@@ -277,8 +278,10 @@ let private getCookiesAsMap (response:HttpWebResponse) =
     response.Cookies.CopyTo(cookieArray, 0)
     cookieArray |> Array.fold (fun map cookie -> map |> Map.add cookie.Name cookie.Value) Map.empty
 
+// Get the header as a ResponseHeader option.  Is an option because there are some headers we don't want to set.
 let private getResponseHeader headerName =
     match headerName with
+    | null -> None
     | "Access-Control-Allow-Origin" -> Some(AccessControlAllowOrigin)
     | "Accept-Ranges" -> Some(AcceptRanges)
     | "Age" -> Some(Age)
@@ -305,6 +308,7 @@ let private getResponseHeader headerName =
     | "Refresh" -> Some(Refresh)
     | "Retry-After" -> Some(RetryAfter)
     | "Server" -> Some(Server)
+    | "Set-Cookie" -> None
     | "Strict-Transport-Security" -> Some(StrictTransportSecurity)
     | "Trailer" -> Some(Trailer)
     | "Transfer-Encoding" -> Some(TransferEncoding)
@@ -314,13 +318,19 @@ let private getResponseHeader headerName =
     | "WWW-Authenticate" -> Some(WWWAuthenticate)
     | _ -> Some(NonStandard headerName)
 
+// Gets the headers from the passed response as a map of ResponseHeader and string.
 let private getHeadersAsMap (response:HttpWebResponse) =
+    // TODO: Find a better way of dong this
     let headerArray = Array.zeroCreate response.Headers.Count
     for index = 0 to response.Headers.Count-1 do
-        match getResponseHeader response.Headers.Keys.[index] with
-        | Some(headerKey) -> headerArray.[index] <- (headerKey, response.Headers.Item(response.Headers.Keys.[index]))
-        | None -> ()
-    Map.ofArray headerArray
+        headerArray.[index] <- 
+            match getResponseHeader response.Headers.Keys.[index] with
+            | Some(headerKey) -> Some((headerKey, response.Headers.Item(response.Headers.Keys.[index])))
+            | None -> None
+    headerArray
+    |> Array.filter (fun item -> item <> None)
+    |> Array.map Option.get
+    |> Map.ofArray
 
 let private readBody (response:HttpWebResponse) = async {
     use responseStream = new AsyncStreamReader(response.GetResponseStream(),Encoding.GetEncoding(1252))

@@ -117,7 +117,5 @@ let ``withCookie adds the cookie to the request`` () =
     createdRequest.Cookies.Value |> List.exists (fun cookie -> cookie = { name = "c2"; value = "v2" }) |> should equal true
 
 [<Test>]
-let ``withAutoFollowRedirects turns auto-follow on`` () =
+let ``withAutoFollowRedirectsDisabled turns auto-follow off`` () =
     (createValidRequest |> withAutoFollowRedirectsDisabled).AutoFollowRedirects |> should equal false
-
-// TODO: test all HTTP methods in integration tests

@@ -136,7 +136,7 @@ type ``Integration tests`` ()=
         recordedRequest.Value.Headers.Connection |> should equal ""
 
     [<Test>] 
-    member x.``getResponse should set everything correctly in the request`` ()=
+    member x.``createRequest should set everything correctly in the HTTP request`` ()=
         createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
         |> withQueryStringItem {name="search"; value="jeebus"}
         |> withQueryStringItem {name="qs2"; value="hi mum"}
