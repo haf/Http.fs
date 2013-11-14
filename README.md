@@ -9,7 +9,9 @@ In it's simplest form, this will get you a web page:
 
       createRequest Get "http://somesite.com" |> getResponseBody  
 
-A Request (an immutable record type) is built up in a [Fluent Builder](http://stefanoricciardi.com/2010/04/14/a-fluent-builder-in-c/) stylee as follows:
+To get into the details a bit more, there are two or three steps to getting what you want from a web page/HTTP response.
+
+1 - A Request (an immutable record type) is built up in a [Fluent Builder](http://stefanoricciardi.com/2010/04/14/a-fluent-builder-in-c/) stylee as follows:
 
     let request =  
       createRequest Post "http://somesite.com"  
@@ -20,13 +22,13 @@ A Request (an immutable record type) is built up in a [Fluent Builder](http://st
       |> withCookie {name="session"; value="123"}  
       |> withBody "Check out my sexy body"  
   
-The Http response (or just the response code/body) is retrieved using one of the following:
+2 - The Http response (or just the response code/body) is retrieved using one of the following:
 
     request |> getResponse  
     request |> getResponseCode  
     request |> getResponseBody  
 
-If you get the full response (another record), you can get things from it like so:
+3 - If you get the full response (another record), you can get things from it like so:
 
     response.StatusCode  
     response.EntityBody.Value  
