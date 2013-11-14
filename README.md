@@ -1,7 +1,7 @@
 Http.fs
 =======
 
-An HTTP client library for F#, which wraps [HttpWebRequest](http://msdn.microsoft.com/en-us/library/system.net.httpwebrequest(v=vs.110).aspx)/[Response](http://msdn.microsoft.com/en-us/library/system.net.httpwebresponse(v=vs.110).aspx) in a glorious functional jacket!
+An HTTP client library for F#, which wraps [HttpWebRequest](http://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.aspx)/[Response](http://msdn.microsoft.com/en-us/library/system.net.httpwebresponse.aspx) in a glorious functional jacket!
 
 ## How do I use it? ##
 
@@ -9,7 +9,7 @@ In it's simplest form, this will get you a web page:
 
       createRequest Get "http://somesite.com" |> getResponseBody  
 
-A Request (an immutable record type) is built up in a Fluent Builder stylee as follows:
+A Request (an immutable record type) is built up in a [Fluent Builder](http://stefanoricciardi.com/2010/04/14/a-fluent-builder-in-c/) stylee as follows:
 
     let request =  
       createRequest Post "http://somesite.com"  
@@ -127,11 +127,11 @@ I've since discovered HttpClient, which looks better than HttpWebRequest, but st
 
 ## What other kick-ass open source libraries are involved? ##
 
-The only thing that's used in the HttpClient module itself is AsyncStreamReader.fs, a source file taken directly from the Fsharpx library.
+The only thing that's used in the HttpClient module itself is AsyncStreamReader.fs, a source file taken directly from the [Fsharpx](https://github.com/fsharp/fsharpx) library.
 
 However, for testing a couple of other things are used:
-  * FsUnit for unit testing
-  * NancyFX to create a web server for integration testing
+  * [FsUnit](https://github.com/fsharp/FsUnit) for unit testing
+  * [NancyFX](http://nancyfx.org/) to create a web server for integration testing
 
 That's about it.
 Happy requesting!
