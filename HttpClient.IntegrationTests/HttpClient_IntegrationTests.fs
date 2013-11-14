@@ -209,10 +209,10 @@ type ``Integration tests`` ()=
         |> withHeader (AcceptDatetime "Thu, 31 May 2007 20:35:00 GMT" )
         |> withHeader (AcceptLanguage "en-GB, en-US;q=0.1" )
         |> withHeader (Authorization  "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
-        |> withHeader (RequestHeader.Connection "conn1" )
-        |> withHeader (RequestHeader.ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
-        |> withHeader (RequestHeader.ContentType "application/json" )
-        |> withHeader (RequestHeader.Date (new DateTime(1999, 12, 31, 11, 59, 59)))
+        |> withHeader (Connection "conn1" )
+        |> withHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
+        |> withHeader (ContentType "application/json" )
+        |> withHeader (Date (new DateTime(1999, 12, 31, 11, 59, 59)))
         |> withHeader (Expect 100 )
         |> withHeader (From "user@example.com" )
         |> withHeader (IfMatch "737060cd8c284d8af7ad3082f209582d" )
@@ -227,8 +227,8 @@ type ``Integration tests`` ()=
         |> withHeader (Referer "http://en.wikipedia.org/" )
         |> withHeader (Upgrade "HTTP/2.0, SHTTP/1.3" )
         |> withHeader (UserAgent "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0" )
-        |> withHeader (RequestHeader.Via "1.0 fred, 1.1 example.com (Apache/1.1)" )
-        |> withHeader (RequestHeader.Warning "199 Miscellaneous warning" )
+        |> withHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)" )
+        |> withHeader (Warning "199 Miscellaneous warning" )
         |> withHeader (Custom {name="X-Greeting"; value="Happy Birthday"})
         |> getResponseCode |> ignore
 
@@ -299,11 +299,11 @@ type ``Integration tests`` ()=
         response.Headers.[ContentEncoding] |> should equal "gzip"
         response.Headers.[ContentLanguage] |> should equal "EN-gb"
         response.Headers.[ContentLocation] |> should equal "/index.htm"
-        response.Headers.[ContentMD5] |> should equal "Q2hlY2sgSW50ZWdyaXR5IQ=="
-        response.Headers.[ContentDisposition] |> should equal "attachment; filename=\"fname.ext\""
+        response.Headers.[Resp.ContentMD5] |> should equal "Q2hlY2sgSW50ZWdyaXR5IQ=="
+        response.Headers.[Resp.ContentDisposition] |> should equal "attachment; filename=\"fname.ext\""
         response.Headers.[ContentRange] |> should equal "bytes 21010-47021/47022"
-        response.Headers.[ContentType] |> should equal "text/html; charset=utf-8"
-        let (parsedOK,_) = System.DateTime.TryParse(response.Headers.[Date])
+        response.Headers.[Resp.ContentType] |> should equal "text/html; charset=utf-8"
+        let (parsedOK,_) = System.DateTime.TryParse(response.Headers.[Resp.Date])
         parsedOK |> should equal true
         response.Headers.[ETag] |> should equal "737060cd8c284d8af7ad3082f209582d"
         response.Headers.[Expires] |> should equal "Thu, 01 Dec 1994 16:00:00 GMT"
@@ -311,7 +311,7 @@ type ``Integration tests`` ()=
         response.Headers.[Link] |> should equal "</feed>; rel=\"alternate\""
         response.Headers.[Location] |> should equal "http://www.w3.org/pub/WWW/People.html"
         response.Headers.[P3P] |> should equal "CP=\"your_compact_policy\""
-        response.Headers.[Pragma] |> should equal "no-cache"
+        response.Headers.[Resp.Pragma] |> should equal "no-cache"
         response.Headers.[ProxyAuthenticate] |> should equal "Basic"
         response.Headers.[Refresh] |> should equal "5; url=http://www.w3.org/pub/WWW/People.html"
         response.Headers.[RetryAfter] |> should equal "120"
@@ -320,7 +320,7 @@ type ``Integration tests`` ()=
         response.Headers.[Trailer] |> should equal "Max-Forwards"
         response.Headers.[TransferEncoding] |> should equal "chunked"
         response.Headers.[Vary] |> should equal "*"
-        response.Headers.[Via] |> should equal "1.0 fred, 1.1 example.com (Apache/1.1)"
-        response.Headers.[Warning] |> should equal "199 Miscellaneous warning"
+        response.Headers.[Resp.Via] |> should equal "1.0 fred, 1.1 example.com (Apache/1.1)"
+        response.Headers.[Resp.Warning] |> should equal "199 Miscellaneous warning"
         response.Headers.[WWWAuthenticate] |> should equal "Basic"
         response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"

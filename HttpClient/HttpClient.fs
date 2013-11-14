@@ -20,37 +20,6 @@ type DecompressionScheme =
 type NameValue = { name:string; value:string }
 type ContentRange = {start:int64; finish:int64 }
 
-// some headers can't be set with HttpWebRequest, or are set automatically, so are not included.
-// others, such as transfer-encoding, just haven't been implemented.
-type RequestHeader =
-    // TODO: Decide what to do about request & response headers sometimes having the same names
-    | Accept of string
-    | AcceptCharset of string
-    | AcceptDatetime of string
-    | AcceptLanguage of string
-    | Authorization of string
-    | Connection of string
-    | ContentMD5 of string
-    | ContentType of string
-    | Date of DateTime
-    | Expect of int
-    | From of string
-    | IfMatch of string
-    | IfModifiedSince of DateTime
-    | IfNoneMatch of string
-    | IfRange of string
-    | MaxForwards of int
-    | Origin of string
-    | Pragma of string
-    | ProxyAuthorization of string
-    | Range of ContentRange
-    | Referer of string
-    | Upgrade of string
-    | UserAgent of string
-    | Via of string
-    | Warning of string
-    | Custom of NameValue
-
 type ResponseHeader =
     | AccessControlAllowOrigin 
     | AcceptRanges 
@@ -86,6 +55,41 @@ type ResponseHeader =
     | Warning 
     | WWWAuthenticate 
     | NonStandard of string
+
+// short name for qualified access (needed as some request & response
+// headers have the same name)
+type Resp = ResponseHeader 
+
+// some headers can't be set with HttpWebRequest, or are set automatically, so are not included.
+// others, such as transfer-encoding, just haven't been implemented.
+type RequestHeader =
+    // TODO: Decide what to do about request & response headers sometimes having the same names
+    | Accept of string
+    | AcceptCharset of string
+    | AcceptDatetime of string
+    | AcceptLanguage of string
+    | Authorization of string
+    | Connection of string
+    | ContentMD5 of string
+    | ContentType of string
+    | Date of DateTime
+    | Expect of int
+    | From of string
+    | IfMatch of string
+    | IfModifiedSince of DateTime
+    | IfNoneMatch of string
+    | IfRange of string
+    | MaxForwards of int
+    | Origin of string
+    | Pragma of string
+    | ProxyAuthorization of string
+    | Range of ContentRange
+    | Referer of string
+    | Upgrade of string
+    | UserAgent of string
+    | Via of string
+    | Warning of string
+    | Custom of NameValue
 
 type Request = {
     Url: string
@@ -287,23 +291,23 @@ let private getResponseHeader headerName =
     | "Age" -> Some(Age)
     | "Allow" -> Some(Allow)
     | "Cache-Control" -> Some(CacheControl)
-    | "Connection" -> Some(Connection)
+    | "Connection" -> Some(ResponseHeader.Connection)
     | "Content-Encoding" -> Some(ContentEncoding)
     | "Content-Language" -> Some(ContentLanguage)
     | "Content-Length" -> None
     | "Content-Location" -> Some(ContentLocation)
-    | "Content-MD5" -> Some(ContentMD5)
+    | "Content-MD5" -> Some(ResponseHeader.ContentMD5)
     | "Content-Disposition" -> Some(ContentDisposition)
     | "Content-Range" -> Some(ContentRange)
-    | "Content-Type" -> Some(ContentType)
-    | "Date" -> Some(Date)
+    | "Content-Type" -> Some(ResponseHeader.ContentType)
+    | "Date" -> Some(ResponseHeader.Date)
     | "ETag" -> Some(ETag)
     | "Expires" -> Some(Expires)
     | "Last-Modified" -> Some(LastModified)
     | "Link" -> Some(Link)
     | "Location" -> Some(Location)
     | "P3P" -> Some(P3P)
-    | "Pragma" -> Some(Pragma)
+    | "Pragma" -> Some(ResponseHeader.Pragma)
     | "Proxy-Authenticate" -> Some(ProxyAuthenticate)
     | "Refresh" -> Some(Refresh)
     | "Retry-After" -> Some(RetryAfter)
@@ -313,8 +317,8 @@ let private getResponseHeader headerName =
     | "Trailer" -> Some(Trailer)
     | "Transfer-Encoding" -> Some(TransferEncoding)
     | "Vary" -> Some(Vary)
-    | "Via" -> Some(Via)
-    | "Warning" -> Some(Warning)
+    | "Via" -> Some(ResponseHeader.Via)
+    | "Warning" -> Some(ResponseHeader.Warning)
     | "WWW-Authenticate" -> Some(WWWAuthenticate)
     | _ -> Some(NonStandard headerName)
 
