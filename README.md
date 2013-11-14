@@ -130,7 +130,7 @@ The sort of things I wanted my module to do differently from HttpWebRequest incl
 
 It isn't intended as a high-performance library, usability from F# has been the goal.  It shouldn't be much worse than HttpWebRequest, but you'd have to test it if that was important.
 
-I've since discovered HttpClient, which looks better than HttpWebRequest, but still doesn't work quite how I'd like.
+I've since discovered [HttpClient](http://msdn.microsoft.com/en-us/library/system.net.http.httpclient.aspx), which looks better than HttpWebRequest, but still doesn't work quite how I'd like.
 
 ## What other kick-ass open source libraries are involved? ##
 
