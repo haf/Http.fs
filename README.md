@@ -74,7 +74,7 @@ or this:
 
 ## Where can I find out more? ##
 
-There's really not that much to it, but if you want to know the details your best bet is the integration and unit tests.  The test names describe the functionality pretty well.
+There's really not that much to it, but if you want to know the details your best bet is the integration and unit tests.
 
 Unit tests describe making the request:
   * createRequest makes a Request with a Method and URL, and sensible defaults
