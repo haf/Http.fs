@@ -53,10 +53,9 @@ So you can do the old download-multiple-sites-in-parallel thing:
     |> Async.RunSynchronously
     |> Array.iter (printfn "%s")
 
-*Note* that because some of the request and response headers have the same names, you have to fully-qualify some of the headers, e.g.
+*Note* because some of the request and response headers have the same names, you have to qualify some of the response headers with 'Resp', e.g.
 
-    createRequest Get "http://localhost:1234/TestServer/RecordRequest" 
-        |> withHeader (RequestHeader.ContentType "application/json" )
+    response.Headers.[Resp.ContentType]
         
 If you get cryptic errors like 'This is a function and cannot be applied' when you try to set a header, it's probably this.  I'll try to think of a better way to do it soon, I promise...
 
