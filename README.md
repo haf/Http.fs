@@ -61,7 +61,17 @@ If you get cryptic errors like 'This is a function and cannot be applied' when y
 
 ## Cool!  So how do I get it in my code? ##
 
-Everything you need's in the Release folder.  You can either reference the DLL, or include the two source files directly.
+The easiest way, if you have a full-on project, is to us NuGet:
+
+    PM> install-package Http.fs
+    
+Then just open the module and use as required:
+
+    open HttpClient  
+
+    printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
+
+If you can't use NuGet (perhaps you're writing a script), or want to use the source files, everything you need's in the Release folder.  You can either reference the DLL, or include the two source files directly.
 
 So to use it from a script, it would be this:
 
@@ -132,6 +142,8 @@ The sort of things I wanted my module to do differently from HttpWebRequest incl
 It isn't intended as a high-performance library, usability from F# has been the goal.  It shouldn't be much worse than HttpWebRequest, but you'd have to test it if that was important.
 
 I've since discovered [HttpClient](http://msdn.microsoft.com/en-us/library/system.net.http.httpclient.aspx), which looks better than HttpWebRequest, but still doesn't work quite how I'd like.
+
+If you want to read a bit more about why using HttpWebRequest sucks, check out [my blog entry introducing Http.fs](http://www.relentlessdevelopment.net/2013/11/15/web-requests-in-f-now-easy-introducing-http-fs/).
 
 ## What other kick-ass open source libraries are involved? ##
 
