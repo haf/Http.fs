@@ -61,7 +61,7 @@ If you get cryptic errors like 'This is a function and cannot be applied' when y
 
 ## Cool!  So how do I get it in my code? ##
 
-The easiest way, if you have a full-on project, is to us NuGet:
+The easiest way, if you have a full-on project, is to us [the NuGet package](https://www.nuget.org/packages/Http.fs/):
 
     PM> install-package Http.fs
     
