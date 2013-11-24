@@ -16,6 +16,7 @@ To get into the details a bit more, there are two or three steps to getting what
     let request =  
       createRequest Post "http://somesite.com"  
       |> withQueryStringItem {name="search"; value="jeebus"}  
+      |> withBasicAuthentication "myUsername" "myPassword"
       |> withHeader (UserAgent "Chrome or summat")  
       |> withHeader (Custom {name="X-My-Header"; value="hi mum"})  
       |> withAutoDecompression DecompressionScheme.GZip  
