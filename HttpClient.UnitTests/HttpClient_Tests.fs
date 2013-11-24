@@ -65,6 +65,14 @@ let ``multiple headers of different types can be added, including custom headers
     createdRequest.Headers.Value |> List.exists (fun header -> header = Custom { name="c2"; value="v2"}) |> should equal true
 
 [<Test>]
+let ``withBasicAuthentication sets the Authorization header with the username and password encoded`` () =
+    let createdRequest =
+        createValidRequest
+        |> withBasicAuthentication "myUsername" "myPassword"
+    createdRequest.Headers |> Option.isSome |> should equal true
+    createdRequest.Headers.Value |> List.exists (fun header -> header = Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk") |> should equal true
+
+[<Test>]
 let ``If the same header is added multiple times, throws an exception`` () =
     (fun () ->
         createValidRequest
@@ -81,8 +89,6 @@ let ``If a custom header with the same name is added multiple times, an exceptio
         |> withHeader (Custom { name="c1"; value="v2"})
         |> ignore )
     |> should throw typeof<Exception>
-
-// TODO: check content-length is set in integration tests
 
 [<Test>]
 let ``withBody sets the request body`` () =

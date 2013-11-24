@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Http.fs</id>
+    <version>0.8.1.0</version>
+    <authors>Grant Crofton</authors>
+    <owners>Grant Crofton</owners>
+    <projectUrl>https://github.com/relentless/Http.fs</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>An HTTP client library for F#, which wraps HttpWebRequest/Response in a glorious functional jacket!</description>
+    <releaseNotes>Added withBasicAuthentication</releaseNotes>
+    <copyright>Copyright G Crofton 2013</copyright>
+  </metadata>
+</package>
