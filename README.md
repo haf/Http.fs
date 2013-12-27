@@ -92,6 +92,14 @@ or this:
 
     printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
 
+## FAQ ##
+
+  * Why are my cookies not getting set?
+
+Perhaps the response is a redirect (a 302 or similar) - unfortunately, although HttpWebRequest handles redirects automatically by default, it doesn't maintain the cookies set during the redirect. (See [this CodeProject article about it](http://www.codeproject.com/Articles/49243/Handling-Cookies-with-Redirects-and-HttpWebRequest)).
+
+The solution is to set 'withAutoFollowRedirectsDisabled' on your request - although this does mean you'll have to handle the redirection yourself.
+
 ## Where can I find out more? ##
 
 There's really not that much to it, but if you want to know the details your best bet is the integration and unit tests.
@@ -159,5 +167,5 @@ However, for testing a couple of other things are used:
 That's about it.
 Happy requesting!
 
-Grant
+Grant  
 @relentlessdev
