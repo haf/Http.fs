@@ -20,6 +20,7 @@ To get into the details a bit more, there are two or three steps to getting what
       |> withHeader (UserAgent "Chrome or summat")  
       |> withHeader (Custom {name="X-My-Header"; value="hi mum"})  
       |> withAutoDecompression DecompressionScheme.GZip  
+      |> withAutoFollowRedirectsDisabled  
       |> withCookie {name="session"; value="123"}  
       |> withBody "Check out my sexy body"  
   
@@ -110,6 +111,7 @@ Unit tests describe making the request:
   * withCookie throws an exception if cookies are disabled
   * withCookie adds the cookie to the request
   * withAutoFollowRedirectsDisabled turns auto-follow off
+  * withBasicAuthentication sets the Authorization header with the username and password encoded
 
 Integration tests describe submitting the request and handling the response:
   * _connection keep-alive header is set automatically on the first request, but not subsequent ones
