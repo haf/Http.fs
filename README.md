@@ -136,6 +136,9 @@ Integration tests describe submitting the request and handling the response:
   * Content-Length header is set automatically for Posts with a body
   * accept-encoding header is set automatically when decompression scheme is set
   * all of the response headers should be available after a call to getResponse
+  * the body is read using the character encoding specified in the content-type header
+  * if character encoding is not specified in the content-type header, the body is read using ISO Latin 1 character encoding
+  * if character encoding specified in the content-type header is invalid, an exception is thrown
 
 There's also a SampleApplication folder with a program which demonstrates the library being used and unit tested.
 
