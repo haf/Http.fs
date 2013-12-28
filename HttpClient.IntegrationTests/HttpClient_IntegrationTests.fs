@@ -10,97 +10,7 @@ open FsUnit
 open HttpClient
 open Nancy
 open Nancy.Hosting.Self
-open System.Threading
-
-// ? operator to get values from a Nancy DynamicDictionary
-let (?) (parameters:obj) param =
-    (parameters :?> Nancy.DynamicDictionary).[param]
- 
-let recordedRequest = ref (null:Request)
-
-type FakeServer() as self = 
-    inherit NancyModule()
-    do
-        self.Post.["RecordRequest"] <- 
-            fun _ -> 
-                recordedRequest := self.Request
-                200 :> obj
-
-        self.Get.["RecordRequest"] <- 
-            fun _ -> 
-                recordedRequest := self.Request
-                200 :> obj
-
-        self.Get.["GoodStatusCode"] <- 
-            fun _ -> 
-                200 :> obj
-
-        self.Get.["BadStatusCode"] <- 
-            fun _ -> 
-                401 :> obj
-
-        self.Get.["GotBody"] <- 
-            fun _ -> 
-                "Check out my sexy body" :> obj
-
-        self.Get.["AllTheThings"] <- 
-            fun _ -> 
-                let response = "Some JSON or whatever" |> Nancy.Response.op_Implicit 
-                response.StatusCode <- HttpStatusCode.ImATeapot
-                response.AddCookie("cookie1", "chocolate chip") |> ignore
-                response.AddCookie("cookie2", "smarties") |> ignore
-                response.Headers.Add("Content-Encoding", "gzip")
-                response.Headers.Add("X-New-Fangled-Header", "some value")
-                response :> obj
-
-        self.Get.["AllHeaders"] <- 
-            fun _ -> 
-                let response = "Some JSON or whatever" |> Nancy.Response.op_Implicit 
-                response.ContentType <- "text/html; charset=utf-8"
-                response.Headers.Add("Access-Control-Allow-Origin", "*")
-                response.Headers.Add("Accept-Ranges", "bytes")
-                response.Headers.Add("Age", "12")
-                response.Headers.Add("Allow", "GET, HEAD")
-                response.Headers.Add("Cache-Control", "max-age=3600")
-                response.Headers.Add("Connection", "close")
-                response.Headers.Add("Content-Encoding", "gzip")
-                response.Headers.Add("Content-Language", "EN-gb")
-                response.Headers.Add("Content-Location", "/index.htm")
-                response.Headers.Add("Content-MD5", "Q2hlY2sgSW50ZWdyaXR5IQ==")
-                response.Headers.Add("Content-Disposition", "attachment; filename=\"fname.ext\"")
-                response.Headers.Add("Content-Range", "bytes 21010-47021/47022")
-                response.Headers.Add("Content-Type", "text/html; charset=utf-8")
-                //response.Headers.Add("Date", "") // will be current date
-                response.Headers.Add("ETag", "737060cd8c284d8af7ad3082f209582d")
-                response.Headers.Add("Expires", "Thu, 01 Dec 1994 16:00:00 GMT")
-                response.Headers.Add("Last-Modified", "Tue, 15 Nov 1994 12:45:26 +0000")
-                response.Headers.Add("Link", "</feed>; rel=\"alternate\"")
-                response.Headers.Add("Location", "http://www.w3.org/pub/WWW/People.html")
-                response.Headers.Add("P3P", "CP=\"your_compact_policy\"")
-                response.Headers.Add("Pragma", "no-cache")
-                response.Headers.Add("Proxy-Authenticate", "Basic")
-                response.Headers.Add("Refresh", "5; url=http://www.w3.org/pub/WWW/People.html")
-                response.Headers.Add("Retry-After", "120")
-                //response.Headers.Add("Server", "") // will be 'Microsoft-HTTPAPI/2.0'
-                response.Headers.Add("Strict-Transport-Security", "max-age=16070400; includeSubDomains")
-                response.Headers.Add("Trailer", "Max-Forwards")
-                response.Headers.Add("Transfer-Encoding", "chunked")
-                response.Headers.Add("Vary", "*")
-                response.Headers.Add("Via", "1.0 fred, 1.1 example.com (Apache/1.1)")
-                response.Headers.Add("Warning", "199 Miscellaneous warning")
-                response.Headers.Add("WWW-Authenticate", "Basic")
-                response.Headers.Add("X-New-Fangled-Header", "some value")
-                response :> obj
-
-        self.Get.["SlowCall"] <- 
-            fun _ -> 
-                Thread.Sleep(100)
-                200 :> obj
-
-        self.Get.["OneSecondCall"] <- 
-            fun _ -> 
-                Thread.Sleep(1000)
-                200 :> obj
+open HttpServer
 
 let nancyHost = new NancyHost(new Uri("http://localhost:1234/TestServer/"))
 
@@ -109,6 +19,7 @@ type ``Integration tests`` ()=
 
     [<TestFixtureSetUp>]
     member x.fixtureSetup() =
+        // disable caching in HttpWebRequest/Response in case it interferes with the tests
         HttpWebRequest.DefaultCachePolicy <- HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore)
         nancyHost.Start()
 
@@ -118,22 +29,22 @@ type ``Integration tests`` ()=
 
     [<SetUp>]
     member x.setUp() =
-        recordedRequest := null
+        HttpServer.recordedRequest := null
 
     [<Test>]
-    // This needs to be run first, as the keep-aliver is only set on the first call.  They seem to be run alphabetically.
+    // This needs to be run first, as the keep-alive is only set on the first call.  They seem to be run alphabetically.
     member x.``_connection keep-alive header is set automatically on the first request, but not subsequent ones`` () =
 
         createRequest Get "http://localhost:1234/TestServer/RecordRequest"
         |> getResponseCode |> ignore
-        recordedRequest.Value |> should not' (equal null)
-        recordedRequest.Value.Headers.Connection |> should equal "Keep-Alive"
+        HttpServer.recordedRequest.Value |> should not' (equal null)
+        HttpServer.recordedRequest.Value.Headers.Connection |> should equal "Keep-Alive"
 
-        recordedRequest := null
+        HttpServer.recordedRequest := null
         createRequest Get "http://localhost:1234/TestServer/RecordRequest"
         |> getResponseCode |> ignore
-        recordedRequest.Value |> should not' (equal null)
-        recordedRequest.Value.Headers.Connection |> should equal ""
+        HttpServer.recordedRequest.Value |> should not' (equal null)
+        HttpServer.recordedRequest.Value.Headers.Connection |> should equal ""
 
     [<Test>] 
     member x.``createRequest should set everything correctly in the HTTP request`` ()=
@@ -144,12 +55,12 @@ type ``Integration tests`` ()=
         |> withCookie {name="SESSIONID"; value="1234"}
         |> withBody "some JSON or whatever"
         |> getResponseCode |> ignore
-        recordedRequest.Value |> should not' (equal null)
-        recordedRequest.Value.Query?search.ToString() |> should equal "jeebus"
-        recordedRequest.Value.Query?qs2.ToString() |> should equal "hi mum"
-        recordedRequest.Value.Headers.Accept |> should contain ("application/xml", 1m)
-        recordedRequest.Value.Cookies.["SESSIONID"] |> should contain "1234"
-        use bodyStream = new StreamReader(recordedRequest.Value.Body,Encoding.GetEncoding(1252))
+        HttpServer.recordedRequest.Value |> should not' (equal null)
+        HttpServer.recordedRequest.Value.Query?search.ToString() |> should equal "jeebus"
+        HttpServer.recordedRequest.Value.Query?qs2.ToString() |> should equal "hi mum"
+        HttpServer.recordedRequest.Value.Headers.Accept |> should contain ("application/xml", 1m)
+        HttpServer.recordedRequest.Value.Cookies.["SESSIONID"] |> should contain "1234"
+        use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body,Encoding.GetEncoding(1252))
         bodyStream.ReadToEnd() |> should equal "some JSON or whatever"
 
     [<Test>]
@@ -199,10 +110,10 @@ type ``Integration tests`` ()=
         // Not sure if this is just a Nancy thing, but the handler doesn't get called if there isn't a body
         createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
         |> getResponseCode |> ignore
-        recordedRequest.Value |> should equal null
+        HttpServer.recordedRequest.Value |> should equal null
 
     [<Test>] 
-    member x.``all of the manually-set request headers should get sent to the server`` ()=
+    member x.``all of the manually-set request headers get sent to the server`` ()=
         createRequest Get "http://localhost:1234/TestServer/RecordRequest" 
         |> withHeader (Accept "application/xml,text/html;q=0.3")
         |> withHeader (AcceptCharset "utf-8, utf-16;q=0.5" )
@@ -232,63 +143,63 @@ type ``Integration tests`` ()=
         |> withHeader (Custom {name="X-Greeting"; value="Happy Birthday"})
         |> getResponseCode |> ignore
 
-        recordedRequest.Value |> should not' (equal null)
-        recordedRequest.Value.Headers.Accept |> should contain ("application/xml", 1m)
-        recordedRequest.Value.Headers.Accept |> should contain ("text/html", 0.3m)
-        recordedRequest.Value.Headers.AcceptCharset |> should contain ("utf-8", 1m)
-        recordedRequest.Value.Headers.AcceptCharset |> should contain ("utf-16", 0.5m)
-        recordedRequest.Value.Headers.["Accept-Datetime"] |> should equal ["Thu, 31 May 2007 20:35:00 GMT"]
-        recordedRequest.Value.Headers.AcceptLanguage |> should contain ("en-GB", 1m)
-        recordedRequest.Value.Headers.AcceptLanguage |> should contain ("en-US", 0.1m)
-        recordedRequest.Value.Headers.Authorization |> should equal "QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
-        recordedRequest.Value.Headers.Connection |> should equal "conn1"
-        recordedRequest.Value.Headers.["Content-MD5"] |> should equal ["Q2hlY2sgSW50ZWdyaXR5IQ=="]
-        recordedRequest.Value.Headers.ContentType |> should equal "application/json"
-        recordedRequest.Value.Headers.Date.Value |> should equal (new DateTime(1999, 12, 31, 11, 59, 59))
-        recordedRequest.Value.Headers.["Expect"] |> should equal ["100"]
-        recordedRequest.Value.Headers.["From"] |> should equal ["user@example.com"]
-        recordedRequest.Value.Headers.IfMatch |> should equal ["737060cd8c284d8af7ad3082f209582d"]
-        recordedRequest.Value.Headers.IfModifiedSince |> should equal (new DateTime(2000, 12, 31, 11, 59, 59))
-        recordedRequest.Value.Headers.IfNoneMatch |> should equal ["737060cd8c284d8af7ad3082f209582d"]
-        recordedRequest.Value.Headers.IfRange |> should equal "737060cd8c284d8af7ad3082f209582d"
-        recordedRequest.Value.Headers.MaxForwards |> should equal 5
-        recordedRequest.Value.Headers.["Origin"] |> should equal ["http://www.mybot.com"]
-        recordedRequest.Value.Headers.["Pragma"] |> should equal ["no-cache"]
-        recordedRequest.Value.Headers.["Proxy-Authorization"] |> should equal ["QWxhZGRpbjpvcGVuIHNlc2FtZQ=="]
-        recordedRequest.Value.Headers.["Range"] |> should equal ["bytes=0-500"]
-        recordedRequest.Value.Headers.["Referer"] |> should equal ["http://en.wikipedia.org/"]
-        recordedRequest.Value.Headers.["Upgrade"] |> should contain "HTTP/2.0"
-        recordedRequest.Value.Headers.["Upgrade"] |> should contain "SHTTP/1.3" 
-        recordedRequest.Value.Headers.UserAgent |> should equal "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"
-        recordedRequest.Value.Headers.["Via"] |> should contain ("1.0 fred")
-        recordedRequest.Value.Headers.["Via"] |> should contain ("1.1 example.com (Apache/1.1)")
-        recordedRequest.Value.Headers.["Warning"] |> should equal ["199 Miscellaneous warning"]
-        recordedRequest.Value.Headers.["X-Greeting"] |> should equal ["Happy Birthday"]
+        HttpServer.recordedRequest.Value |> should not' (equal null)
+        HttpServer.recordedRequest.Value.Headers.Accept |> should contain ("application/xml", 1m)
+        HttpServer.recordedRequest.Value.Headers.Accept |> should contain ("text/html", 0.3m)
+        HttpServer.recordedRequest.Value.Headers.AcceptCharset |> should contain ("utf-8", 1m)
+        HttpServer.recordedRequest.Value.Headers.AcceptCharset |> should contain ("utf-16", 0.5m)
+        HttpServer.recordedRequest.Value.Headers.["Accept-Datetime"] |> should equal ["Thu, 31 May 2007 20:35:00 GMT"]
+        HttpServer.recordedRequest.Value.Headers.AcceptLanguage |> should contain ("en-GB", 1m)
+        HttpServer.recordedRequest.Value.Headers.AcceptLanguage |> should contain ("en-US", 0.1m)
+        HttpServer.recordedRequest.Value.Headers.Authorization |> should equal "QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
+        HttpServer.recordedRequest.Value.Headers.Connection |> should equal "conn1"
+        HttpServer.recordedRequest.Value.Headers.["Content-MD5"] |> should equal ["Q2hlY2sgSW50ZWdyaXR5IQ=="]
+        HttpServer.recordedRequest.Value.Headers.ContentType |> should equal "application/json"
+        HttpServer.recordedRequest.Value.Headers.Date.Value |> should equal (new DateTime(1999, 12, 31, 11, 59, 59))
+        HttpServer.recordedRequest.Value.Headers.["Expect"] |> should equal ["100"]
+        HttpServer.recordedRequest.Value.Headers.["From"] |> should equal ["user@example.com"]
+        HttpServer.recordedRequest.Value.Headers.IfMatch |> should equal ["737060cd8c284d8af7ad3082f209582d"]
+        HttpServer.recordedRequest.Value.Headers.IfModifiedSince |> should equal (new DateTime(2000, 12, 31, 11, 59, 59))
+        HttpServer.recordedRequest.Value.Headers.IfNoneMatch |> should equal ["737060cd8c284d8af7ad3082f209582d"]
+        HttpServer.recordedRequest.Value.Headers.IfRange |> should equal "737060cd8c284d8af7ad3082f209582d"
+        HttpServer.recordedRequest.Value.Headers.MaxForwards |> should equal 5
+        HttpServer.recordedRequest.Value.Headers.["Origin"] |> should equal ["http://www.mybot.com"]
+        HttpServer.recordedRequest.Value.Headers.["Pragma"] |> should equal ["no-cache"]
+        HttpServer.recordedRequest.Value.Headers.["Proxy-Authorization"] |> should equal ["QWxhZGRpbjpvcGVuIHNlc2FtZQ=="]
+        HttpServer.recordedRequest.Value.Headers.["Range"] |> should equal ["bytes=0-500"]
+        HttpServer.recordedRequest.Value.Headers.["Referer"] |> should equal ["http://en.wikipedia.org/"]
+        HttpServer.recordedRequest.Value.Headers.["Upgrade"] |> should contain "HTTP/2.0"
+        HttpServer.recordedRequest.Value.Headers.["Upgrade"] |> should contain "SHTTP/1.3" 
+        HttpServer.recordedRequest.Value.Headers.UserAgent |> should equal "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"
+        HttpServer.recordedRequest.Value.Headers.["Via"] |> should contain ("1.0 fred")
+        HttpServer.recordedRequest.Value.Headers.["Via"] |> should contain ("1.1 example.com (Apache/1.1)")
+        HttpServer.recordedRequest.Value.Headers.["Warning"] |> should equal ["199 Miscellaneous warning"]
+        HttpServer.recordedRequest.Value.Headers.["X-Greeting"] |> should equal ["Happy Birthday"]
 
     [<Test>]
     member x.``Content-Length header is set automatically for Posts with a body`` () =
         createRequest Post "http://localhost:1234/TestServer/RecordRequest"
         |> withBody "Hi Mum"
         |> getResponseCode |> ignore
-        recordedRequest.Value |> should not' (equal null)
-        recordedRequest.Value.Headers.ContentLength |> should equal 6
+        HttpServer.recordedRequest.Value |> should not' (equal null)
+        HttpServer.recordedRequest.Value.Headers.ContentLength |> should equal 6
 
     [<Test>]
     member x.``accept-encoding header is set automatically when decompression scheme is set`` () =
         createRequest Get "http://localhost:1234/TestServer/RecordRequest"
         |> withAutoDecompression (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
         |> getResponseCode |> ignore
-        recordedRequest.Value |> should not' (equal null)
-        recordedRequest.Value.Headers.AcceptEncoding |> should contain "gzip"
-        recordedRequest.Value.Headers.AcceptEncoding |> should contain "deflate"
+        HttpServer.recordedRequest.Value |> should not' (equal null)
+        HttpServer.recordedRequest.Value.Headers.AcceptEncoding |> should contain "gzip"
+        HttpServer.recordedRequest.Value.Headers.AcceptEncoding |> should contain "deflate"
 
-        // TODO: Seperate tests for the headers which get set automatically:
+        // TODO: Separate tests for the headers which get set automatically:
         // Cache-Control
         // Host
         // IfUnmodifiedSince
 
     [<Test>]
-    member x.``all of the response headers should be available after a call to getResponse`` () =
+    member x.``all of the response headers are available after a call to getResponse`` () =
         let response = createRequest Get "http://localhost:1234/TestServer/AllHeaders" |> getResponse
         response.Headers.[AccessControlAllowOrigin] |> should equal "*"
         response.Headers.[AcceptRanges] |> should equal "bytes"
@@ -324,3 +235,27 @@ type ``Integration tests`` ()=
         response.Headers.[Resp.Warning] |> should equal "199 Miscellaneous warning"
         response.Headers.[WWWAuthenticate] |> should equal "Basic"
         response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
+
+    [<Test>]
+    member x.``the body is read using the character encoding specified in the header`` () =
+        let response = createRequest Get "http://localhost:1234/TestServer/MoonLanguageCorrectEncoding" |> getResponse
+        response.EntityBody.Value |> should equal "яЏ§§їДЙ"
+
+    [<Test>]
+    member x.``if character encoding is not specified in the content-type header, the body is read using ISO Latin 1 character encoding`` () =
+        let response = createRequest Get "http://localhost:1234/TestServer/MoonLanguageNoEncoding" |> getResponse
+        response.EntityBody.Value |> should equal "ÿ§§¿ÄÉ" // what "яЏ§§їДЙ" comes out as when decoded with ISO-8859-1
+
+    [<Test>]
+    member x.``if character encoding specified in the content-type header is invalid, throws exception`` () =
+        (fun() -> createRequest Get "http://localhost:1234/TestServer/MoonLanguageInvalidEncoding" |> getResponse |> ignore) 
+            |> should throw typeof<ArgumentException>
+
+    [<Test>]
+    member x.``cookies are not kept during an automatic redirect`` () =
+        let response =
+            createRequest Get "http://localhost:1234/TestServer/CookieRedirect"
+            |> getResponse
+        
+        response.StatusCode |> should equal 200
+        response.Cookies.ContainsKey "cookie1" |> should equal false

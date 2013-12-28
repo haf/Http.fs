@@ -42,6 +42,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="app.config" />
+    <Compile Include="HttpServer.fs" />
     <Compile Include="HttpClient_IntegrationTests.fs" />
   </ItemGroup>
   <ItemGroup>

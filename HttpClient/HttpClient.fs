@@ -228,7 +228,6 @@ let withAutoDecompression decompressionSchemes request =
     {request with AutoDecompression = decompressionSchemes}
 
 let withBody body request =
-    // TODO: check method is appropriate to have a body? (will throw exception on making request)
     {request with Body = Some(body)}
 
 let withQueryStringItem item request =
@@ -238,7 +237,7 @@ let withCookie cookie request =
     if not request.CookiesEnabled then failwithf "Cannot add cookie %A - cookies disabled" cookie.name
     {request with Cookies = request.Cookies |> append cookie}
 
-let private toHttpWebrequest request =
+let private toHttpWebRequest request =
 
     let url = request.Url + (request |> getQueryString)
     let webRequest = HttpWebRequest.Create(url) :?> HttpWebRequest
@@ -260,6 +259,7 @@ let private toHttpWebrequest request =
     webRequest.KeepAlive <- true
 
     if request.Body.IsSome then
+        // TODO: Allow other encodings
         let bodyBytes = Encoding.GetEncoding(1252).GetBytes(request.Body.Value)
         // Getting the request stream seems to be actually connecting to the internet in some way
         use requestStream = webRequest.GetRequestStream() 
@@ -341,13 +341,15 @@ let private getHeadersAsMap (response:HttpWebResponse) =
     |> Map.ofArray
 
 let private readBody (response:HttpWebResponse) = async {
-    use responseStream = new AsyncStreamReader(response.GetResponseStream(),Encoding.GetEncoding(1252))
+    let encoding = Encoding.GetEncoding(response.CharacterSet)
+
+    use responseStream = new AsyncStreamReader(response.GetResponseStream(),encoding)
     let! body = responseStream.ReadToEnd()
     return body
 }
 
 let getResponseCodeAsync request = async {
-    use! response = request |> toHttpWebrequest |> getResponseNoException
+    use! response = request |> toHttpWebRequest |> getResponseNoException
     return response.StatusCode |> int
 }
 
@@ -355,7 +357,7 @@ let getResponseCode request =
     getResponseCodeAsync request |> Async.RunSynchronously
 
 let getResponseBodyAsync request = async {
-    use! response = request |> toHttpWebrequest |> getResponseNoException
+    use! response = request |> toHttpWebRequest |> getResponseNoException
     let! body = response |> readBody
     return body
 }
@@ -364,18 +366,18 @@ let getResponseBody request =
     getResponseBodyAsync request |> Async.RunSynchronously
 
 let getResponseAsync request = async {
-    use! response = request |> toHttpWebrequest |> getResponseNoException
+    use! response = request |> toHttpWebRequest |> getResponseNoException
 
     let code = response.StatusCode |> int
     let! body = response |> readBody
+
+    let cookies = response |> getCookiesAsMap
+    let headers = response |> getHeadersAsMap
 
     let entityBody = 
         match body.Length > 0 with
         | true -> Some(body)
         | false -> None
-
-    let cookies = response |> getCookiesAsMap
-    let headers = response |> getHeadersAsMap
 
     return {   
         StatusCode = code
