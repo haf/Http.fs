@@ -237,7 +237,7 @@ type ``Integration tests`` ()=
         response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
     [<Test>]
-    member x.``the body is read using the character encoding specified in the header`` () =
+    member x.``the body is read using the character encoding specified in the content-type header`` () =
         let response = createRequest Get "http://localhost:1234/TestServer/MoonLanguageCorrectEncoding" |> getResponse
         response.EntityBody.Value |> should equal "яЏ§§їДЙ"
 
@@ -247,7 +247,7 @@ type ``Integration tests`` ()=
         response.EntityBody.Value |> should equal "ÿ§§¿ÄÉ" // what "яЏ§§їДЙ" comes out as when decoded with ISO-8859-1
 
     [<Test>]
-    member x.``if character encoding specified in the content-type header is invalid, throws exception`` () =
+    member x.``if character encoding specified in the content-type header is invalid, an exception is thrown`` () =
         (fun() -> createRequest Get "http://localhost:1234/TestServer/MoonLanguageInvalidEncoding" |> getResponse |> ignore) 
             |> should throw typeof<ArgumentException>
 
