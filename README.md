@@ -23,6 +23,7 @@ To get into the details a bit more, there are two or three steps to getting what
       |> withAutoFollowRedirectsDisabled  
       |> withCookie {name="session"; value="123"}  
       |> withBody "Check out my sexy body"  
+      |> withResponseCharacterEncoding "utf-8"
   
 2 - The Http response (or just the response code/body) is retrieved using one of the following:
 
@@ -120,9 +121,10 @@ Unit tests describe making the request:
   * withCookie adds the cookie to the request
   * withAutoFollowRedirectsDisabled turns auto-follow off
   * withBasicAuthentication sets the Authorization header with the username and password encoded
+  * withResponseCharacterEncoding sets the response character encoding
 
 Integration tests describe submitting the request and handling the response:
-  * _connection keep-alive header is set automatically on the first request, but not subsequent ones
+  * connection keep-alive header is set automatically on the first request, but not subsequent ones
   * createRequest should set everything correctly in the HTTP request
   * getResponseCode should return the http status code for all response types
   * getResponseBody should return the entity body as a string
@@ -137,8 +139,12 @@ Integration tests describe submitting the request and handling the response:
   * accept-encoding header is set automatically when decompression scheme is set
   * all of the response headers should be available after a call to getResponse
   * the body is read using the character encoding specified in the content-type header
-  * if character encoding is not specified in the content-type header, the body is read using ISO Latin 1 character encoding
-  * if character encoding specified in the content-type header is invalid, an exception is thrown
+  * if a response character encoding is specified, that encoding is used regardless of what the response's content-type specifies
+  * if an invalid response character encoding is specified, an exception is thrown
+  * if a response character encoding is NOT specified, the body is read using the character encoding specified in the response's content-type header
+  * if a response character encoding is NOT specified, and character encoding is NOT specified in the response's content-type header, the body is read using ISO Latin 1 character encoding
+  * if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown
+  * cookies are not kept during an automatic redirect
 
 There's also a SampleApplication folder with a program which demonstrates the library being used and unit tested.
 
