@@ -21,6 +21,7 @@ let ``createRequest makes a Request with a Method and URL, and sensible defaults
     createdRequest.CookiesEnabled |> should equal true
     createdRequest.Headers.IsNone |> should equal true
     createdRequest.QueryStringItems.IsNone |> should equal true
+    createdRequest.ResponseCharacterEncoding.IsNone |> should equal true
 
 [<Test>]
 let ``requests have cookies enabled by default`` () =
@@ -125,3 +126,10 @@ let ``withCookie adds the cookie to the request`` () =
 [<Test>]
 let ``withAutoFollowRedirectsDisabled turns auto-follow off`` () =
     (createValidRequest |> withAutoFollowRedirectsDisabled).AutoFollowRedirects |> should equal false
+
+[<Test>]
+let ``withResponseCharacterEncoding sets the response character encoding`` () =
+    let createdRequest =
+        createRequest Get "http://www.google.com/"
+        |> withResponseCharacterEncoding "utf-8"
+    createdRequest.ResponseCharacterEncoding.Value |> should equal "utf-8"

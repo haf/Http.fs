@@ -237,17 +237,33 @@ type ``Integration tests`` ()=
         response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
     [<Test>]
-    member x.``the body is read using the character encoding specified in the content-type header`` () =
+    member x.``if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies`` () =
+        let response = 
+            createRequest Get "http://localhost:1234/TestServer/MoonLanguageCorrectEncoding" 
+            |> withResponseCharacterEncoding "utf-16"
+            |> getResponse
+        response.EntityBody.Value |> should equal "迿ꞧ쒿" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with utf-16
+    
+    [<Test>]
+    member x.``if an invalid response character encoding is specified, an exception is thrown`` () =
+        (fun() -> createRequest Get "http://localhost:1234/TestServer/MoonLanguageCorrectEncoding" 
+                    |> withResponseCharacterEncoding "gibberish"
+                    |> getResponse 
+                    |> ignore) 
+            |> should throw typeof<ArgumentException>
+
+    [<Test>]
+    member x.``if a response character encoding is NOT specified, the body is read using the character encoding specified in the content-type header`` () =
         let response = createRequest Get "http://localhost:1234/TestServer/MoonLanguageCorrectEncoding" |> getResponse
         response.EntityBody.Value |> should equal "яЏ§§їДЙ"
 
     [<Test>]
-    member x.``if character encoding is not specified in the content-type header, the body is read using ISO Latin 1 character encoding`` () =
+    member x.``if a response character encoding is NOT specified, and character encoding is NOT specified in the content-type header, the body is read using ISO Latin 1 character encoding`` () =
         let response = createRequest Get "http://localhost:1234/TestServer/MoonLanguageNoEncoding" |> getResponse
-        response.EntityBody.Value |> should equal "ÿ§§¿ÄÉ" // what "яЏ§§їДЙ" comes out as when decoded with ISO-8859-1
+        response.EntityBody.Value |> should equal "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
 
     [<Test>]
-    member x.``if character encoding specified in the content-type header is invalid, an exception is thrown`` () =
+    member x.``if a response character encoding is NOT specified, and the character encoding specified in the content-type header is invalid, an exception is thrown`` () =
         (fun() -> createRequest Get "http://localhost:1234/TestServer/MoonLanguageInvalidEncoding" |> getResponse |> ignore) 
             |> should throw typeof<ArgumentException>
 

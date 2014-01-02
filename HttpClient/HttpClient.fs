@@ -101,7 +101,7 @@ type Request = {
     Body: string option
     QueryStringItems: NameValue list option
     Cookies: NameValue list option
-    Encoding: int
+    ResponseCharacterEncoding: string option
 }
 
 type Response = {
@@ -110,7 +110,6 @@ type Response = {
     ContentLength: int64
     Cookies: Map<string,string>
     Headers: Map<ResponseHeader,string>
-    Encoding: int
 }
 
 let private getMethodAsString request =
@@ -201,14 +200,6 @@ let private appendHeaderNoRepeat newHeader headerList =
             failwithf "Header %A already exists" newHeader
         Some(existingList@[newHeader])
 
-let private getEncoding encoding =
-    try
-        let enc = Encoding.GetEncoding(encoding:int)
-        encoding
-    with
-        | ex -> 1252
-
-
 let createRequest httpMethod url = {
     Url = url; 
     Method = httpMethod;
@@ -219,7 +210,7 @@ let createRequest httpMethod url = {
     Body = None;
     QueryStringItems = None;
     Cookies = None;
-    Encoding = 1252;
+    ResponseCharacterEncoding = None;
     }
 
 let withCookiesDisabled request = 
@@ -248,8 +239,8 @@ let withCookie cookie request =
     if not request.CookiesEnabled then failwithf "Cannot add cookie %A - cookies disabled" cookie.name
     {request with Cookies = request.Cookies |> append cookie}
 
-let withEncoding encoding request:Request = 
-    {request with Encoding = getEncoding encoding}
+let withResponseCharacterEncoding encoding request:Request = 
+    {request with ResponseCharacterEncoding = Some(encoding)}
 
 let private toHttpWebRequest request =
 
@@ -274,7 +265,7 @@ let private toHttpWebRequest request =
 
     if request.Body.IsSome then
 
-        let bodyBytes = Encoding.GetEncoding(request.Encoding).GetBytes(request.Body.Value)
+        let bodyBytes = Encoding.GetEncoding("windows-1252").GetBytes(request.Body.Value)
 
         // Getting the request stream seems to be actually connecting to the internet in some way
         use requestStream = webRequest.GetRequestStream() 
@@ -356,7 +347,11 @@ let private getHeadersAsMap (response:HttpWebResponse) =
     |> Map.ofArray
 
 let private readBody encoding (response:HttpWebResponse) = async {
-    use responseStream = new AsyncStreamReader(response.GetResponseStream(),Encoding.GetEncoding(encoding:int))
+    let charset = 
+        match encoding with
+        | None -> Encoding.GetEncoding(response.CharacterSet)
+        | Some(enc) -> Encoding.GetEncoding(enc:string)
+    use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)
     let! body = responseStream.ReadToEnd()
     return body
 }
@@ -371,7 +366,7 @@ let getResponseCode request =
 
 let getResponseBodyAsync request = async {
     use! response = request |> toHttpWebRequest |> getResponseNoException
-    let! body = response |> readBody request.Encoding
+    let! body = response |> readBody request.ResponseCharacterEncoding
     return body
 }
 
@@ -382,7 +377,7 @@ let getResponseAsync request = async {
     use! response = request |> toHttpWebRequest |> getResponseNoException
 
     let code = response.StatusCode |> int
-    let! body = response |> readBody request.Encoding
+    let! body = response |> readBody request.ResponseCharacterEncoding
 
     let cookies = response |> getCookiesAsMap
     let headers = response |> getHeadersAsMap
@@ -398,7 +393,6 @@ let getResponseAsync request = async {
         ContentLength = response.ContentLength
         Cookies = cookies
         Headers = headers
-        Encoding = request.Encoding
     }
 }
 
