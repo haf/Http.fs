@@ -1,7 +1,7 @@
 Http.fs
 =======
 
-An HTTP client library for F#, which wraps [HttpWebRequest](http://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.aspx)/[Response](http://msdn.microsoft.com/en-us/library/system.net.httpwebresponse.aspx) in a glorious functional jacket!
+A gloriously functional HTTP client library for F#!
 
 ## How do I use it? ##
 
@@ -94,6 +94,10 @@ or this:
     printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
 
 ## FAQ ##
+
+  * How does it work?
+
+Http.fs currently uses [HttpWebRequest](http://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.aspx)/[Response](http://msdn.microsoft.com/en-us/library/system.net.httpwebresponse.aspx) under the hood.
 
   * Why are my cookies not getting set?
 
