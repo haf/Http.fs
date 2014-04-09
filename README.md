@@ -23,6 +23,7 @@ To get into the details a bit more, there are two or three steps to getting what
       |> withAutoFollowRedirectsDisabled  
       |> withCookie {name="session"; value="123"}  
       |> withBody "Check out my sexy body"  
+      |> withBodyEncoded "Check out my sexy foreign body" "ISO-8859-5"
       |> withResponseCharacterEncoding "utf-8"
   
 2 - The Http response (or just the response code/body) is retrieved using one of the following:
@@ -120,6 +121,9 @@ Unit tests describe making the request:
   * If the same header is added multiple times, throws an exception
   * If a custom header with the same name is added multiple times, an exception is thrown
   * withBody sets the request body
+  * withBody uses default character encoding of ISO-8859-1
+  * withBodyEncoded sets the request body
+  * withBodyEncoded sets the body encoding
   * withQueryString adds the query string item to the list
   * withCookie throws an exception if cookies are disabled
   * withCookie adds the cookie to the request
@@ -142,6 +146,7 @@ Integration tests describe submitting the request and handling the response:
   * Content-Length header is set automatically for Posts with a body
   * accept-encoding header is set automatically when decompression scheme is set
   * all of the response headers should be available after a call to getResponse
+  * if body character encoding is specified, encodes the request body with it
   * the body is read using the character encoding specified in the content-type header
   * if a response character encoding is specified, that encoding is used regardless of what the response's content-type specifies
   * if an invalid response character encoding is specified, an exception is thrown
