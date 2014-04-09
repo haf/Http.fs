@@ -99,6 +99,7 @@ type Request = {
     AutoDecompression: DecompressionScheme
     Headers: RequestHeader list option
     Body: string option
+    BodyCharacterEncoding: string option
     QueryStringItems: NameValue list option
     Cookies: NameValue list option
     ResponseCharacterEncoding: string option
@@ -114,8 +115,8 @@ type Response = {
 
 let private getMethodAsString request =
     match request.Method with
-        | Options -> "OPTIONS"
-        | Get -> "GET"
+        | Options -> "Options"
+        | Get -> "Get"
         | Head -> "HEAD"
         | Post -> "POST"
         | Put -> "PUT"
@@ -208,6 +209,7 @@ let createRequest httpMethod url = {
     AutoDecompression = DecompressionScheme.None;
     Headers = None; 
     Body = None;
+    BodyCharacterEncoding = None;
     QueryStringItems = None;
     Cookies = None;
     ResponseCharacterEncoding = None;
@@ -230,7 +232,10 @@ let withAutoDecompression decompressionSchemes request =
     {request with AutoDecompression = decompressionSchemes}
 
 let withBody body request =
-    {request with Body = Some(body)}
+    {request with Body = Some(body); BodyCharacterEncoding = Some("ISO-8859-1")}
+
+let withBodyEncoded body characterEncoding request =
+    {request with Body = Some(body); BodyCharacterEncoding = Some(characterEncoding)}
 
 let withQueryStringItem item request =
     {request with QueryStringItems = request.QueryStringItems |> append item}
@@ -247,7 +252,7 @@ let private toHttpWebRequest request =
     let url = request.Url + (request |> getQueryString)
     let webRequest = HttpWebRequest.Create(url) :?> HttpWebRequest
 
-    webRequest.Method <- request |> getMethodAsString
+    webRequest.Method <- (request |> getMethodAsString)
     webRequest.ProtocolVersion <- HttpVersion.Version11
 
     if request.CookiesEnabled then
@@ -265,7 +270,10 @@ let private toHttpWebRequest request =
 
     if request.Body.IsSome then
 
-        let bodyBytes = Encoding.GetEncoding("windows-1252").GetBytes(request.Body.Value)
+        if request.BodyCharacterEncoding.IsNone then
+            failwith "Body Character Encoding not set"
+
+        let bodyBytes = Encoding.GetEncoding(request.BodyCharacterEncoding.Value).GetBytes(request.Body.Value)
 
         // Getting the request stream seems to be actually connecting to the internet in some way
         use requestStream = webRequest.GetRequestStream() 

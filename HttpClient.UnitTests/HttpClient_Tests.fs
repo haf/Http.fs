@@ -17,6 +17,7 @@ let ``createRequest makes a Request with a Method and URL, and sensible defaults
     createdRequest.AutoDecompression |> should equal DecompressionScheme.None
     createdRequest.AutoFollowRedirects |> should equal true
     createdRequest.Body.IsNone |> should equal true
+    createdRequest.BodyCharacterEncoding.IsNone |> should equal true
     createdRequest.Cookies.IsNone |> should equal true
     createdRequest.CookiesEnabled |> should equal true
     createdRequest.Headers.IsNone |> should equal true
@@ -94,6 +95,29 @@ let ``If a custom header with the same name is added multiple times, an exceptio
 [<Test>]
 let ``withBody sets the request body`` () =
     (createValidRequest |> withBody """Hello mum!%2\/@$""").Body.Value |> should equal """Hello mum!%2\/@$"""
+
+[<Test>]
+let ``withBody uses default character encoding of ISO-8859-1`` () =
+    (createValidRequest |> withBody "whatever").BodyCharacterEncoding.Value |> should equal "ISO-8859-1"
+
+[<Test>]
+let ``withBodyEncoded sets the request body`` () =
+    (createValidRequest |> withBodyEncoded """Hello mum!%2\/@$""" "UTF-8").Body.Value |> should equal """Hello mum!%2\/@$"""
+
+[<Test>]
+let ``withBodyEncoded sets the body encding`` () =
+    (createValidRequest |> withBodyEncoded "Hi Mum" "UTF-8").BodyCharacterEncoding.Value |> should equal "UTF-8"
+
+[<Test>]
+let ``if a body character encoding is somehow not specified, throws an exception`` () =
+    let request = 
+        createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
+        |> withBodyEncoded "¥§±Æ" "UTF-8" // random UTF-8 characters
+            
+    let dodgyRequest = {request with BodyCharacterEncoding = None }
+
+    (fun () -> dodgyRequest |> getResponseCode |> ignore)
+        |> should throw typeof<Exception>
 
 [<Test>]
 let ``withQueryString adds the query string item to the list`` () =
