@@ -225,7 +225,7 @@ let withHeader header (request:Request) =
     {request with Headers = request.Headers |> appendHeaderNoRepeat header}
 
 let withBasicAuthentication username password (request:Request) =
-    let authHeader = Authorization ("Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(username + ":" + password)))
+    let authHeader = Authorization ("Basic " + Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1").GetBytes(username + ":" + password)))
     {request with Headers = request.Headers |> appendHeaderNoRepeat authHeader}
 
 let withAutoDecompression decompressionSchemes request =

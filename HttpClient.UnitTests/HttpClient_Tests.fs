@@ -75,6 +75,13 @@ let ``withBasicAuthentication sets the Authorization header with the username an
     createdRequest.Headers.Value |> List.exists (fun header -> header = Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk") |> should equal true
 
 [<Test>]
+let ``withBasicAuthentication encodes the username and password with ISO-8859-1`` () =
+    let createdRequest =
+        createValidRequest
+        |> withBasicAuthentication "Ãµ¶" "ÖØ" // ISO-8859-1 characters not present in ASCII
+    createdRequest.Headers.Value |> List.exists (fun header -> header = Authorization "Basic w7W2OtbY") |> should equal true
+
+[<Test>]
 let ``If the same header is added multiple times, throws an exception`` () =
     (fun () ->
         createValidRequest
