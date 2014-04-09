@@ -69,27 +69,18 @@ Target "Run Integration Tests" (fun _ ->
             OutputFile = integrationTestOutputFolder + "TestResults.xml"})
 )
 
-Target "Build Everything" (fun _ ->
+Target "All" (fun _ ->
     // A dummy target so I can build everything easily
     ()
 )
 
 // Dependencies
-"Clean" ==> "BuildClient"
-"BuildClient" ==> "BuildUnitTests"
-"BuildClient" ==> "BuildIntegrationTests"
-"BuildClient" ==> "BuildSampleApplication"
-"BuildUnitTests" ==> "Run Unit Tests"
-"BuildIntegrationTests" ==> "Run Integration Tests"
-
-// Make "Build Everything" depend on all targets, so I can call that to build everything
-"Clean" ==> "Build Everything"
-"BuildClient" ==> "Build Everything"
-"BuildUnitTests" ==> "Build Everything"
-"BuildIntegrationTests" ==> "Build Everything"
-"BuildSampleApplication" ==> "Build Everything"
-"Run Unit Tests" ==> "Build Everything"
-"Run Integration Tests" ==> "Build Everything"
+"Clean" 
+    ==> "BuildClient"
+    ==> "BuildUnitTests" <=> "BuildIntegrationTests" <=> "BuildSampleApplication"
+    ==> "Run Unit Tests" <=> "Run Integration Tests"
+    ==> "All"
 
 // start build
-RunTargetOrDefault "Build Everything"
+RunTargetOrDefault "All"
+//PrintDependencyGraph true "All"
