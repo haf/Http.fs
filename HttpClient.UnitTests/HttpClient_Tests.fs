@@ -67,7 +67,7 @@ let ``multiple headers of different types can be added, including custom headers
     createdRequest.Headers.Value |> List.exists (fun header -> header = Custom { name="c2"; value="v2"}) |> should equal true
 
 [<Test>]
-let ``withBasicAuthentication sets the Authorization header with the username and password encoded`` () =
+let ``withBasicAuthentication sets the Authorization header with the username and password base-64 encoded`` () =
     let createdRequest =
         createValidRequest
         |> withBasicAuthentication "myUsername" "myPassword"
@@ -75,7 +75,7 @@ let ``withBasicAuthentication sets the Authorization header with the username an
     createdRequest.Headers.Value |> List.exists (fun header -> header = Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk") |> should equal true
 
 [<Test>]
-let ``withBasicAuthentication encodes the username and password with ISO-8859-1`` () =
+let ``withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64`` () =
     let createdRequest =
         createValidRequest
         |> withBasicAuthentication "Ãµ¶" "ÖØ" // ISO-8859-1 characters not present in ASCII
