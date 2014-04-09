@@ -99,8 +99,10 @@ type Request = {
     AutoDecompression: DecompressionScheme
     Headers: RequestHeader list option
     Body: string option
+    BodyCharacterEncoding: string option
     QueryStringItems: NameValue list option
     Cookies: NameValue list option
+    ResponseCharacterEncoding: string option
 }
 
 type Response = {
@@ -113,8 +115,8 @@ type Response = {
 
 let private getMethodAsString request =
     match request.Method with
-        | Options -> "OPTIONS"
-        | Get -> "GET"
+        | Options -> "Options"
+        | Get -> "Get"
         | Head -> "HEAD"
         | Post -> "POST"
         | Put -> "PUT"
@@ -207,8 +209,10 @@ let createRequest httpMethod url = {
     AutoDecompression = DecompressionScheme.None;
     Headers = None; 
     Body = None;
+    BodyCharacterEncoding = None;
     QueryStringItems = None;
     Cookies = None;
+    ResponseCharacterEncoding = None;
     }
 
 let withCookiesDisabled request = 
@@ -221,15 +225,17 @@ let withHeader header (request:Request) =
     {request with Headers = request.Headers |> appendHeaderNoRepeat header}
 
 let withBasicAuthentication username password (request:Request) =
-    let authHeader = Authorization ("Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(username + ":" + password)))
+    let authHeader = Authorization ("Basic " + Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1").GetBytes(username + ":" + password)))
     {request with Headers = request.Headers |> appendHeaderNoRepeat authHeader}
 
 let withAutoDecompression decompressionSchemes request =
     {request with AutoDecompression = decompressionSchemes}
 
 let withBody body request =
-    // TODO: check method is appropriate to have a body? (will throw exception on making request)
-    {request with Body = Some(body)}
+    {request with Body = Some(body); BodyCharacterEncoding = Some("ISO-8859-1")}
+
+let withBodyEncoded body characterEncoding request =
+    {request with Body = Some(body); BodyCharacterEncoding = Some(characterEncoding)}
 
 let withQueryStringItem item request =
     {request with QueryStringItems = request.QueryStringItems |> append item}
@@ -238,12 +244,15 @@ let withCookie cookie request =
     if not request.CookiesEnabled then failwithf "Cannot add cookie %A - cookies disabled" cookie.name
     {request with Cookies = request.Cookies |> append cookie}
 
-let private toHttpWebrequest request =
+let withResponseCharacterEncoding encoding request:Request = 
+    {request with ResponseCharacterEncoding = Some(encoding)}
+
+let private toHttpWebRequest request =
 
     let url = request.Url + (request |> getQueryString)
     let webRequest = HttpWebRequest.Create(url) :?> HttpWebRequest
 
-    webRequest.Method <- request |> getMethodAsString
+    webRequest.Method <- (request |> getMethodAsString)
     webRequest.ProtocolVersion <- HttpVersion.Version11
 
     if request.CookiesEnabled then
@@ -260,7 +269,12 @@ let private toHttpWebrequest request =
     webRequest.KeepAlive <- true
 
     if request.Body.IsSome then
-        let bodyBytes = Encoding.GetEncoding(1252).GetBytes(request.Body.Value)
+
+        if request.BodyCharacterEncoding.IsNone then
+            failwith "Body Character Encoding not set"
+
+        let bodyBytes = Encoding.GetEncoding(request.BodyCharacterEncoding.Value).GetBytes(request.Body.Value)
+
         // Getting the request stream seems to be actually connecting to the internet in some way
         use requestStream = webRequest.GetRequestStream() 
         requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
@@ -340,14 +354,18 @@ let private getHeadersAsMap (response:HttpWebResponse) =
     |> Array.map Option.get
     |> Map.ofArray
 
-let private readBody (response:HttpWebResponse) = async {
-    use responseStream = new AsyncStreamReader(response.GetResponseStream(),Encoding.GetEncoding(1252))
+let private readBody encoding (response:HttpWebResponse) = async {
+    let charset = 
+        match encoding with
+        | None -> Encoding.GetEncoding(response.CharacterSet)
+        | Some(enc) -> Encoding.GetEncoding(enc:string)
+    use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)
     let! body = responseStream.ReadToEnd()
     return body
 }
 
 let getResponseCodeAsync request = async {
-    use! response = request |> toHttpWebrequest |> getResponseNoException
+    use! response = request |> toHttpWebRequest |> getResponseNoException
     return response.StatusCode |> int
 }
 
@@ -355,8 +373,8 @@ let getResponseCode request =
     getResponseCodeAsync request |> Async.RunSynchronously
 
 let getResponseBodyAsync request = async {
-    use! response = request |> toHttpWebrequest |> getResponseNoException
-    let! body = response |> readBody
+    use! response = request |> toHttpWebRequest |> getResponseNoException
+    let! body = response |> readBody request.ResponseCharacterEncoding
     return body
 }
 
@@ -364,18 +382,18 @@ let getResponseBody request =
     getResponseBodyAsync request |> Async.RunSynchronously
 
 let getResponseAsync request = async {
-    use! response = request |> toHttpWebrequest |> getResponseNoException
+    use! response = request |> toHttpWebRequest |> getResponseNoException
 
     let code = response.StatusCode |> int
-    let! body = response |> readBody
+    let! body = response |> readBody request.ResponseCharacterEncoding
+
+    let cookies = response |> getCookiesAsMap
+    let headers = response |> getHeadersAsMap
 
     let entityBody = 
         match body.Length > 0 with
         | true -> Some(body)
         | false -> None
-
-    let cookies = response |> getCookiesAsMap
-    let headers = response |> getHeadersAsMap
 
     return {   
         StatusCode = code

@@ -9,6 +9,7 @@ let unitTestsDir = "./HttpClient.UnitTests/"
 let integrationTestsDir = "./HttpClient.IntegrationTests/"
 let sampleApplicationDir = "./HttpClient.SampleApplication/"
 
+let releaseDir = "Release/"
 let nUnitToolPath = "Tools/NUnit-2.6.3/bin"
 
 // Helper Functions
@@ -69,8 +70,40 @@ Target "Run Integration Tests" (fun _ ->
             OutputFile = integrationTestOutputFolder + "TestResults.xml"})
 )
 
+// copy the distributable source files & dll into the Release folder 
+Target "Copy Release Files" (fun _ ->
+
+    CopyFiles 
+        releaseDir 
+        [
+            httpClientDir + "HttpClient.fs"
+            httpClientDir + "AsyncStreamReader.fs"
+            (httpClientDir |> outputFolder) + "HttpClient.dll"
+        ]
+)
+
+//Target "Upload to NuGet" (fun _ ->
+//    // Copy all the package files into a package folder
+//    CopyFiles packagingDir allPackageFiles
+//
+//    NuGet (fun p -> 
+//        {p with
+//            Authors = authors
+//            Project = projectName
+//            Description = projectDescription                               
+//            OutputPath = packagingRoot
+//            Summary = projectSummary
+//            WorkingDir = packagingDir
+//            Version = buildVersion
+//            AccessKey = myAccesskey
+//            Publish = true }) 
+//            "myProject.nuspec"
+//)
+
 Target "All" (fun _ ->
     // A dummy target so I can build everything easily
+    trace <| "hasBuildParam test " + (hasBuildParam "test").ToString()
+    trace <| "buildParam tim: " + getBuildParam "tim"
     ()
 )
 
@@ -79,8 +112,9 @@ Target "All" (fun _ ->
     ==> "BuildClient"
     ==> "BuildUnitTests" <=> "BuildIntegrationTests" <=> "BuildSampleApplication"
     ==> "Run Unit Tests" <=> "Run Integration Tests"
+    ==> "Copy Release Files"
+    =?> ("Upload to NuGet", hasBuildParam "nuget")
     ==> "All"
 
 // start build
 RunTargetOrDefault "All"
-//PrintDependencyGraph true "All"
