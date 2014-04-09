@@ -236,7 +236,7 @@ type ``Integration tests`` ()=
         response.Headers.[WWWAuthenticate] |> should equal "Basic"
         response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
-    member x.``if body character encoding is NOT specified, encodes with the default ISO-8859-1`` () =
+    member x.``if body character encoding is specified, encodes the request body with it`` () =
         let response = 
             createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
             |> withBodyEncoded "¥§±Æ" "UTF-8" // random UTF-8 characters

@@ -105,7 +105,7 @@ let ``withBodyEncoded sets the request body`` () =
     (createValidRequest |> withBodyEncoded """Hello mum!%2\/@$""" "UTF-8").Body.Value |> should equal """Hello mum!%2\/@$"""
 
 [<Test>]
-let ``withBodyEncoded sets the body encding`` () =
+let ``withBodyEncoded sets the body encoding`` () =
     (createValidRequest |> withBodyEncoded "Hi Mum" "UTF-8").BodyCharacterEncoding.Value |> should equal "UTF-8"
 
 [<Test>]
