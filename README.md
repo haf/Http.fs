@@ -128,7 +128,8 @@ Unit tests describe making the request:
   * withCookie throws an exception if cookies are disabled
   * withCookie adds the cookie to the request
   * withAutoFollowRedirectsDisabled turns auto-follow off
-  * withBasicAuthentication sets the Authorization header with the username and password encoded
+  * withBasicAuthentication sets the Authorization header with the username and password base-64 encoded
+  * withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64
   * withResponseCharacterEncoding sets the response character encoding
 
 Integration tests describe submitting the request and handling the response:
