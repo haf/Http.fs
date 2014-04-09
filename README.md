@@ -177,6 +177,9 @@ However, for testing a couple of other things are used:
   * [FsUnit](https://github.com/fsharp/FsUnit) for unit testing
   * [NancyFX](http://nancyfx.org/) to create a web server for integration testing
 
+And for building, there's also:
+  * [FAKE](http://fsharp.github.io/FAKE/), the F# MAKE tool
+
 That's about it.
 Happy requesting!
 
