@@ -37,3 +37,8 @@ Icon?
 Thumbs.db
 # Include release files
 !/Release/*
+# Include Tools
+!/Tools/FAKE/*
+!/Tools/NUnit-2.6.3/*
+!/Tools/NUnit-2.6.3/bin/*
+!/Tools/NUnit-2.6.3/bin/lib/*
