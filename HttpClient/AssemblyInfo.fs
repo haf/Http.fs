@@ -12,7 +12,7 @@ open System.Runtime.InteropServices
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("")>]
 [<assembly: AssemblyProduct("Http.fs")>]
-[<assembly: AssemblyCopyright("Copyright © G Crofton 2013")>]
+[<assembly: AssemblyCopyright("Copyright © G Crofton 2014")>]
 [<assembly: AssemblyTrademark("")>]
 [<assembly: AssemblyCulture("")>]
 
@@ -24,6 +24,6 @@ open System.Runtime.InteropServices
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [<assembly: Guid("4ead3524-8220-4f0b-b77d-edd088597fcf")>]
 
-[<assembly: AssemblyVersion("0.8.*")>]
-[<assembly: AssemblyFileVersion("0.8.0.0")>]
+[<assembly: AssemblyVersion("0.9.*")>]
+[<assembly: AssemblyFileVersion("0.9.0.0")>]
 ()

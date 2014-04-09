@@ -3,24 +3,24 @@
 open Fake 
 
 // Paths
-
 let httpClientDir = "./HttpClient/"
 let unitTestsDir = "./HttpClient.UnitTests/"
 let integrationTestsDir = "./HttpClient.IntegrationTests/"
 let sampleApplicationDir = "./HttpClient.SampleApplication/"
 
 let releaseDir = "Release/"
+let nuGetDir = releaseDir + "NuGet/"
+let nuSpecFile = nuGetDir + "HttpClient.dll.nuspec"
+let nuGetProjectDll = nuGetDir + "lib/net40/HttpClient.dll"
 let nUnitToolPath = "Tools/NUnit-2.6.3/bin"
 
 // Helper Functions
-
 let outputFolder baseDir =
     baseDir + "bin/Debug/"
 
 let projectFolder baseDir =
     baseDir + "*.fsproj"
 
-// Does a standard project build using MSBuild and outputting to /bin/debug
 let BuildTarget targetName baseDirectory =
     Target targetName (fun _ ->
         !! (baseDirectory |> projectFolder)
@@ -29,7 +29,6 @@ let BuildTarget targetName baseDirectory =
     )
 
 // Targets
-
 Target "Clean" (fun _ ->
     CleanDirs [
         httpClientDir |> outputFolder
@@ -82,28 +81,32 @@ Target "Copy Release Files" (fun _ ->
         ]
 )
 
-//Target "Upload to NuGet" (fun _ ->
-//    // Copy all the package files into a package folder
-//    CopyFiles packagingDir allPackageFiles
-//
-//    NuGet (fun p -> 
-//        {p with
-//            Authors = authors
-//            Project = projectName
-//            Description = projectDescription                               
-//            OutputPath = packagingRoot
-//            Summary = projectSummary
-//            WorkingDir = packagingDir
-//            Version = buildVersion
-//            AccessKey = myAccesskey
-//            Publish = true }) 
-//            "myProject.nuspec"
-//)
+// note to self - call like this: Tools\FAKE\fake.exe build.fsx nuget-version=0.8.5.0 nuget-api-key=(my api key)
+Target "Upload to NuGet" (fun _ ->
+    // Copy the dll into the right place
+    CopyFiles 
+        (releaseDir + "NuGet/lib/net40")
+        [(httpClientDir |> outputFolder) + "HttpClient.dll"]
+
+    trace <| "buildParam nuget-version: " + getBuildParam "nuget-version"
+    trace <| "buildParam nuget-api-key: " + getBuildParam "nuget-api-key"
+
+    // Create and upload package
+    NuGet (fun n -> 
+        {n with          
+            OutputPath = nuGetDir
+            WorkingDir = nuGetDir
+            Project = "Http.fs"
+            Version = getBuildParam "nuget-version"
+            AccessKey = getBuildParam "nuget-api-key"
+            Publish = true }) 
+        nuSpecFile
+)
 
 Target "All" (fun _ ->
     // A dummy target so I can build everything easily
-    trace <| "hasBuildParam test " + (hasBuildParam "test").ToString()
-    trace <| "buildParam tim: " + getBuildParam "tim"
+    trace <| "hasBuildParam nuget-version " + (hasBuildParam "nuget-version").ToString()
+    
     ()
 )
 
@@ -113,7 +116,7 @@ Target "All" (fun _ ->
     ==> "BuildUnitTests" <=> "BuildIntegrationTests" <=> "BuildSampleApplication"
     ==> "Run Unit Tests" <=> "Run Integration Tests"
     ==> "Copy Release Files"
-    =?> ("Upload to NuGet", hasBuildParam "nuget")
+    =?> ("Upload to NuGet", hasBuildParam "nuget-version" && hasBuildParam "nuget-version")
     ==> "All"
 
 // start build

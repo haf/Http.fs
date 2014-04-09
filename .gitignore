@@ -37,6 +37,8 @@ Icon?
 Thumbs.db
 # Include release files
 !/Release/*
+!/Release/NuGet/*
+!/Release/NuGet/lib/net40/*
 # Include Tools
 !/Tools/FAKE/*
 !/Tools/NUnit-2.6.3/*
