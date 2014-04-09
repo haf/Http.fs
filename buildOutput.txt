@@ -1,5 +1,0 @@
-
-C:\Programming\FSharp\HTTP\Http.fs>rem builds the solution and runs the tests using FAKE (F# Make tool) 
-Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? 
-Press any key to continue . . . 
-Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? 
