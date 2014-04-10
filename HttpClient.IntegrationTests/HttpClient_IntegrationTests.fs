@@ -236,6 +236,7 @@ type ``Integration tests`` ()=
         response.Headers.[WWWAuthenticate] |> should equal "Basic"
         response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
+    [<Test>]
     member x.``if body character encoding is specified, encodes the request body with it`` () =
         let response = 
             createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
@@ -243,6 +244,14 @@ type ``Integration tests`` ()=
             |> getResponseCode |> ignore
         use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body,Encoding.GetEncoding("UTF-8"))
         bodyStream.ReadToEnd() |> should equal "¥§±Æ"
+
+    [<Test>]
+    member x.``if an invalid body character encoding is specified, throws an exception`` () =
+        (fun() ->
+            createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
+            |> withBodyEncoded "hi mum" "notAValidEncoding"
+            |> getResponseCode |> ignore)
+            |> should throw typeof<ArgumentException>
 
     [<Test>]
     member x.``if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies`` () =

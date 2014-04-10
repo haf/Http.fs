@@ -9,6 +9,8 @@ open Microsoft.FSharp.Control
 open Microsoft.FSharp.Control.CommonExtensions
 open Microsoft.FSharp.Control.WebExtensions
 
+let ISO_Latin_1 = "ISO-8859-1"
+
 type HttpMethod = Options | Get | Head | Post | Put | Delete | Trace | Connect
 
 // Same as System.Net.DecompressionMethods, but I didn't want to expose that
@@ -225,14 +227,14 @@ let withHeader header (request:Request) =
     {request with Headers = request.Headers |> appendHeaderNoRepeat header}
 
 let withBasicAuthentication username password (request:Request) =
-    let authHeader = Authorization ("Basic " + Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1").GetBytes(username + ":" + password)))
+    let authHeader = Authorization ("Basic " + Convert.ToBase64String(Encoding.GetEncoding(ISO_Latin_1).GetBytes(username + ":" + password)))
     {request with Headers = request.Headers |> appendHeaderNoRepeat authHeader}
 
 let withAutoDecompression decompressionSchemes request =
     {request with AutoDecompression = decompressionSchemes}
 
 let withBody body request =
-    {request with Body = Some(body); BodyCharacterEncoding = Some("ISO-8859-1")}
+    {request with Body = Some(body); BodyCharacterEncoding = Some(ISO_Latin_1)}
 
 let withBodyEncoded body characterEncoding request =
     {request with Body = Some(body); BodyCharacterEncoding = Some(characterEncoding)}
@@ -357,7 +359,10 @@ let private getHeadersAsMap (response:HttpWebResponse) =
 let private readBody encoding (response:HttpWebResponse) = async {
     let charset = 
         match encoding with
-        | None -> Encoding.GetEncoding(response.CharacterSet)
+        | None -> 
+            match response.CharacterSet with
+            | null -> Encoding.GetEncoding(ISO_Latin_1)
+            | cs -> Encoding.GetEncoding(cs)
         | Some(enc) -> Encoding.GetEncoding(enc:string)
     use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)
     let! body = responseStream.ReadToEnd()
