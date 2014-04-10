@@ -11,7 +11,7 @@
 *.vssscc
 *.vspscc
 # Include dlls if they’re in the NuGet packages directory
-!/packages/*/lib/*.dll
+!/packages/*/*/*.dll
 !/packages/*/lib/*/*.dll
 # VS Upgrade stuff #
 ####################
