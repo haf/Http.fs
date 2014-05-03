@@ -51,8 +51,8 @@ type FakeServer() as self =
             fun _ -> 
                 let response = "Some JSON or whatever" |> Nancy.Response.op_Implicit 
                 response.StatusCode <- HttpStatusCode.ImATeapot
-                response.AddCookie("cookie1", "chocolate chip") |> ignore
-                response.AddCookie("cookie2", "smarties") |> ignore
+                response.WithCookie("cookie1", "chocolate chip") |> ignore
+                response.WithCookie("cookie2", "smarties") |> ignore
                 response.Headers.Add("Content-Encoding", "gzip")
                 response.Headers.Add("X-New-Fangled-Header", "some value")
                 response :> obj
@@ -116,7 +116,7 @@ type FakeServer() as self =
         self.Get.["CookieRedirect"] <- 
             fun _ -> 
                 let response = "body" |> Nancy.Response.op_Implicit
-                response.AddCookie("cookie1", "baboon") |> ignore
+                response.WithCookie("cookie1", "baboon") |> ignore
                 response.Headers.Add("Location", "http://localhost:1234/TestServer/NoCookies")
                 response.StatusCode <- HttpStatusCode.TemporaryRedirect
                 response :> obj
