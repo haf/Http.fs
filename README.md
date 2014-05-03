@@ -106,7 +106,7 @@ Perhaps the response is a redirect (a 302 or similar) - unfortunately, although 
 
 The solution is to set 'withAutoFollowRedirectsDisabled' on your request - although this does mean you'll have to handle the redirection yourself.
 
-## Where can I find out more? ##
+## I need details! ##
 
 There's really not that much to it, but if you want to know the details your best bet is the integration and unit tests.
 
@@ -156,7 +156,13 @@ Integration tests describe submitting the request and handling the response:
   * if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown
   * cookies are not kept during an automatic redirect
 
-There's also a SampleApplication folder with a program which demonstrates the library being used and unit tested.
+You can also check out the *SampleApplication* folder, which contains a program demonstrating the library being used and unit tested.
+
+## Versioning ##
+
+The versioning of Http.fs attempts to follow [Semantic Versoning](http://semver.org/), which defines what the different parts of the version number mean and how they relate to backwards compatability of the API.  In a nutshell, as long as the major version doesn't change, everything should still work.
+
+At the moment, wehaven't yet reached v1, so anything could happen.  In reality, there's just [one small change](https://github.com/relentless/Http.fs/issues/4) I'd like to make to the API then we'll go 1.0.0.
 
 ## Why on earth would you make such a thing? ##
 
