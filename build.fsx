@@ -1,5 +1,5 @@
 // include Fake lib
-#r @"packages\FAKE.2.13.3\tools\FakeLib.dll"
+#r @"packages\FAKE.2.15.4\tools\FakeLib.dll"
 open Fake 
 
 // Paths

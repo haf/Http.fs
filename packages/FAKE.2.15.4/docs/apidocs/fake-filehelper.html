@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>FileHelper - FAKE - F# Make</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Steffen Forkmann, Mauricio Scheffer, Colin Bull">
+
+    <script src="http://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="http://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+
+    <link type="text/css" rel="stylesheet" href="http://fsharp.github.io/FAKE/content/style.css" />
+    <script type="text/javascript" src="http://fsharp.github.io/FAKE/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://github.com/fsharp/fake">github page</a></li>
+        </ul>
+        <h3 class="muted">FAKE - F# Make</h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+
+
+
+<h1>FileHelper</h1>
+<div class="xmldoc">
+<p>Contains helper function which allow to deal with files and directories.</p>
+</div>
+
+<!-- Render nested types and modules, if there are any -->
+
+  <h3>Functions and values</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Function or value</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '108', 108)" onmouseover="showTip(event, '108', 108)">
+            allFiles path
+          </code>
+          <div class="tip" id="108">
+            <strong>Signature:</strong>path:string -&gt; bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Includes all files</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L209-209" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '109', 109)" onmouseover="showTip(event, '109', 109)">
+            AppendTextFiles newFileName files
+          </code>
+          <div class="tip" id="109">
+            <strong>Signature:</strong>newFileName:string -&gt; files:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Appends all given files to one file.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>newFileName</code> - The target FileName.</li>
+<li><code>files</code> - The original FileNames as a sequence.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L271-271" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '110', 110)" onmouseover="showTip(event, '110', 110)">
+            changeExt extension fileName
+          </code>
+          <div class="tip" id="110">
+            <strong>Signature:</strong>extension:string -&gt; fileName:string -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Change the extension of the file.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li>'extension' - The new extension containing the leading '.'.</li>
+<li>'fileName' - Name of the file from which the extension is retrieved.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L417-417" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '111', 111)" onmouseover="showTip(event, '111', 111)">
+            CleanDir path
+          </code>
+          <div class="tip" id="111">
+            <strong>Signature:</strong>path:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Cleans a directory by removing all files and sub-directories.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L234-234" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '112', 112)" onmouseover="showTip(event, '112', 112)">
+            CleanDirs dirs
+          </code>
+          <div class="tip" id="112">
+            <strong>Signature:</strong>dirs:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Cleans multiple directories</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L253-253" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '113', 113)" onmouseover="showTip(event, '113', 113)">
+            CompareFiles (...)
+          </code>
+          <div class="tip" id="113">
+            <strong>Signature:</strong>delete:bool -&gt; originalFileName:string -&gt; compareFileName:string -&gt; bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Compares the given files for changes.
+If delete is set to true then equal files will be removed.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L295-295" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '114', 114)" onmouseover="showTip(event, '114', 114)">
+            Copy target files
+          </code>
+          <div class="tip" id="114">
+            <strong>Signature:</strong>target:string -&gt; files:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies the files to the target.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target directory.</li>
+<li><code>files</code> - The original file names as a sequence.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L135-135" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '115', 115)" onmouseover="showTip(event, '115', 115)">
+            CopyCached target cacheDir files
+          </code>
+          <div class="tip" id="115">
+            <strong>Signature:</strong>target:string -&gt; cacheDir:string -&gt; files:seq&lt;string&gt; -&gt; string list<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies the files from a cache folder.
+If the files are not cached or the original files have a different write time the cache will be refreshed.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target FileName.</li>
+<li><code>cacheDir</code> - The cache directory.</li>
+<li><code>files</code> - The orginal files.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L151-151" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '116', 116)" onmouseover="showTip(event, '116', 116)">
+            CopyDir target source filterFile
+          </code>
+          <div class="tip" id="116">
+            <strong>Signature:</strong>target:string -&gt; source:string -&gt; filterFile:(string -&gt; bool) -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies a directory recursivly. If the target directory does not exist, it will be created.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target directory.</li>
+<li><code>source</code> - The source directory.</li>
+<li><code>filterFile</code> - A file filter predicate.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L217-217" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '117', 117)" onmouseover="showTip(event, '117', 117)">
+            CopyFile target fileName
+          </code>
+          <div class="tip" id="117">
+            <strong>Signature:</strong>target:string -&gt; fileName:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies a single file to the target and overwrites the existing file.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target directory or file.</li>
+<li><code>fileName</code> - The FileName.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L118-118" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '118', 118)" onmouseover="showTip(event, '118', 118)">
+            CopyFileIntoSubFolder target fileName
+          </code>
+          <div class="tip" id="118">
+            <strong>Signature:</strong>target:string -&gt; fileName:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies a single file to a relative subfolder of the target.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target directory</li>
+<li><code>fileName</code> - The fileName</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L104-104" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '119', 119)" onmouseover="showTip(event, '119', 119)">
+            CopyFiles target files
+          </code>
+          <div class="tip" id="119">
+            <strong>Signature:</strong>target:string -&gt; files:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies the files to the target - Alias for Copy</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target directory.</li>
+<li><code>files</code> - The orginal file names.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L203-203" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '120', 120)" onmouseover="showTip(event, '120', 120)">
+            copyRecursive dir outputDir overwrite
+          </code>
+          <div class="tip" id="120">
+            <strong>Signature:</strong>dir:DirectoryInfo -&gt; outputDir:DirectoryInfo -&gt; overwrite:bool -&gt; string list<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies the file structure recursively.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L344-344" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '121', 121)" onmouseover="showTip(event, '121', 121)">
+            CopyRecursive dir outputDir
+          </code>
+          <div class="tip" id="121">
+            <strong>Signature:</strong>dir:string -&gt; outputDir:string -&gt; bool -&gt; string list<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies the file structure recursively.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L362-362" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '122', 122)" onmouseover="showTip(event, '122', 122)">
+            CopyTo target files
+          </code>
+          <div class="tip" id="122">
+            <strong>Signature:</strong>target:string -&gt; files:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies the given files to the target.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target directory.</li>
+<li><code>files</code> - The original file names as a sequence.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L142-142" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '123', 123)" onmouseover="showTip(event, '123', 123)">
+            CreateDir path
+          </code>
+          <div class="tip" id="123">
+            <strong>Signature:</strong>path:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Creates a directory if it does not exist.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L54-54" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '124', 124)" onmouseover="showTip(event, '124', 124)">
+            CreateFile fileName
+          </code>
+          <div class="tip" id="124">
+            <strong>Signature:</strong>fileName:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Creates a file if it does not exist.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L62-62" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '125', 125)" onmouseover="showTip(event, '125', 125)">
+            DeleteDir path
+          </code>
+          <div class="tip" id="125">
+            <strong>Signature:</strong>path:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Deletes a directory if it exists.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L42-42" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '126', 126)" onmouseover="showTip(event, '126', 126)">
+            DeleteDirs dirs
+          </code>
+          <div class="tip" id="126">
+            <strong>Signature:</strong>dirs:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Deletes multiple directories</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L256-256" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '127', 127)" onmouseover="showTip(event, '127', 127)">
+            DeleteFile fileName
+          </code>
+          <div class="tip" id="127">
+            <strong>Signature:</strong>fileName:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Deletes a file if it exists.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L71-71" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '128', 128)" onmouseover="showTip(event, '128', 128)">
+            DeleteFiles files
+          </code>
+          <div class="tip" id="128">
+            <strong>Signature:</strong>files:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Deletes the given files.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L79-79" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '129', 129)" onmouseover="showTip(event, '129', 129)">
+            directory path
+          </code>
+          <div class="tip" id="129">
+            <strong>Signature:</strong>path:string -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Get the directory of the specified path</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li>'path' - The path from which the directory is retrieved.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L442-442" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '130', 130)" onmouseover="showTip(event, '130', 130)">
+            excludeSVNFiles path
+          </code>
+          <div class="tip" id="130">
+            <strong>Signature:</strong>path:string -&gt; bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Exclude SVN files (path with .svn)</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L206-206" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '131', 131)" onmouseover="showTip(event, '131', 131)">
+            ext fileName
+          </code>
+          <div class="tip" id="131">
+            <strong>Signature:</strong>fileName:string -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Get the filename extension including the leading '.', or an empty string if the file has no extension.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li>'fileName' - Name of the file from which the extension is retrieved.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L410-410" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '132', 132)" onmouseover="showTip(event, '132', 132)">
+            filename path
+          </code>
+          <div class="tip" id="132">
+            <strong>Signature:</strong>path:string -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Get the filename for the specified path</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li>'path' - The path from which the filename is retrieved.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L430-430" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '133', 133)" onmouseover="showTip(event, '133', 133)">
+            filenameWithouExt path
+          </code>
+          <div class="tip" id="133">
+            <strong>Signature:</strong>path:string -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Get the filename for the specified path without it's extension</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li>'path' - The path from which the filename is retrieved.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L436-436" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '134', 134)" onmouseover="showTip(event, '134', 134)">
+            FilesAreEqual first second
+          </code>
+          <div class="tip" id="134">
+            <strong>Signature:</strong>first:FileInfo -&gt; second:FileInfo -&gt; bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Checks if the two files are byte-to-byte equal.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L280-280" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '135', 135)" onmouseover="showTip(event, '135', 135)">
+            FileVersion fileName
+          </code>
+          <div class="tip" id="135">
+            <strong>Signature:</strong>fileName:string -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Get the version a file.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li>'fileName' - Name of file from which the version is retrieved. The path can be relative.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L401-401" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '136', 136)" onmouseover="showTip(event, '136', 136)">
+            GeneratePatch (...)
+          </code>
+          <div class="tip" id="136">
+            <strong>Signature:</strong>lastReleaseDir:string -&gt; patchDir:string -&gt; srcFiles:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Checks the srcFiles for changes to the last release.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>lastReleaseDir</code> - The directory of the last release.</li>
+<li><code>patchDir</code> - The target directory.</li>
+<li><code>srcFiles</code> - The source files.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L340-340" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '137', 137)" onmouseover="showTip(event, '137', 137)">
+            GeneratePatchWithFindOldFileFunction (...)
+          </code>
+          <div class="tip" id="137">
+            <strong>Signature:</strong>lastReleaseDir:string -&gt; patchDir:string -&gt; srcFiles:seq&lt;string&gt; -&gt; findOldFileF:(string -&gt; string -&gt; string) -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Checks the srcFiles for changes to the last release.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>lastReleaseDir</code> - The directory of the last release</li>
+<li><code>patchDir</code> - The target directory</li>
+<li><code>srcFiles</code> - The source files</li>
+<li><code>findOldFileF</code> - A function which finds the old file</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L326-326" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '138', 138)" onmouseover="showTip(event, '138', 138)">
+            hasExt extension fileName
+          </code>
+          <div class="tip" id="138">
+            <strong>Signature:</strong>extension:string -&gt; fileName:string -&gt; bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Tests whether the file has specified extensions (containing the leading '.')</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li>'extension' - The extension to fine containing the leading '.'.</li>
+<li>'fileName' - Name of the file from which the extension is retrieved.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L424-424" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '139', 139)" onmouseover="showTip(event, '139', 139)">
+            MoveFile target fileName
+          </code>
+          <div class="tip" id="139">
+            <strong>Signature:</strong>target:string -&gt; fileName:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Moves a single file to the target and overwrites the existing file.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target directory.</li>
+<li><code>fileName</code> - The FileName.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L369-369" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '140', 140)" onmouseover="showTip(event, '140', 140)">
+            ReadCSVFile file
+          </code>
+          <div class="tip" id="140">
+            <strong>Signature:</strong>file:string -&gt; seq&lt;string []&gt;<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Reads a csv file line by line
+delimiter is a ,</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L260-260" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '141', 141)" onmouseover="showTip(event, '141', 141)">
+            recursively dirF fileF dir
+          </code>
+          <div class="tip" id="141">
+            <strong>Signature:</strong>dirF:(DirectoryInfo -&gt; unit) -&gt; fileF:(FileInfo -&gt; unit) -&gt; dir:DirectoryInfo -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Performs the given actions on all files and subdirectories</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L10-10" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '142', 142)" onmouseover="showTip(event, '142', 142)">
+            Rename target fileName
+          </code>
+          <div class="tip" id="142">
+            <strong>Signature:</strong>target:string -&gt; fileName:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Renames the file to the target file name.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target file name.</li>
+<li><code>file</code> - The orginal file name.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L180-180" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '143', 143)" onmouseover="showTip(event, '143', 143)">
+            ReplaceInFiles replacements files
+          </code>
+          <div class="tip" id="143">
+            <strong>Signature:</strong>replacements:seq&lt;string * string&gt; -&gt; files:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Replaces all occurences of the patterns in the given files with the given replacements.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>replacements</code> - A sequence of tuples with the patterns and the replacements.</li>
+<li><code>files</code> - The files to process.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L395-395" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '144', 144)" onmouseover="showTip(event, '144', 144)">
+            setDirectoryReadOnly readOnly dir
+          </code>
+          <div class="tip" id="144">
+            <strong>Signature:</strong>readOnly:bool -&gt; dir:DirectoryInfo -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Sets the directory readonly</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L21-21" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '145', 145)" onmouseover="showTip(event, '145', 145)">
+            SetDirReadOnly readOnly dir
+          </code>
+          <div class="tip" id="145">
+            <strong>Signature:</strong>readOnly:bool -&gt; dir:DirectoryInfo -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Sets all files in the directory readonly.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L28-28" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '146', 146)" onmouseover="showTip(event, '146', 146)">
+            SetReadOnly readOnly files
+          </code>
+          <div class="tip" id="146">
+            <strong>Signature:</strong>readOnly:bool -&gt; files:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Sets all given files readonly.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L32-32" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '147', 147)" onmouseover="showTip(event, '147', 147)">
+            SilentCopy target files
+          </code>
+          <div class="tip" id="147">
+            <strong>Signature:</strong>target:string -&gt; files:seq&lt;string&gt; -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Copies a list of files to the specified directory without any output.</p>
+
+<h2>Parameters</h2>
+
+<ul>
+<li><code>target</code> - The target directory.</li>
+<li><code>files</code> - List of files to copy.</li>
+</ul>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L187-187" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '148', 148)" onmouseover="showTip(event, '148', 148)">
+            TestDir path
+          </code>
+          <div class="tip" id="148">
+            <strong>Signature:</strong>path:string -&gt; bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Checks if the directory exists</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L312-312" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '149', 149)" onmouseover="showTip(event, '149', 149)">
+            WriteConfigFile (...)
+          </code>
+          <div class="tip" id="149">
+            <strong>Signature:</strong>configFileName:string -&gt; parameters:seq&lt;&#39;?7831 * &#39;?7832&gt; -&gt; unit<br />
+                          <strong>Type parameters:</strong> '?7831, '?7832          </div>
+        </td>
+        <td class="xmldoc">
+        <p>Creates a config file with the parameters as "key;value" lines</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L381-381" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Active patterns</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Active pattern</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '203', 203)" onmouseover="showTip(event, '203', 203)">
+            ( |EndsWith|_| ) extension file
+          </code>
+          <div class="tip" id="203">
+            <strong>Signature:</strong>extension:string -&gt; file:string -&gt; unit option<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Active Pattern for determining file extension.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L89-89" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '207', 207)" onmouseover="showTip(event, '207', 207)">
+            ( |File|Directory| ) fileSysInfo
+          </code>
+          <div class="tip" id="207">
+            <strong>Signature:</strong>fileSysInfo:FileSystemInfo -&gt; Choice&lt;FileInfo,(DirectoryInfo * IEnumerable&lt;FileSystemInfo&gt;)&gt;<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Active pattern which discriminates between files and directories.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L82-82" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '208', 208)" onmouseover="showTip(event, '208', 208)">
+            ( |FileInfoFullName| ) f
+          </code>
+          <div class="tip" id="208">
+            <strong>Signature:</strong>f:FileInfo -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Active Pattern for determining file name.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L94-94" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '209', 209)" onmouseover="showTip(event, '209', 209)">
+            ( |FileInfoNameSections| ) f
+          </code>
+          <div class="tip" id="209">
+            <strong>Signature:</strong>f:FileInfo -&gt; string * string * string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Active Pattern for determining FileInfoNameSections.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileHelper.fs#L97-97" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+        </div>
+        <div class="span3">
+          <img src="http://fsharp.github.io/FAKE/pics/logo.png" alt="FAKE - F# Make" style="width:150px;margin-left: 20px;" />
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FAKE - F# Make</li>
+            <li><a href="http://fsharp.github.io/FAKE/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="https://nuget.org/packages/Fake">Get FAKE via NuGet</a></li>
+            <li><a href="http://github.com/fsharp/fake">Source Code on GitHub</a></li>
+            <li><a href="https://github.com/fsharp/FAKE/blob/develop/License.txt">License (MS-PL)</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/users.html">Who is using FAKE?</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/changelog.html">Changelog</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/contributing.html">Contributing to FAKE</a></li>
+            <li><a href="http://stackoverflow.com/questions/tagged/f%23-fake">Ask a question</a></li>
+            <li class="nav-header">Articles</li>
+            <li><a href="http://fsharp.github.io/FAKE/gettingstarted.html">Getting started</a></li>
+            <li class="divider"></li>
+            <li><a href="http://fsharp.github.io/FAKE/nuget.html">NuGet package restore</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/fxcop.html">Using FxCop in a build</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/assemblyinfo.html">Generating AssemblyInfo</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/create-nuget-package.html">Create NuGet packages</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/specifictargets.html">Running specific targets</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/commandline.html">Running FAKE from command line</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/customtasks.html">Creating custom tasks</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/teamcity.html">TeamCity integration</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/canopy.html">Running canopy tests</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/octopusdeploy.html">Octopus Deploy</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/typescript.html">TypeScript support</a></li>
+            <li class="divider"></li>
+            <li><a href="http://fsharp.github.io/FAKE/deploy.html">Fake.Deploy</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="http://fsharp.github.io/FAKE/apidocs/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/fsharp/fake"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"></a>
+  </body>
+  </html>
