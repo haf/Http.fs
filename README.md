@@ -59,12 +59,10 @@ So you can do the old download-multiple-sites-in-parallel thing:
     |> Async.RunSynchronously
     |> Array.iter (printfn "%s")
 
-*Note* because some of the request and response headers have the same names, you have to qualify some of the response headers with 'Resp', e.g.
+*Note* because some of the request and response headers have the same names, to prevent name clashes, the response versions have 'Response' stuck on the end, e.g.
 
-    response.Headers.[Resp.ContentType]
+    response.Headers.[ContentTypeResponse]
         
-If you get cryptic errors like 'This is a function and cannot be applied' when you try to set a header, it's probably this.  I'll try to think of a better way to do it soon, I promise...
-
 ## Cool!  So how do I get it in my code? ##
 
 The easiest way, if you have a full-on project, is to us [the NuGet package](https://www.nuget.org/packages/Http.fs/):
@@ -163,8 +161,6 @@ You can also check out the *SampleApplication* folder, which contains a program 
 ## Versioning ##
 
 Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defines what the different parts of the version number mean and how they relate to backwards compatability of the API.  In a nutshell, as long as the major version doesn't change, everything should still work.
-
-At the moment, we're still on v0, so anything could happen.  In reality, there's just [one small change](https://github.com/relentless/Http.fs/issues/4) I'd like to make to the API then we'll go 1.0.0.
 
 ## Why on earth would you make such a thing? ##
 
