@@ -33,18 +33,18 @@ type ResponseHeader =
     | ContentLanguage 
     | ContentLength
     | ContentLocation 
-    | ContentMD5 
+    | ContentMD5Response 
     | ContentDisposition 
     | ContentRange 
-    | ContentType 
-    | Date 
+    | ContentTypeResponse 
+    | DateResponse 
     | ETag 
     | Expires 
     | LastModified 
     | Link 
     | Location 
     | P3P 
-    | Pragma 
+    | PragmaResponse 
     | ProxyAuthenticate 
     | Refresh 
     | RetryAfter 
@@ -53,14 +53,14 @@ type ResponseHeader =
     | Trailer 
     | TransferEncoding 
     | Vary 
-    | Via 
-    | Warning 
+    | ViaResponse 
+    | WarningResponse 
     | WWWAuthenticate 
     | NonStandard of string
 
 // short name for qualified access (needed as some request & response
 // headers have the same name)
-type Resp = ResponseHeader 
+//type Resp = ResponseHeader 
 
 // some headers can't be set with HttpWebRequest, or are set automatically, so are not included.
 // others, such as transfer-encoding, just haven't been implemented.
@@ -316,18 +316,18 @@ let private getResponseHeader headerName =
     | "Content-Language" -> Some(ContentLanguage)
     | "Content-Length" -> None
     | "Content-Location" -> Some(ContentLocation)
-    | "Content-MD5" -> Some(ResponseHeader.ContentMD5)
+    | "Content-MD5" -> Some(ResponseHeader.ContentMD5Response)
     | "Content-Disposition" -> Some(ContentDisposition)
     | "Content-Range" -> Some(ContentRange)
-    | "Content-Type" -> Some(ResponseHeader.ContentType)
-    | "Date" -> Some(ResponseHeader.Date)
+    | "Content-Type" -> Some(ResponseHeader.ContentTypeResponse)
+    | "Date" -> Some(ResponseHeader.DateResponse)
     | "ETag" -> Some(ETag)
     | "Expires" -> Some(Expires)
     | "Last-Modified" -> Some(LastModified)
     | "Link" -> Some(Link)
     | "Location" -> Some(Location)
     | "P3P" -> Some(P3P)
-    | "Pragma" -> Some(ResponseHeader.Pragma)
+    | "Pragma" -> Some(ResponseHeader.PragmaResponse)
     | "Proxy-Authenticate" -> Some(ProxyAuthenticate)
     | "Refresh" -> Some(Refresh)
     | "Retry-After" -> Some(RetryAfter)
@@ -337,8 +337,8 @@ let private getResponseHeader headerName =
     | "Trailer" -> Some(Trailer)
     | "Transfer-Encoding" -> Some(TransferEncoding)
     | "Vary" -> Some(Vary)
-    | "Via" -> Some(ResponseHeader.Via)
-    | "Warning" -> Some(ResponseHeader.Warning)
+    | "Via" -> Some(ResponseHeader.ViaResponse)
+    | "Warning" -> Some(ResponseHeader.WarningResponse)
     | "WWW-Authenticate" -> Some(WWWAuthenticate)
     | _ -> Some(NonStandard headerName)
 

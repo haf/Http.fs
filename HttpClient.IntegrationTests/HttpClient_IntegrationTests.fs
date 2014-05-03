@@ -210,11 +210,11 @@ type ``Integration tests`` ()=
         response.Headers.[ContentEncoding] |> should equal "gzip"
         response.Headers.[ContentLanguage] |> should equal "EN-gb"
         response.Headers.[ContentLocation] |> should equal "/index.htm"
-        response.Headers.[Resp.ContentMD5] |> should equal "Q2hlY2sgSW50ZWdyaXR5IQ=="
-        response.Headers.[Resp.ContentDisposition] |> should equal "attachment; filename=\"fname.ext\""
+        response.Headers.[ContentMD5Response] |> should equal "Q2hlY2sgSW50ZWdyaXR5IQ=="
+        response.Headers.[ContentDisposition] |> should equal "attachment; filename=\"fname.ext\""
         response.Headers.[ContentRange] |> should equal "bytes 21010-47021/47022"
-        response.Headers.[Resp.ContentType] |> should equal "text/html; charset=utf-8"
-        let (parsedOK,_) = System.DateTime.TryParse(response.Headers.[Resp.Date])
+        response.Headers.[ContentTypeResponse] |> should equal "text/html; charset=utf-8"
+        let (parsedOK,_) = System.DateTime.TryParse(response.Headers.[DateResponse])
         parsedOK |> should equal true
         response.Headers.[ETag] |> should equal "737060cd8c284d8af7ad3082f209582d"
         response.Headers.[Expires] |> should equal "Thu, 01 Dec 1994 16:00:00 GMT"
@@ -222,7 +222,7 @@ type ``Integration tests`` ()=
         response.Headers.[Link] |> should equal "</feed>; rel=\"alternate\""
         response.Headers.[Location] |> should equal "http://www.w3.org/pub/WWW/People.html"
         response.Headers.[P3P] |> should equal "CP=\"your_compact_policy\""
-        response.Headers.[Resp.Pragma] |> should equal "no-cache"
+        response.Headers.[PragmaResponse] |> should equal "no-cache"
         response.Headers.[ProxyAuthenticate] |> should equal "Basic"
         response.Headers.[Refresh] |> should equal "5; url=http://www.w3.org/pub/WWW/People.html"
         response.Headers.[RetryAfter] |> should equal "120"
@@ -231,8 +231,8 @@ type ``Integration tests`` ()=
         response.Headers.[Trailer] |> should equal "Max-Forwards"
         response.Headers.[TransferEncoding] |> should equal "chunked"
         response.Headers.[Vary] |> should equal "*"
-        response.Headers.[Resp.Via] |> should equal "1.0 fred, 1.1 example.com (Apache/1.1)"
-        response.Headers.[Resp.Warning] |> should equal "199 Miscellaneous warning"
+        response.Headers.[ViaResponse] |> should equal "1.0 fred, 1.1 example.com (Apache/1.1)"
+        response.Headers.[WarningResponse] |> should equal "199 Miscellaneous warning"
         response.Headers.[WWWAuthenticate] |> should equal "Basic"
         response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
