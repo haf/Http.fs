@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>FileUtils - FAKE - F# Make</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Steffen Forkmann, Mauricio Scheffer, Colin Bull">
+
+    <script src="http://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="http://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+
+    <link type="text/css" rel="stylesheet" href="http://fsharp.github.io/FAKE/content/style.css" />
+    <script type="text/javascript" src="http://fsharp.github.io/FAKE/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://github.com/fsharp/fake">github page</a></li>
+        </ul>
+        <h3 class="muted">FAKE - F# Make</h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+
+
+
+<h1>FileUtils</h1>
+<div class="xmldoc">
+<p>Shell-like functions. Similar to <a href="http://www.ruby-doc.org/stdlib-2.0.0/libdoc/rake/rdoc/FileUtils.html">Ruby's FileUtils</a>.</p>
+</div>
+
+<!-- Render nested types and modules, if there are any -->
+
+  <h3>Functions and values</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Function or value</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '210', 210)" onmouseover="showTip(event, '210', 210)">
+            cd path
+          </code>
+          <div class="tip" id="210">
+            <strong>Signature:</strong>path:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Changes working directory</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L35-35" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '211', 211)" onmouseover="showTip(event, '211', 211)">
+            chdir path
+          </code>
+          <div class="tip" id="211">
+            <strong>Signature:</strong>path:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Changes working directory</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L32-32" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '212', 212)" onmouseover="showTip(event, '212', 212)">
+            cp src dest
+          </code>
+          <div class="tip" id="212">
+            <strong>Signature:</strong>src:string -&gt; dest:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Like "cp" in a shell. Copies a single file.
+<param name="src">The source</param>
+<param name="dest">The destination</param></p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L29-29" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '213', 213)" onmouseover="showTip(event, '213', 213)">
+            cp_r src dest
+          </code>
+          <div class="tip" id="213">
+            <strong>Signature:</strong>src:string -&gt; dest:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Like "cp -r" in a shell. Copies a file or directory recursively.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L22-22" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '214', 214)" onmouseover="showTip(event, '214', 214)">
+            mkdir path
+          </code>
+          <div class="tip" id="214">
+            <strong>Signature:</strong>path:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Creates a directory if it doesn't exist.</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L15-15" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '215', 215)" onmouseover="showTip(event, '215', 215)">
+            mv src dest
+          </code>
+          <div class="tip" id="215">
+            <strong>Signature:</strong>src:string -&gt; dest:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Like "mv" in a shell. Moves/renames a file
+<param name="src">The source</param>
+<param name="dest">The destination</param></p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L43-43" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '216', 216)" onmouseover="showTip(event, '216', 216)">
+            pwd ()
+          </code>
+          <div class="tip" id="216">
+            <strong>Signature:</strong>unit -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Gets working directory</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L38-38" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '217', 217)" onmouseover="showTip(event, '217', 217)">
+            rm 
+          </code>
+          <div class="tip" id="217">
+            <strong>Signature:</strong>string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Deletes a file if it exists</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L7-7" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '218', 218)" onmouseover="showTip(event, '218', 218)">
+            rm_rf f
+          </code>
+          <div class="tip" id="218">
+            <strong>Signature:</strong>f:string -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+        <p>Like "rm -rf" in a shell. Removes files recursively, ignoring nonexisting files</p>
+
+            <a href="https://github.com/fsharp/FAKE/blob/develop/src/app/FakeLib/FileUtils.fs#L10-10" class="github-link">Go to GitHub source</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+        </div>
+        <div class="span3">
+          <img src="http://fsharp.github.io/FAKE/pics/logo.png" alt="FAKE - F# Make" style="width:150px;margin-left: 20px;" />
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FAKE - F# Make</li>
+            <li><a href="http://fsharp.github.io/FAKE/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="https://nuget.org/packages/Fake">Get FAKE via NuGet</a></li>
+            <li><a href="http://github.com/fsharp/fake">Source Code on GitHub</a></li>
+            <li><a href="https://github.com/fsharp/FAKE/blob/develop/License.txt">License (MS-PL)</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/users.html">Who is using FAKE?</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/changelog.html">Changelog</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/contributing.html">Contributing to FAKE</a></li>
+            <li><a href="http://stackoverflow.com/questions/tagged/f%23-fake">Ask a question</a></li>
+            <li class="nav-header">Articles</li>
+            <li><a href="http://fsharp.github.io/FAKE/gettingstarted.html">Getting started</a></li>
+            <li class="divider"></li>
+            <li><a href="http://fsharp.github.io/FAKE/nuget.html">NuGet package restore</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/fxcop.html">Using FxCop in a build</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/assemblyinfo.html">Generating AssemblyInfo</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/create-nuget-package.html">Create NuGet packages</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/specifictargets.html">Running specific targets</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/commandline.html">Running FAKE from command line</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/customtasks.html">Creating custom tasks</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/teamcity.html">TeamCity integration</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/canopy.html">Running canopy tests</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/octopusdeploy.html">Octopus Deploy</a></li>
+            <li><a href="http://fsharp.github.io/FAKE/typescript.html">TypeScript support</a></li>
+            <li class="divider"></li>
+            <li><a href="http://fsharp.github.io/FAKE/deploy.html">Fake.Deploy</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="http://fsharp.github.io/FAKE/apidocs/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/fsharp/fake"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"></a>
+  </body>
+  </html>

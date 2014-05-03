@@ -1,9 +1,0 @@
-SRCSRV: ini ------------------------------------------------
-VERSION=2
-SRCSRV: variables ------------------------------------------
-SRCSRVVERCTRL=https
-SRCSRVTRG=https://raw.github.com/fsharp/FAKE/ad9ce07e43ad19f56681cdb62f6298bf88b939d1/%var2%
-SRCSRV: source files ---------------------------------------
-C:\code\fake\src\app\Fake.IIS\IISExpress.fs*src/app/Fake.IIS/IISExpress.fs
-C:\code\fake\src\app\Fake.IIS\IISHelper.fs*src/app/Fake.IIS/IISHelper.fs
-SRCSRV: end ------------------------------------------------
