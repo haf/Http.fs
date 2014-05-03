@@ -12,7 +12,7 @@ open Nancy
 open Nancy.Hosting.Self
 open HttpServer
 
-let nancyHost = new NancyHost(new Uri("http://localhost:1234/TestServer/"))
+let nancyHost = new NancyHost(new HostConfiguration(UrlReservations=UrlReservations(CreateAutomatically=true)), new Uri("http://localhost:1234/TestServer/"))
 
 [<TestFixture>] 
 type ``Integration tests`` ()=
