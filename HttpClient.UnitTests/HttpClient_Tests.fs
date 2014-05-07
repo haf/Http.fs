@@ -43,14 +43,14 @@ let ``withCookiesDisabled disables cookies`` () =
 [<Test>]
 let ``withHeader adds header to the request`` () =
     (createValidRequest
-    |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")).Headers.Value.[0]
-    |> should equal <| UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36"
+    |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")).Headers.Value
+    |> should equal [ UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36" ]
 
 [<Test>]
 let ``withHeader Custom adds a custom header to the request`` () =
     (createValidRequest
-    |> withHeader (Custom { name="X-Hello-Mum"; value="Happy Birthday!"})).Headers.Value.[0]
-    |> should equal <| Custom { name="X-Hello-Mum"; value="Happy Birthday!"}
+    |> withHeader (Custom { name="X-Hello-Mum"; value="Happy Birthday!"})).Headers.Value
+    |> should equal [ Custom { name="X-Hello-Mum"; value="Happy Birthday!"} ]
 
 [<Test>]
 let ``multiple headers of different types can be added, including custom headers with different names`` () =
@@ -60,11 +60,11 @@ let ``multiple headers of different types can be added, including custom headers
         |> withHeader (Referer "ref")
         |> withHeader (Custom { name="c1"; value="v1"})
         |> withHeader (Custom { name="c2"; value="v2"})
-    createdRequest.Headers.Value |> List.length |> should equal 4
-    createdRequest.Headers.Value |> List.exists (fun header -> header = UserAgent "ua") |> should equal true
-    createdRequest.Headers.Value |> List.exists (fun header -> header = Referer "ref") |> should equal true
-    createdRequest.Headers.Value |> List.exists (fun header -> header = Custom { name="c1"; value="v1"}) |> should equal true
-    createdRequest.Headers.Value |> List.exists (fun header -> header = Custom { name="c2"; value="v2"}) |> should equal true
+    createdRequest.Headers.Value |> should haveLength 4
+    createdRequest.Headers.Value |> should contain (UserAgent "ua")
+    createdRequest.Headers.Value |> should contain (Referer "ref")
+    createdRequest.Headers.Value |> should contain (Custom { name = "c1"; value = "v1" })
+    createdRequest.Headers.Value |> should contain (Custom { name = "c2"; value = "v2"})
 
 [<Test>]
 let ``withBasicAuthentication sets the Authorization header with the username and password base-64 encoded`` () =
@@ -72,14 +72,14 @@ let ``withBasicAuthentication sets the Authorization header with the username an
         createValidRequest
         |> withBasicAuthentication "myUsername" "myPassword"
     createdRequest.Headers |> Option.isSome |> should equal true
-    createdRequest.Headers.Value |> List.exists (fun header -> header = Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk") |> should equal true
+    createdRequest.Headers.Value |> should contain (Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk")
 
 [<Test>]
 let ``withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64`` () =
     let createdRequest =
         createValidRequest
         |> withBasicAuthentication "Ãµ¶" "ÖØ" // ISO-8859-1 characters not present in ASCII
-    createdRequest.Headers.Value |> List.exists (fun header -> header = Authorization "Basic w7W2OtbY") |> should equal true
+    createdRequest.Headers.Value |> should contain (Authorization "Basic w7W2OtbY")
 
 [<Test>]
 let ``If the same header is added multiple times, throws an exception`` () =
@@ -132,9 +132,9 @@ let ``withQueryString adds the query string item to the list`` () =
         createValidRequest
         |> withQueryStringItem {name="f1"; value="v1"}
         |> withQueryStringItem {name="f2"; value="v2"}
-    createdRequest.QueryStringItems.Value.Length |> should equal 2
-    createdRequest.QueryStringItems.Value |> List.exists (fun qs -> qs = {name="f1"; value="v1"}) |> should equal true
-    createdRequest.QueryStringItems.Value |> List.exists (fun qs -> qs = {name="f2"; value="v2"}) |> should equal true
+    createdRequest.QueryStringItems.Value |> should haveLength 2
+    createdRequest.QueryStringItems.Value |> should contain {name="f1"; value="v1"}
+    createdRequest.QueryStringItems.Value |> should contain {name="f2"; value="v2"}
 
 [<Test>]
 let ``withCookie throws an exception if cookies are disabled`` () =
@@ -150,9 +150,9 @@ let ``withCookie adds the cookie to the request`` () =
         createRequest Get "http://www.google.com/"
         |> withCookie { name = "c1"; value = "v1" }
         |> withCookie { name = "c2"; value = "v2" }
-    createdRequest.Cookies.Value.Length |> should equal 2
-    createdRequest.Cookies.Value |> List.exists (fun cookie -> cookie = { name = "c1"; value = "v1" }) |> should equal true
-    createdRequest.Cookies.Value |> List.exists (fun cookie -> cookie = { name = "c2"; value = "v2" }) |> should equal true
+    createdRequest.Cookies.Value |> should haveLength 2
+    createdRequest.Cookies.Value |> should contain { name = "c1"; value = "v1" }
+    createdRequest.Cookies.Value |> should contain { name = "c2"; value = "v2" }
 
 [<Test>]
 let ``withAutoFollowRedirectsDisabled turns auto-follow off`` () =
@@ -164,3 +164,23 @@ let ``withResponseCharacterEncoding sets the response character encoding`` () =
         createRequest Get "http://www.google.com/"
         |> withResponseCharacterEncoding "utf-8"
     createdRequest.ResponseCharacterEncoding.Value |> should equal "utf-8"
+
+[<Test>]
+let ``withProxy sets proxy with custom credentials`` () =
+    let request = 
+        createValidRequest 
+        |> withProxy { Address = "proxy.com"; Port = 8080; Credentials = ProxyCredentials.Custom ("user", "password") }
+        |> toHttpWebRequest
+    
+    request |> should not' (equal null)
+    request.Proxy.GetProxy(Uri "http://google.com") |> should equal (Uri "http://proxy.com:8080")
+    request.Proxy.Credentials |> should not' (equal null)
+
+[<Test>]
+let ``withProxy sets proxy with default credentials`` () =
+    let request = 
+        createValidRequest 
+        |> withProxy { Address = "proxy.com"; Port = 8080; Credentials = ProxyCredentials.Default }
+        |> toHttpWebRequest
+    
+    request.Proxy.Credentials |> should equal System.Net.CredentialCache.DefaultCredentials
