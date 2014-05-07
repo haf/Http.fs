@@ -93,6 +93,17 @@ type RequestHeader =
     | Warning of string
     | Custom of NameValue
 
+[<RequireQualifiedAccess>]
+type ProxyCredentials =
+    | No
+    | Default
+    | Custom of username: string * password: string
+
+type Proxy =
+    { Address: string
+      Port: int
+      Credentials: ProxyCredentials }
+
 type Request = {
     Url: string
     Method: HttpMethod
@@ -105,6 +116,7 @@ type Request = {
     QueryStringItems: NameValue list option
     Cookies: NameValue list option
     ResponseCharacterEncoding: string option
+    Proxy: Proxy option
 }
 
 type Response = {
@@ -215,6 +227,7 @@ let createRequest httpMethod url = {
     QueryStringItems = None;
     Cookies = None;
     ResponseCharacterEncoding = None;
+    Proxy = None;
     }
 
 let withCookiesDisabled request = 
@@ -248,8 +261,11 @@ let withCookie cookie request =
 
 let withResponseCharacterEncoding encoding request:Request = 
     {request with ResponseCharacterEncoding = Some(encoding)}
+    
+let withProxy proxy request =
+    {request with Proxy = Some proxy}
 
-let private toHttpWebRequest request =
+let toHttpWebRequest request =
 
     let url = request.Url + (request |> getQueryString)
     let webRequest = HttpWebRequest.Create(url) :?> HttpWebRequest
@@ -269,6 +285,17 @@ let private toHttpWebRequest request =
     webRequest |> setCookies request.Cookies request.Url
 
     webRequest.KeepAlive <- true
+
+    request.Proxy |> Option.iter (fun proxy ->
+        let webProxy = WebProxy(proxy.Address, proxy.Port)
+
+        match proxy.Credentials with
+        | ProxyCredentials.Custom (username = username; password = password) -> 
+            webProxy.Credentials <- NetworkCredential(username, password)
+        | ProxyCredentials.Default -> webProxy.UseDefaultCredentials <- true
+        | ProxyCredentials.No -> webProxy.Credentials <- null
+
+        webRequest.Proxy <- webProxy)
 
     if request.Body.IsSome then
 
