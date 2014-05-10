@@ -58,10 +58,6 @@ type ResponseHeader =
     | WWWAuthenticate 
     | NonStandard of string
 
-// short name for qualified access (needed as some request & response
-// headers have the same name)
-//type Resp = ResponseHeader 
-
 // some headers can't be set with HttpWebRequest, or are set automatically, so are not included.
 // others, such as transfer-encoding, just haven't been implemented.
 type RequestHeader =
@@ -93,6 +89,20 @@ type RequestHeader =
     | Warning of string
     | Custom of NameValue
 
+type UserDetails = { username:string; password:string }
+
+[<RequireQualifiedAccess>]
+type ProxyCredentials =
+    | None
+    | Default
+    | Custom of UserDetails
+
+type Proxy = { 
+    Address: string
+    Port: int
+    Credentials: ProxyCredentials 
+}
+
 type Request = {
     Url: string
     Method: HttpMethod
@@ -105,6 +115,7 @@ type Request = {
     QueryStringItems: NameValue list option
     Cookies: NameValue list option
     ResponseCharacterEncoding: string option
+    Proxy: Proxy option
 }
 
 type Response = {
@@ -215,6 +226,7 @@ let createRequest httpMethod url = {
     QueryStringItems = None;
     Cookies = None;
     ResponseCharacterEncoding = None;
+    Proxy = None;
     }
 
 let withCookiesDisabled request = 
@@ -248,6 +260,9 @@ let withCookie cookie request =
 
 let withResponseCharacterEncoding encoding request:Request = 
     {request with ResponseCharacterEncoding = Some(encoding)}
+    
+let withProxy proxy request =
+    {request with Proxy = Some proxy}
 
 let private toHttpWebRequest request =
 
@@ -269,6 +284,17 @@ let private toHttpWebRequest request =
     webRequest |> setCookies request.Cookies request.Url
 
     webRequest.KeepAlive <- true
+
+    request.Proxy |> Option.iter (fun proxy ->
+        let webProxy = WebProxy(proxy.Address, proxy.Port)
+
+        match proxy.Credentials with
+        | ProxyCredentials.Custom { username = name; password = pwd} -> 
+            webProxy.Credentials <- NetworkCredential(name, pwd)
+        | ProxyCredentials.Default -> webProxy.UseDefaultCredentials <- true
+        | ProxyCredentials.None -> webProxy.Credentials <- null
+
+        webRequest.Proxy <- webProxy)
 
     if request.Body.IsSome then
 

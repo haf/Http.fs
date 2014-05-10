@@ -12,7 +12,10 @@ open Nancy
 open Nancy.Hosting.Self
 open HttpServer
 
-let nancyHost = new NancyHost(new HostConfiguration(UrlReservations=UrlReservations(CreateAutomatically=true)), new Uri("http://localhost:1234/TestServer/"))
+let nancyHost = 
+    new NancyHost(
+        new HostConfiguration(UrlReservations=UrlReservations(CreateAutomatically=true)), 
+        new Uri("http://localhost:1234/TestServer/"))
 
 [<TestFixture>] 
 type ``Integration tests`` ()=
@@ -292,3 +295,13 @@ type ``Integration tests`` ()=
         
         response.StatusCode |> should equal 200
         response.Cookies.ContainsKey "cookie1" |> should equal false
+
+    // TODO: test proxy - approach below doesn't seem to work, even without port specified in proxy (which appends it to the end of the URL)
+    // There's a script called 'test proxy' which can be used to test it manually.
+
+//    [<Test>]
+//    member x.``requests with a proxy set use the proxy details`` () =
+//        createRequest Get "http://localhost:1234/TestServer/NoPage"
+//        |> withProxy { Address = "localhost:1234/TestServer/RecordRequest"; Port = 1234; Credentials = ProxyCredentials.Default }
+//        |> getResponseCode |> ignore
+//        HttpServer.recordedRequest.Value |> should not' (equal null)

@@ -81,7 +81,7 @@ Target "Copy Release Files" (fun _ ->
         ]
 )
 
-// note to self - call like this: Tools\FAKE\fake.exe build.fsx nuget-version=0.8.5.0 nuget-api-key=(my api key)
+// note to self - call like this: Tools\FAKE\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key)
 Target "Upload to NuGet" (fun _ ->
     // Copy the dll into the right place
     CopyFiles 
