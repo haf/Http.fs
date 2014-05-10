@@ -25,7 +25,10 @@ To get into the details a bit more, there are two or three steps to getting what
       |> withBody "Check out my sexy body"  
       |> withBodyEncoded "Check out my sexy foreign body" "ISO-8859-5"
       |> withResponseCharacterEncoding "utf-8"
-      |> withProxy { Address = "proxy.com"; Port = 8080; Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
+      |> withProxy { 
+            Address = "proxy.com"; 
+            Port = 8080; 
+            Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
   
 (with everything after createRequest being optional)
   
@@ -163,9 +166,13 @@ Integration tests describe submitting the request and handling the response:
 
 You can also check out the *SampleApplication* folder, which contains a program demonstrating the library being used and unit tested.
 
-## Versioning ##
+## Versionin History ##
 
 Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defines what the different parts of the version number mean and how they relate to backwards compatability of the API.  In a nutshell, as long as the major version doesn't change, everything should still work.
+
+0.X.X - Various.  Thanks for code and suggestions from [Sergeeeek](https://github.com/Sergeeeek), [rodrigodival](https://github.com/rodrigovidal), [ovatsus](https://github.com/ovatsus) and more
+1.0.0 - First stable API release.  Changed how 'duplicated' DUs were named between request/response.
+1.1.0 - Added withProxy, thanks to [vasily-kirichenko](https://github.com/vasily-kirichenko)
 
 ## Why on earth would you make such a thing? ##
 
