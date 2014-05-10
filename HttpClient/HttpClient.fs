@@ -22,8 +22,9 @@ type DecompressionScheme =
 // defines mappings between encodings which might be specified to the names
 // which work with the .net encoder
 let responseEncodingMappings =
-    Map.empty.
-        Add("utf8", "utf-8")
+    Map.empty
+        .Add("utf8", "utf-8")
+        .Add("utf16", "utf-16")
 
 type NameValue = { name:string; value:string }
 type ContentRange = {start:int64; finish:int64 }

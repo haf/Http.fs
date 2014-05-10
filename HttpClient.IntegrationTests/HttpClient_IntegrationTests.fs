@@ -294,6 +294,11 @@ type ``Integration tests`` ()=
         response.EntityBody.Value |> should equal "'Why do you hate me so much, Windows?!' - utf8"
 
     [<Test>]
+    member x.``if the response character encoding is specified as 'utf16', uses 'utf-16' instead`` () =
+        let response = createRequest Get "http://localhost:1234/TestServer/utf16" |> getResponse
+        response.EntityBody.Value |> should equal "'Why are you so picky, Windows?!' - utf16"
+
+    [<Test>]
     member x.``cookies are not kept during an automatic redirect`` () =
         let response =
             createRequest Get "http://localhost:1234/TestServer/CookieRedirect"
