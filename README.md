@@ -25,6 +25,7 @@ To get into the details a bit more, there are two or three steps to getting what
       |> withBody "Check out my sexy body"  
       |> withBodyEncoded "Check out my sexy foreign body" "ISO-8859-5"
       |> withResponseCharacterEncoding "utf-8"
+      |> withProxy { Address = "proxy.com"; Port = 8080; Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
   
 (with everything after createRequest being optional)
   
@@ -131,6 +132,10 @@ Unit tests describe making the request:
   * withBasicAuthentication sets the Authorization header with the username and password base-64 encoded
   * withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64
   * withResponseCharacterEncoding sets the response character encoding
+  * withProxy sets proxy address and port
+  * withProxy can set proxy with custom credentials
+  * withProxy can set proxy with default credentials
+  * withProxy can set proxy with no credentials
 
 Integration tests describe submitting the request and handling the response:
   * connection keep-alive header is set automatically on the first request, but not subsequent ones
