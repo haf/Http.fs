@@ -98,6 +98,14 @@ or this:
 
     printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
 
+## Version History ##
+
+Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defines what the different parts of the version number mean and how they relate to backwards compatability of the API.  In a nutshell, as long as the major version doesn't change, everything should still work.
+
+* 0.X.X - Various.  Thanks for code and suggestions from [Sergeeeek](https://github.com/Sergeeeek), [rodrigodival](https://github.com/rodrigovidal), [ovatsus](https://github.com/ovatsus) and more
+* 1.0.0 - First stable API release.  Changed how 'duplicated' DUs were named between request/response.
+* 1.1.0 - Added withProxy, thanks to [vasily-kirichenko](https://github.com/vasily-kirichenko)
+
 ## FAQ ##
 
   * How does it work?
@@ -165,14 +173,6 @@ Integration tests describe submitting the request and handling the response:
   * cookies are not kept during an automatic redirect
 
 You can also check out the *SampleApplication* folder, which contains a program demonstrating the library being used and unit tested.
-
-## Versionin History ##
-
-Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defines what the different parts of the version number mean and how they relate to backwards compatability of the API.  In a nutshell, as long as the major version doesn't change, everything should still work.
-
-0.X.X - Various.  Thanks for code and suggestions from [Sergeeeek](https://github.com/Sergeeeek), [rodrigodival](https://github.com/rodrigovidal), [ovatsus](https://github.com/ovatsus) and more
-1.0.0 - First stable API release.  Changed how 'duplicated' DUs were named between request/response.
-1.1.0 - Added withProxy, thanks to [vasily-kirichenko](https://github.com/vasily-kirichenko)
 
 ## Why on earth would you make such a thing? ##
 
