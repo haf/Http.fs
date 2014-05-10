@@ -105,6 +105,7 @@ Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defi
 * 0.X.X - Various.  Thanks for code and suggestions from [Sergeeeek](https://github.com/Sergeeeek), [rodrigodival](https://github.com/rodrigovidal), [ovatsus](https://github.com/ovatsus) and more
 * 1.0.0 - First stable API release.  Changed how 'duplicated' DUs were named between request/response.
 * 1.1.0 - Added withProxy, thanks to [vasily-kirichenko](https://github.com/vasily-kirichenko)
+* 1.1.1 - Handles response encoding secified as 'utf8' (.net encoder only likes 'utf-8')
 
 ## FAQ ##
 
@@ -170,6 +171,7 @@ Integration tests describe submitting the request and handling the response:
   * if a response character encoding is NOT specified, the body is read using the character encoding specified in the response's content-type header
   * if a response character encoding is NOT specified, and character encoding is NOT specified in the response's content-type header, the body is read using ISO Latin 1 character encoding
   * if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown
+  * if the response character encoding is specified as 'utf8', uses 'utf-8' instead
   * cookies are not kept during an automatic redirect
 
 You can also check out the *SampleApplication* folder, which contains a program demonstrating the library being used and unit tested.
