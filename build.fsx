@@ -81,7 +81,8 @@ Target "Copy Release Files" (fun _ ->
         ]
 )
 
-// note to self - call like this: Tools\FAKE\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key)
+// note to self - call like this: 
+// Tools\FAKE\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="hi mum"
 Target "Upload to NuGet" (fun _ ->
     // Copy the dll into the right place
     CopyFiles 
@@ -99,14 +100,14 @@ Target "Upload to NuGet" (fun _ ->
             Project = "Http.fs"
             Version = getBuildParam "nuget-version"
             AccessKey = getBuildParam "nuget-api-key"
+            ReleaseNotes = getBuildParam "nuget-release-notes"
+            PublishTrials = 3
             Publish = true }) 
         nuSpecFile
 )
 
 Target "All" (fun _ ->
     // A dummy target so I can build everything easily
-    trace <| "hasBuildParam nuget-version " + (hasBuildParam "nuget-version").ToString()
-    
     ()
 )
 
@@ -116,7 +117,10 @@ Target "All" (fun _ ->
     ==> "BuildUnitTests" <=> "BuildIntegrationTests" <=> "BuildSampleApplication"
     ==> "Run Unit Tests" <=> "Run Integration Tests"
     ==> "Copy Release Files"
-    =?> ("Upload to NuGet", hasBuildParam "nuget-version" && hasBuildParam "nuget-version")
+    =?> ("Upload to NuGet", // run this if all params secified
+        hasBuildParam "nuget-version" && 
+        hasBuildParam "nuget-api-key" && 
+        hasBuildParam "nuget-release-notes")
     ==> "All"
 
 // start build
