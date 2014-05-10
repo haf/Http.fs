@@ -75,6 +75,12 @@ type FakeServer() as self =
                 response.ContentType <- "text/plain; charset=Ninky-Nonk"
                 response :> obj
 
+        self.Get.["utf8"] <- 
+            fun _ -> 
+                let response = new EncodedResponse("'Why do you hate me so much, Windows?!' - utf8", "utf-8")
+                response.ContentType <- "text/plain; charset=utf8"
+                response :> obj
+
         self.Get.["AllHeaders"] <- 
             fun _ -> 
                 let response = "Some JSON or whatever" |> Nancy.Response.op_Implicit 

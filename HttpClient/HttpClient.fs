@@ -19,6 +19,12 @@ type DecompressionScheme =
     | GZip = 1
     | Deflate = 2
 
+// defines mappings between encodings which might be specified to the names
+// which work with the .net encoder
+let responseEncodingMappings =
+    Map.empty.
+        Add("utf8", "utf-8")
+
 type NameValue = { name:string; value:string }
 type ContentRange = {start:int64; finish:int64 }
 
@@ -382,13 +388,18 @@ let private getHeadersAsMap (response:HttpWebResponse) =
     |> Array.map Option.get
     |> Map.ofArray
 
+let private mapEncoding (encoding:string) =
+    match responseEncodingMappings.TryFind(encoding.ToLower()) with
+        | Some(mappedEncoding) -> mappedEncoding
+        | None -> encoding
+
 let private readBody encoding (response:HttpWebResponse) = async {
     let charset = 
         match encoding with
         | None -> 
             match response.CharacterSet with
             | null -> Encoding.GetEncoding(ISO_Latin_1)
-            | cs -> Encoding.GetEncoding(cs)
+            | responseCharset -> Encoding.GetEncoding(responseCharset |> mapEncoding)
         | Some(enc) -> Encoding.GetEncoding(enc:string)
     use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)
     let! body = responseStream.ReadToEnd()

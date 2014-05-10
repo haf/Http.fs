@@ -181,7 +181,10 @@ let ``withProxy sets proxy address and port`` () =
 let ``withProxy can set proxy with custom credentials`` () =
     let request = 
         createValidRequest 
-        |> withProxy { Address = "proxy.com"; Port = 8080; Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
+        |> withProxy { 
+            Address = "proxy.com"; 
+            Port = 8080; 
+            Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
     
     request.Proxy.Value.Credentials |> should equal (ProxyCredentials.Custom { username = "Tim"; password = "Password1" })
 

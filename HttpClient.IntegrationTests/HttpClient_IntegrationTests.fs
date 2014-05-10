@@ -287,6 +287,12 @@ type ``Integration tests`` ()=
         (fun() -> createRequest Get "http://localhost:1234/TestServer/MoonLanguageInvalidEncoding" |> getResponse |> ignore) 
             |> should throw typeof<ArgumentException>
 
+    // .Net encoder doesn't like utf8, seems to need utf-8
+    [<Test>]
+    member x.``if the response character encoding is specified as 'utf8', uses 'utf-8' instead`` () =
+        let response = createRequest Get "http://localhost:1234/TestServer/utf8" |> getResponse
+        response.EntityBody.Value |> should equal "'Why do you hate me so much, Windows?!' - utf8"
+
     [<Test>]
     member x.``cookies are not kept during an automatic redirect`` () =
         let response =
