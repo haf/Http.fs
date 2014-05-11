@@ -120,6 +120,10 @@ Perhaps the response is a redirect (a 302 or similar) - unfortunately, although 
 
 The solution is to set 'withAutoFollowRedirectsDisabled' on your request - although this does mean you'll have to handle the redirection yourself.
 
+  * Does it support proxies?
+
+Yes. By default it uses the proxy settings defined in IE, and as of 1.1.0 you can specify basic proxy settings separately using withProxy.
+
 ## I need details! ##
 
 There's really not that much to it, but if you want to know the details your best bet is the integration and unit tests.
