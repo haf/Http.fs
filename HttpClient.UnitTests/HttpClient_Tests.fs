@@ -9,6 +9,7 @@ let VALID_URL = "http://www"
 
 let createValidRequest = createRequest Get VALID_URL
 
+// TODO: split these out
 [<Test>]
 let ``createRequest makes a Request with a Method and URL, and sensible defaults`` () =
     let createdRequest = createRequest Get "http://www.google.com"
@@ -24,7 +25,7 @@ let ``createRequest makes a Request with a Method and URL, and sensible defaults
     createdRequest.QueryStringItems.IsNone |> should equal true
     createdRequest.ResponseCharacterEncoding.IsNone |> should equal true
     createdRequest.Proxy.IsNone |> should equal true
-
+    createdRequest.KeepAlive |> should equal true
 
 [<Test>]
 let ``requests have cookies enabled by default`` () =
@@ -203,3 +204,7 @@ let ``withProxy can set proxy with no credentials`` () =
         |> withProxy { Address = ""; Port = 0; Credentials = ProxyCredentials.None }
     
     request.Proxy.Value.Credentials |> should equal ProxyCredentials.None
+
+[<Test>]
+let ``withKeepAlive sets KeepAlive`` () =
+    (createValidRequest |> withKeepAlive false).KeepAlive |> should equal false

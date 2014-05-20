@@ -122,6 +122,7 @@ type Request = {
     Cookies: NameValue list option
     ResponseCharacterEncoding: string option
     Proxy: Proxy option
+    KeepAlive: bool
 }
 
 type Response = {
@@ -132,67 +133,25 @@ type Response = {
     Headers: Map<ResponseHeader,string>
 }
 
-let private getMethodAsString request =
-    match request.Method with
-        | Options -> "Options"
-        | Get -> "Get"
-        | Head -> "HEAD"
-        | Post -> "POST"
-        | Put -> "PUT"
-        | Delete -> "DELETE"
-        | Trace -> "TRACE"
-        | Connect -> "CONNECT"
-
-let private getQueryString request = 
-    match request.QueryStringItems.IsSome with
-    | true -> request.QueryStringItems.Value 
-                |> List.fold (
-                    fun currentQueryString queryStringItem -> 
-                        (if currentQueryString = "?" then currentQueryString else currentQueryString + "&" ) 
-                        + HttpUtility.UrlEncode(queryStringItem.name)
-                        + "=" 
-                        + HttpUtility.UrlEncode(queryStringItem.value)) 
-                    "?"
-    | false -> ""
-
-let private setHeaders (headers:RequestHeader list option) (webRequest:HttpWebRequest) =
-    if headers.IsSome then
-        headers.Value
-        |> List.iter (fun header ->
-            match header with
-            | Accept(value) -> webRequest.Accept <- value
-            | AcceptCharset(value) -> webRequest.Headers.Add("Accept-Charset", value)
-            | AcceptDatetime(value) -> webRequest.Headers.Add("Accept-Datetime", value)
-            | AcceptLanguage(value) -> webRequest.Headers.Add("Accept-Language", value)
-            | Authorization(value) -> webRequest.Headers.Add("Authorization", value)
-            | RequestHeader.Connection(value) -> webRequest.Connection <- value
-            | RequestHeader.ContentMD5(value) -> webRequest.Headers.Add("Content-MD5", value)
-            | RequestHeader.ContentType(value) -> webRequest.ContentType <- value
-            | RequestHeader.Date(value) -> webRequest.Date <- value
-            | Expect(value) -> webRequest.Expect <- value.ToString()
-            | From(value) -> webRequest.Headers.Add("From", value)
-            | IfMatch(value) -> webRequest.Headers.Add("If-Match", value)
-            | IfModifiedSince(value) -> webRequest.IfModifiedSince <- value
-            | IfNoneMatch(value) -> webRequest.Headers.Add("If-None-Match", value)
-            | IfRange(value) -> webRequest.Headers.Add("If-Range", value)
-            | MaxForwards(value) -> webRequest.Headers.Add("Max-Forwards", value.ToString())
-            | Origin(value) -> webRequest.Headers.Add("Origin", value)
-            | RequestHeader.Pragma(value) -> webRequest.Headers.Add("Pragma", value)
-            | ProxyAuthorization(value) -> webRequest.Headers.Add("Proxy-Authorization", value)
-            | Range(value) -> webRequest.AddRange(value.start, value.finish)
-            | Referer(value) -> webRequest.Referer <- value
-            | Upgrade(value) -> webRequest.Headers.Add("Upgrade", value)
-            | UserAgent(value) -> webRequest.UserAgent <- value
-            | RequestHeader.Via(value) -> webRequest.Headers.Add("Via", value)
-            | RequestHeader.Warning(value) -> webRequest.Headers.Add("Warning", value)
-            | Custom( {name=customName; value=customValue}) -> webRequest.Headers.Add(customName, customValue))
-
-let private setCookies (cookies:NameValue list option) url (webRequest:HttpWebRequest) =
-    if cookies.IsSome then
-        let domain = Uri(url).Host
-        cookies.Value
-        |> List.iter (fun cookie ->
-            webRequest.CookieContainer.Add(new System.Net.Cookie(cookie.name, cookie.value, Path="/", Domain=domain)))
+/// <summary>Creates the Request record which can be used to make an HTTP request</summary>
+/// <param name="httpMethod">The type of request to be made (Get, Post, etc.)</param>
+/// <param name="url">The URL of the resource including protocol, e.g. 'http://www.relentlessdevelopment.net'</param>
+/// <returns>The Request record</returns>
+let createRequest httpMethod url = {
+    Url = url; 
+    Method = httpMethod;
+    CookiesEnabled = true;
+    AutoFollowRedirects = true;
+    AutoDecompression = DecompressionScheme.None;
+    Headers = None; 
+    Body = None;
+    BodyCharacterEncoding = None;
+    QueryStringItems = None;
+    Cookies = None;
+    ResponseCharacterEncoding = None;
+    Proxy = None;
+    KeepAlive = true;
+}
 
 // Adds an element to a list which may be none
 let private append item listOption =
@@ -219,25 +178,6 @@ let private appendHeaderNoRepeat newHeader headerList =
         if existingList |> headerExists newHeader then
             failwithf "Header %A already exists" newHeader
         Some(existingList@[newHeader])
-
-/// <summary>Creates the Request record which can be used to make an HTTP request</summary>
-/// <param name="httpMethod">The type of request to be made (Get, Post, etc.)</param>
-/// <param name="url">The URL of the resource including protocol, e.g. 'http://www.relentlessdevelopment.net'</param>
-/// <returns>The Request record</returns>
-let createRequest httpMethod url = {
-    Url = url; 
-    Method = httpMethod;
-    CookiesEnabled = true;
-    AutoFollowRedirects = true;
-    AutoDecompression = DecompressionScheme.None;
-    Headers = None; 
-    Body = None;
-    BodyCharacterEncoding = None;
-    QueryStringItems = None;
-    Cookies = None;
-    ResponseCharacterEncoding = None;
-    Proxy = None;
-    }
 
 /// Disables cookies, which are enabled by default
 let withCookiesDisabled request = 
@@ -303,6 +243,109 @@ let withResponseCharacterEncoding encoding request:Request =
 let withProxy proxy request =
     {request with Proxy = Some proxy}
 
+/// Sets the keep-alive header.  Defaults to true.
+///
+/// If true, Connection header also set to 'Keep-Alive'
+/// If false, Connection header also set to 'Close'
+///
+/// NOTE: If true, headers only sent on first request.
+let withKeepAlive value request =
+    {request with KeepAlive = value}
+
+let private getMethodAsString request =
+    match request.Method with
+        | Options -> "Options"
+        | Get -> "Get"
+        | Head -> "HEAD"
+        | Post -> "POST"
+        | Put -> "PUT"
+        | Delete -> "DELETE"
+        | Trace -> "TRACE"
+        | Connect -> "CONNECT"
+
+let private getQueryString request = 
+    match request.QueryStringItems.IsSome with
+    | true -> request.QueryStringItems.Value 
+                |> List.fold (
+                    fun currentQueryString queryStringItem -> 
+                        (if currentQueryString = "?" then currentQueryString else currentQueryString + "&" ) 
+                        + HttpUtility.UrlEncode(queryStringItem.name)
+                        + "=" 
+                        + HttpUtility.UrlEncode(queryStringItem.value)) 
+                    "?"
+    | false -> ""
+
+// Sets headers on HttpWebRequest.
+// Mutates HttpWebRequest.
+let private setHeaders (headers:RequestHeader list option) (webRequest:HttpWebRequest) =
+    if headers.IsSome then
+        headers.Value
+        |> List.iter (fun header ->
+            match header with
+            | Accept(value) -> webRequest.Accept <- value
+            | AcceptCharset(value) -> webRequest.Headers.Add("Accept-Charset", value)
+            | AcceptDatetime(value) -> webRequest.Headers.Add("Accept-Datetime", value)
+            | AcceptLanguage(value) -> webRequest.Headers.Add("Accept-Language", value)
+            | Authorization(value) -> webRequest.Headers.Add("Authorization", value)
+            | RequestHeader.Connection(value) -> webRequest.Connection <- value
+            | RequestHeader.ContentMD5(value) -> webRequest.Headers.Add("Content-MD5", value)
+            | RequestHeader.ContentType(value) -> webRequest.ContentType <- value
+            | RequestHeader.Date(value) -> webRequest.Date <- value
+            | Expect(value) -> webRequest.Expect <- value.ToString()
+            | From(value) -> webRequest.Headers.Add("From", value)
+            | IfMatch(value) -> webRequest.Headers.Add("If-Match", value)
+            | IfModifiedSince(value) -> webRequest.IfModifiedSince <- value
+            | IfNoneMatch(value) -> webRequest.Headers.Add("If-None-Match", value)
+            | IfRange(value) -> webRequest.Headers.Add("If-Range", value)
+            | MaxForwards(value) -> webRequest.Headers.Add("Max-Forwards", value.ToString())
+            | Origin(value) -> webRequest.Headers.Add("Origin", value)
+            | RequestHeader.Pragma(value) -> webRequest.Headers.Add("Pragma", value)
+            | ProxyAuthorization(value) -> webRequest.Headers.Add("Proxy-Authorization", value)
+            | Range(value) -> webRequest.AddRange(value.start, value.finish)
+            | Referer(value) -> webRequest.Referer <- value
+            | Upgrade(value) -> webRequest.Headers.Add("Upgrade", value)
+            | UserAgent(value) -> webRequest.UserAgent <- value
+            | RequestHeader.Via(value) -> webRequest.Headers.Add("Via", value)
+            | RequestHeader.Warning(value) -> webRequest.Headers.Add("Warning", value)
+            | Custom( {name=customName; value=customValue}) -> webRequest.Headers.Add(customName, customValue))
+
+// Sets cookies on HttpWebRequest.
+// Mutates HttpWebRequest.
+let private setCookies (cookies:NameValue list option) url (webRequest:HttpWebRequest) =
+    if cookies.IsSome then
+        let domain = Uri(url).Host
+        cookies.Value
+        |> List.iter (fun cookie ->
+            webRequest.CookieContainer.Add(new System.Net.Cookie(cookie.name, cookie.value, Path="/", Domain=domain)))
+
+// Sets proxy on HttpWebRequest.
+// Mutates HttpWebRequest.
+let setProxy proxy (webRequest:HttpWebRequest) =
+    proxy |> Option.iter (fun proxy ->
+        let webProxy = WebProxy(proxy.Address, proxy.Port)
+
+        match proxy.Credentials with
+        | ProxyCredentials.Custom { username = name; password = pwd} -> 
+            webProxy.Credentials <- NetworkCredential(name, pwd)
+        | ProxyCredentials.Default -> webProxy.UseDefaultCredentials <- true
+        | ProxyCredentials.None -> webProxy.Credentials <- null
+
+        webRequest.Proxy <- webProxy)
+
+// Sets body on HttpWebRequest.
+// Mutates HttpWebRequest.
+let setBody (body:string option) (encoding:string option) (webRequest:HttpWebRequest) =
+    if body.IsSome then
+
+        if encoding.IsNone then
+            failwith "Body Character Encoding not set"
+
+        let bodyBytes = Encoding.GetEncoding(encoding.Value).GetBytes(body.Value)
+
+        // Getting the request stream seems to be actually connecting to the internet in some way
+        use requestStream = webRequest.GetRequestStream() 
+        requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
+
 // The nasty business of turning a Request into an HttpWebRequest
 let private toHttpWebRequest request =
 
@@ -322,31 +365,11 @@ let private toHttpWebRequest request =
 
     webRequest |> setHeaders request.Headers
     webRequest |> setCookies request.Cookies request.Url
+    webRequest |> setProxy request.Proxy
+    webRequest |> setBody request.Body request.BodyCharacterEncoding
 
-    webRequest.KeepAlive <- true
+    webRequest.KeepAlive <- request.KeepAlive
 
-    request.Proxy |> Option.iter (fun proxy ->
-        let webProxy = WebProxy(proxy.Address, proxy.Port)
-
-        match proxy.Credentials with
-        | ProxyCredentials.Custom { username = name; password = pwd} -> 
-            webProxy.Credentials <- NetworkCredential(name, pwd)
-        | ProxyCredentials.Default -> webProxy.UseDefaultCredentials <- true
-        | ProxyCredentials.None -> webProxy.Credentials <- null
-
-        webRequest.Proxy <- webProxy)
-
-    if request.Body.IsSome then
-
-        if request.BodyCharacterEncoding.IsNone then
-            failwith "Body Character Encoding not set"
-
-        let bodyBytes = Encoding.GetEncoding(request.BodyCharacterEncoding.Value).GetBytes(request.Body.Value)
-
-        // Getting the request stream seems to be actually connecting to the internet in some way
-        use requestStream = webRequest.GetRequestStream() 
-        requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
-        
     webRequest
 
 // Uses the HttpWebRequest to get the response.
@@ -357,10 +380,11 @@ let private getResponseNoException (request:HttpWebRequest) = async {
         let! response = request.AsyncGetResponse() 
         return response :?> HttpWebResponse
     with
-        | :? WebException as wex -> if wex.Response <> null then 
-                                        return wex.Response :?> HttpWebResponse 
-                                    else 
-                                        return raise wex
+        | :? WebException as wex -> 
+            if wex.Response <> null then 
+                return wex.Response :?> HttpWebResponse 
+            else 
+                return raise wex
 }
 
 let private getCookiesAsMap (response:HttpWebResponse) = 
