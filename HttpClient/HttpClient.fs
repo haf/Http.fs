@@ -9,7 +9,7 @@ open Microsoft.FSharp.Control
 open Microsoft.FSharp.Control.CommonExtensions
 open Microsoft.FSharp.Control.WebExtensions
 
-let ISO_Latin_1 = "ISO-8859-1"
+let private ISO_Latin_1 = "ISO-8859-1"
 
 type HttpMethod = Options | Get | Head | Post | Put | Delete | Trace | Connect
 
@@ -19,9 +19,9 @@ type DecompressionScheme =
     | GZip = 1
     | Deflate = 2
 
-// defines mappings between encodings which might be specified to the names
+// Defines mappings between encodings which might be specified to the names
 // which work with the .net encoder
-let responseEncodingMappings =
+let private responseEncodingMappings =
     Map.empty
         .Add("utf8", "utf-8")
         .Add("utf16", "utf-16")
@@ -68,7 +68,6 @@ type ResponseHeader =
 // some headers can't be set with HttpWebRequest, or are set automatically, so are not included.
 // others, such as transfer-encoding, just haven't been implemented.
 type RequestHeader =
-    // TODO: Decide what to do about request & response headers sometimes having the same names
     | Accept of string
     | AcceptCharset of string
     | AcceptDatetime of string
@@ -195,7 +194,7 @@ let private setCookies (cookies:NameValue list option) url (webRequest:HttpWebRe
         |> List.iter (fun cookie ->
             webRequest.CookieContainer.Add(new System.Net.Cookie(cookie.name, cookie.value, Path="/", Domain=domain)))
 
-// adds an element to a list which may be none
+// Adds an element to a list which may be none
 let private append item listOption =
     match listOption with
     | None -> Some([item])
@@ -221,6 +220,10 @@ let private appendHeaderNoRepeat newHeader headerList =
             failwithf "Header %A already exists" newHeader
         Some(existingList@[newHeader])
 
+/// <summary>Creates the Request record which can be used to make an HTTP request</summary>
+/// <param name="httpMethod">The type of request to be made (Get, Post, etc.)</param>
+/// <param name="url">The URL of the resource including protocol, e.g. 'http://www.relentlessdevelopment.net'</param>
+/// <returns>The Request record</returns>
 let createRequest httpMethod url = {
     Url = url; 
     Method = httpMethod;
@@ -236,41 +239,71 @@ let createRequest httpMethod url = {
     Proxy = None;
     }
 
+/// Disables cookies, which are enabled by default
 let withCookiesDisabled request = 
     {request with CookiesEnabled = false }
 
+/// Disables automatic following of redirects, which is enabled by default
 let withAutoFollowRedirectsDisabled request = 
     {request with AutoFollowRedirects = false }
 
+/// Adds a header, defined as a RequestHeader
 let withHeader header (request:Request) =
     {request with Headers = request.Headers |> appendHeaderNoRepeat header}
 
+/// Adds an HTTP Basic Authentication header, which includes the username and password encoded as a base-64 string
 let withBasicAuthentication username password (request:Request) =
     let authHeader = Authorization ("Basic " + Convert.ToBase64String(Encoding.GetEncoding(ISO_Latin_1).GetBytes(username + ":" + password)))
     {request with Headers = request.Headers |> appendHeaderNoRepeat authHeader}
 
+/// Sets the accept-encoding request header to accept the decompression methods selected,
+/// and automatically decompresses the responses.
+///
+/// Multiple schemes can be OR'd together, e.g. (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
 let withAutoDecompression decompressionSchemes request =
     {request with AutoDecompression = decompressionSchemes}
 
+/// Sets the the request body, using ISO Latin 1 character encoding.
+///
+/// Only certain request types should have a body, e.g. Posts.
 let withBody body request =
     {request with Body = Some(body); BodyCharacterEncoding = Some(ISO_Latin_1)}
 
+/// Sets the request body, using the provided character encoding.
 let withBodyEncoded body characterEncoding request =
     {request with Body = Some(body); BodyCharacterEncoding = Some(characterEncoding)}
 
+/// Adds the provided QueryString record onto the request URL.
+/// Multiple items can be appended.
 let withQueryStringItem item request =
     {request with QueryStringItems = request.QueryStringItems |> append item}
 
+/// Adds a cookie to the request
+/// The domain will be taken from the URL, and the path set to '/'.
+///
+/// If your cookie appears not to be getting set, it could be because the response is a redirect,
+/// which (by default) will be followed automatically, but cookies will not be re-sent.
 let withCookie cookie request =
     if not request.CookiesEnabled then failwithf "Cannot add cookie %A - cookies disabled" cookie.name
     {request with Cookies = request.Cookies |> append cookie}
 
+/// Decodes the response using the specified encoding, regardless of what the response specifies.
+///
+/// If this is not set, response character encoding will be:
+///  - taken from the response content-encoding header, if provided, otherwise
+///  - ISO Latin 1
+///
+/// Many web pages define the character encoding in the HTML. This will not be used.
 let withResponseCharacterEncoding encoding request:Request = 
     {request with ResponseCharacterEncoding = Some(encoding)}
     
+/// Sends the request via the provided proxy.
+///
+/// If this is no set, the proxy settings from IE will be used, if available.
 let withProxy proxy request =
     {request with Proxy = Some proxy}
 
+// The nasty business of turning a Request into an HttpWebRequest
 let private toHttpWebRequest request =
 
     let url = request.Url + (request |> getQueryString)
@@ -407,23 +440,32 @@ let private readBody encoding (response:HttpWebResponse) = async {
     return body
 }
 
+/// Sends the HTTP request and returns the response code as an integer, asynchronously.
 let getResponseCodeAsync request = async {
     use! response = request |> toHttpWebRequest |> getResponseNoException
     return response.StatusCode |> int
 }
 
+/// Sends the HTTP request and returns the response code as an integer.
 let getResponseCode request =
     getResponseCodeAsync request |> Async.RunSynchronously
 
+/// Sends the HTTP request and returns the response body as a string, asynchronously.
+///
+/// Gives an empty string if there's no response body.
 let getResponseBodyAsync request = async {
     use! response = request |> toHttpWebRequest |> getResponseNoException
     let! body = response |> readBody request.ResponseCharacterEncoding
     return body
 }
 
+/// Sends the HTTP request and returns the response body as a string.
+///
+/// Gives an empty string if there's no response body.
 let getResponseBody request =
     getResponseBodyAsync request |> Async.RunSynchronously
 
+/// Sends the HTTP request and returns the full response as a Response record, asynchronously.
 let getResponseAsync request = async {
     use! response = request |> toHttpWebRequest |> getResponseNoException
 
@@ -447,5 +489,6 @@ let getResponseAsync request = async {
     }
 }
 
+/// Sends the HTTP request and returns the full response as a Response record.
 let getResponse request =
     getResponseAsync request |> Async.RunSynchronously
