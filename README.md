@@ -25,6 +25,7 @@ To get into the details a bit more, there are two or three steps to getting what
       |> withBody "Check out my sexy body"  
       |> withBodyEncoded "Check out my sexy foreign body" "ISO-8859-5"
       |> withResponseCharacterEncoding "utf-8"
+      |> withKeepAlive false
       |> withProxy { 
             Address = "proxy.com"; 
             Port = 8080; 
@@ -107,6 +108,8 @@ Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defi
 * 1.1.0 - Added withProxy, thanks to [vasily-kirichenko](https://github.com/vasily-kirichenko)
 * 1.1.1 - Handles response encoding secified as 'utf8' (.net encoder only likes 'utf-8')
 * 1.1.2 - Added utf16 to response encoding map
+* 1.1.3 - Added XML comments to public functions, made a couple of things private which should always have been (technically a breaking change, but I doubt anybody was using them)
+* 1.2.0 - Added withKeepAlive
 
 ## FAQ ##
 
@@ -123,6 +126,10 @@ The solution is to set 'withAutoFollowRedirectsDisabled' on your request - altho
   * Does it support proxies?
 
 Yes. By default it uses the proxy settings defined in IE, and as of 1.1.0 you can specify basic proxy settings separately using withProxy.
+
+  * Can I set KeepAlive?
+
+Yes, as of version 1.2.0.  This actually sets the Connection header (to 'Keep-Alive' or 'Close').  Note that if this is set to true (which is the default), the Connection header will only be set on the first request, not subsequent ones.
 
 ## I need details! ##
 
@@ -153,9 +160,11 @@ Unit tests describe making the request:
   * withProxy can set proxy with custom credentials
   * withProxy can set proxy with default credentials
   * withProxy can set proxy with no credentials
+  * withKeepAlive sets KeepAlive
 
 Integration tests describe submitting the request and handling the response:
-  * connection keep-alive header is set automatically on the first request, but not subsequent ones
+  * if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones
+  * if KeepAlive is false, Connection set to 'Close' on every request
   * createRequest should set everything correctly in the HTTP request
   * getResponseCode should return the http status code for all response types
   * getResponseBody should return the entity body as a string
