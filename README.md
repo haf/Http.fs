@@ -7,97 +7,119 @@ A gloriously functional HTTP client library for F#!
 
 In it's simplest form, this will get you a web page:
 
-      createRequest Get "http://somesite.com" |> getResponseBody  
+``` fsharp
+createRequest Get "http://somesite.com" |> getResponseBody  
+```
 
 To get into the details a bit more, there are two or three steps to getting what you want from a web page/HTTP response.
 
 1 - A Request (an immutable record type) is built up in a [Fluent Builder](http://stefanoricciardi.com/2010/04/14/a-fluent-builder-in-c/) stylee as follows:
 
-    let request =  
-      createRequest Post "http://somesite.com"  
-      |> withQueryStringItem {name="search"; value="jeebus"}  
-      |> withBasicAuthentication "myUsername" "myPassword"
-      |> withHeader (UserAgent "Chrome or summat")  
-      |> withHeader (Custom {name="X-My-Header"; value="hi mum"})  
-      |> withAutoDecompression DecompressionScheme.GZip  
-      |> withAutoFollowRedirectsDisabled  
-      |> withCookie {name="session"; value="123"}  
-      |> withBody "Check out my sexy body"  
-      |> withBodyEncoded "Check out my sexy foreign body" "ISO-8859-5"
-      |> withResponseCharacterEncoding "utf-8"
-      |> withKeepAlive false
-      |> withProxy { 
-            Address = "proxy.com"; 
-            Port = 8080; 
-            Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
+``` fsharp
+let request =  
+    createRequest Post "http://somesite.com"  
+    |> withQueryStringItem {name="search"; value="jeebus"}  
+    |> withBasicAuthentication "myUsername" "myPassword"
+    |> withHeader (UserAgent "Chrome or summat")  
+    |> withHeader (Custom {name="X-My-Header"; value="hi mum"})  
+    |> withAutoDecompression DecompressionScheme.GZip  
+    |> withAutoFollowRedirectsDisabled  
+    |> withCookie {name="session"; value="123"}  
+    |> withBody "Check out my sexy body"  
+    |> withBodyEncoded "Check out my sexy foreign body" "ISO-8859-5"
+    |> withResponseCharacterEncoding "utf-8"
+    |> withKeepAlive false
+    |> withProxy { 
+          Address = "proxy.com"; 
+          Port = 8080; 
+          Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
+```
   
 (with everything after createRequest being optional)
   
 2 - The Http response (or just the response code/body) is retrieved using one of the following:
 
-    request |> getResponse  
-    request |> getResponseCode  
-    request |> getResponseBody  
+``` fsharp
+request |> getResponse  
+request |> getResponseCode  
+request |> getResponseBody  
+```
 
 3 - If you get the full response (another record), you can get things from it like so:
 
-    response.StatusCode  
-    response.EntityBody.Value  
-    response.ContentLength  
-    response.Cookies.["cookie1"]  
-    response.Headers.[ContentEncoding]  
-    response.Headers.[NonStandard("X-New-Fangled-Header")] 
+``` fsharp
+response.StatusCode  
+response.EntityBody.Value  
+response.ContentLength  
+response.Cookies.["cookie1"]  
+response.Headers.[ContentEncoding]  
+response.Headers.[NonStandard("X-New-Fangled-Header")] 
+```
     
 If you like to do things asynchronously, you're in luck, we have functions for that:
 
-    request |> getResponseAsync  
-    request |> getResponseCodeAsync  
-    request |> getResponseBodyAsync  
+``` fsharp
+request |> getResponseAsync  
+request |> getResponseCodeAsync  
+request |> getResponseBodyAsync  
+```
     
 So you can do the old download-multiple-sites-in-parallel thing:
 
-    ["http://news.bbc.co.uk"
-     "http://www.wikipedia.com"
-     "http://www.stackoverflow.com"]
-    |> List.map (fun url -> createRequest Get url |> getResponseBodyAsync)
-    |> Async.Parallel
-    |> Async.RunSynchronously
-    |> Array.iter (printfn "%s")
+``` fsharp
+["http://news.bbc.co.uk"
+ "http://www.wikipedia.com"
+ "http://www.stackoverflow.com"]
+|> List.map (fun url -> createRequest Get url |> getResponseBodyAsync)
+|> Async.Parallel
+|> Async.RunSynchronously
+|> Array.iter (printfn "%s")
+```
 
 *Note* because some of the request and response headers have the same names, to prevent name clashes, the response versions have 'Response' stuck on the end, e.g.
 
-    response.Headers.[ContentTypeResponse]
+``` fsharp
+response.Headers.[ContentTypeResponse]
+```
         
 ## Cool!  So how do I get it in my code? ##
 
 The easiest way, if you have a full-on project, is to us [the NuGet package](https://www.nuget.org/packages/Http.fs/):
 
-    PM> install-package Http.fs
+``` shell
+PM> install-package Http.fs
+```
     
 Then just open the module and use as required:
 
-    open HttpClient  
+``` fsharp
+open HttpClient  
 
-    printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
+printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
+```
 
 If you can't use NuGet (perhaps you're writing a script), or want to use the source files, everything you need's in the Release folder.  You can either reference the DLL, or include the two source files directly.
 
 So to use it from a script, it would be this:
 
-    #r "HttpClient.dll"
+``` fsharp
+#r "HttpClient.dll"
 
-    open HttpClient  
+open HttpClient  
 
-    printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
+printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
+```
 
 or this:
 
-    #load "AsyncStreamReader.fs"
-    #load "HttpClient.fs"
+``` fsharp
+#load "AsyncStreamReader.fs"
+#load "HttpClient.fs"
 
-    open HttpClient
+open HttpClient
 
-    printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
+printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
+```
 
 ## Version History ##
 
