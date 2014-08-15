@@ -1,0 +1,4 @@
+build_script:
+  - cmd: .\build.bat
+test: off  
+  
