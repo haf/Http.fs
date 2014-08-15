@@ -4,4 +4,3 @@
 @echo off
 cls
 "Tools\FAKE\Fake.exe" build.fsx
-pause
