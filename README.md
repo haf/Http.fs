@@ -3,6 +3,8 @@ Http.fs
 
 A gloriously functional HTTP client library for F#!
 
+[![Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)
+
 ## How do I use it? ##
 
 In it's simplest form, this will get you a web page:
