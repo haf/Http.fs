@@ -34,7 +34,8 @@ let request =
     |> withProxy { 
           Address = "proxy.com"; 
           Port = 8080; 
-          Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
+          Credentials = 
+              ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
 ```
   
 (with everything after createRequest being optional)
