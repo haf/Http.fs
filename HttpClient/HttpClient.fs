@@ -489,14 +489,14 @@ let getResponseBodyAsync request = async {
     return body
 }
 
-let getRawResponseAsync request = async {
+let getRawResponseBodyAsync request = async {
     use! response = request |> toHttpWebRequest |> getResponseNoException
     let! raw = response |> readAsRaw
     return raw
 }
 
-let getRawResponse request = 
-    getRawResponseAsync request |> Async.RunSynchronously
+let getRawResponseBody request = 
+    getRawResponseBodyAsync request |> Async.RunSynchronously
 
 /// Sends the HTTP request and returns the response body as a string.
 ///

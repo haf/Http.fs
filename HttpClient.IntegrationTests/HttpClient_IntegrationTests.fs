@@ -323,6 +323,18 @@ type ``Integration tests`` ()=
         response.StatusCode |> should equal 200
         response.Cookies.ContainsKey "cookie1" |> should equal false
 
+    [<Test>]
+    member x.``getRawResponse test`` () =
+        let response = createRequest Get "http://localhost:1234/TestServer/Raw" |> getRawResponseBody
+
+        let r = Array.create 4 (new Byte())
+        r.[0] <- byte(98)
+        r.[1] <- byte(111)
+        r.[2] <- byte(100)
+        r.[3] <- byte(121)
+
+        response |> should equal r
+
     // TODO: test proxy - approach below doesn't seem to work, even without port specified in proxy (which appends it to the end of the URL)
     // There's a script called 'test proxy' which can be used to test it manually.
 
