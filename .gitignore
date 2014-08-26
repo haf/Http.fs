@@ -44,3 +44,8 @@ Thumbs.db
 !/Tools/NUnit-2.6.3/*
 !/Tools/NUnit-2.6.3/bin/*
 !/Tools/NUnit-2.6.3/bin/lib/*
+!/Tools/OpenCover.4.5.2506/*
+!/Tools/OpenCover.4.5.2506/x64/*
+!/Tools/OpenCover.4.5.2506/x86/*
+!/Tools/ReportGenerator_1.9.1.0/*
+!/Tools/ReportGenerator_1.9.1.0/bin/*
