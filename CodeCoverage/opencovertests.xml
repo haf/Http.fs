@@ -2,158 +2,158 @@
 <CoverageSession xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Summary numSequencePoints="798" visitedSequencePoints="275" numBranchPoints="2506" visitedBranchPoints="311" sequenceCoverage="34.46" branchCoverage="12.41" maxCyclomaticComplexity="47" minCyclomaticComplexity="0" />
   <Modules>
-    <Module skippedDueTo="Filter" hash="B5-EF-91-87-52-88-4E-B0-F8-8C-F4-4C-97-10-C8-D0-C0-7E-55-19">
-      <FullName>C:\windows\assembly\GAC_32\mscorlib\2.0.0.0__b77a5c561934e089\mscorlib.dll</FullName>
+    <Module skippedDueTo="Filter" hash="2D-CC-8A-D3-E3-A7-65-CA-32-53-2A-A3-75-68-27-A3-E1-EC-7D-F9">
+      <FullName>C:\WINDOWS\assembly\GAC_32\mscorlib\2.0.0.0__b77a5c561934e089\mscorlib.dll</FullName>
       <ModuleName>mscorlib</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="F9-04-A8-31-CD-FB-23-72-95-63-5D-14-9A-A0-66-8E-7F-44-93-7A">
-      <FullName>C:\windows\assembly\GAC_32\mscorlib\2.0.0.0__b77a5c561934e089\sorttbls.nlp</FullName>
+      <FullName>C:\WINDOWS\assembly\GAC_32\mscorlib\2.0.0.0__b77a5c561934e089\sorttbls.nlp</FullName>
       <ModuleName>mscorlib</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="83-8C-77-8E-83-70-96-83-9B-5F-DA-87-40-A5-A5-8A-A4-C0-04-9C">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\nunit-console-x86.exe</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\nunit-console-x86.exe</FullName>
       <ModuleName>nunit-console-x86</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="6E-30-2E-50-36-FB-60-2C-8E-50-C0-83-54-8B-CC-EA-A8-91-B6-CC">
-      <FullName>C:\windows\assembly\GAC_32\mscorlib\2.0.0.0__b77a5c561934e089\sortkey.nlp</FullName>
-      <ModuleName>mscorlib</ModuleName>
-      <Classes />
-    </Module>
     <Module skippedDueTo="Filter" hash="2A-C4-E5-DE-F3-EE-AD-84-E1-65-84-CC-15-90-76-96-E7-01-44-4E">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit-console-runner.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit-console-runner.dll</FullName>
       <ModuleName>nunit-console-runner</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="33-E1-CA-24-52-5A-B7-C7-C4-AF-91-2C-A9-4A-C0-37-67-0D-5B-FE">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.dll</FullName>
       <ModuleName>nunit.core</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="74-74-F6-87-59-E1-5F-4F-5F-5E-6E-82-50-E8-E2-46-D4-86-15-76">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.util.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.util.dll</FullName>
       <ModuleName>nunit.util</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="D3-A4-4D-85-55-F7-CE-EF-A5-90-AA-EF-58-E0-9F-B6-CC-27-99-53">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.interfaces.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.interfaces.dll</FullName>
       <ModuleName>nunit.core.interfaces</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="2C-99-EE-29-D5-25-03-C4-0E-40-26-9B-F7-DF-C2-68-6E-74-74-31">
-      <FullName>C:\windows\assembly\GAC_MSIL\System.Configuration\2.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll</FullName>
+    <Module skippedDueTo="Filter" hash="6E-30-2E-50-36-FB-60-2C-8E-50-C0-83-54-8B-CC-EA-A8-91-B6-CC">
+      <FullName>C:\WINDOWS\assembly\GAC_32\mscorlib\2.0.0.0__b77a5c561934e089\sortkey.nlp</FullName>
+      <ModuleName>mscorlib</ModuleName>
+      <Classes />
+    </Module>
+    <Module skippedDueTo="Filter" hash="CC-C8-07-83-AD-80-16-60-3B-FC-37-B6-78-30-CF-C7-32-AC-C6-C0">
+      <FullName>C:\WINDOWS\assembly\GAC_MSIL\System.Configuration\2.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll</FullName>
       <ModuleName>System.Configuration</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="D3-99-70-9D-4C-FD-70-CC-82-00-AA-75-7A-54-8C-25-AC-54-B1-BF">
-      <FullName>C:\windows\assembly\GAC_MSIL\System\2.0.0.0__b77a5c561934e089\System.dll</FullName>
+    <Module skippedDueTo="Filter" hash="69-0E-4A-02-89-E1-1D-53-62-1F-8A-1D-1F-81-6B-83-17-F6-FF-21">
+      <FullName>C:\WINDOWS\assembly\GAC_MSIL\System\2.0.0.0__b77a5c561934e089\System.dll</FullName>
       <ModuleName>System</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="C4-AD-0A-97-FF-1D-61-5F-88-89-A6-25-BD-02-5E-E5-F5-1D-6F-20">
-      <FullName>C:\windows\assembly\GAC_MSIL\System.Xml\2.0.0.0__b77a5c561934e089\System.Xml.dll</FullName>
+    <Module skippedDueTo="Filter" hash="03-B8-26-72-F6-7D-C3-14-3D-A8-A6-22-4D-27-5F-43-AE-2D-AF-52">
+      <FullName>C:\WINDOWS\assembly\GAC_MSIL\System.Xml\2.0.0.0__b77a5c561934e089\System.Xml.dll</FullName>
       <ModuleName>System.Xml</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="92-44-10-37-4C-84-2D-65-E3-A0-6A-B9-9F-01-42-6A-27-41-4A-8C">
-      <FullName>C:\windows\assembly\GAC_MSIL\System.Runtime.Remoting\2.0.0.0__b77a5c561934e089\System.Runtime.Remoting.dll</FullName>
+    <Module skippedDueTo="Filter" hash="2C-03-BB-F1-FA-80-13-1C-F2-5C-75-50-C9-DD-6C-55-FD-1F-08-ED">
+      <FullName>C:\WINDOWS\assembly\GAC_MSIL\System.Runtime.Remoting\2.0.0.0__b77a5c561934e089\System.Runtime.Remoting.dll</FullName>
       <ModuleName>System.Runtime.Remoting</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="12-65-6A-66-2E-D6-63-35-62-65-A9-F9-3A-99-F3-2E-1A-A3-76-A4">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_32\mscorlib\v4.0_4.0.0.0__b77a5c561934e089\mscorlib.dll</FullName>
+    <Module skippedDueTo="Filter" hash="B5-D0-3C-D0-D3-0E-6D-9A-B0-27-ED-4B-C0-AC-D5-4F-18-84-56-AE">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_32\mscorlib\v4.0_4.0.0.0__b77a5c561934e089\mscorlib.dll</FullName>
       <ModuleName>mscorlib</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="5F-24-CB-C7-2A-89-75-BF-F9-18-42-E9-2D-0B-D9-E3-11-8C-68-2B">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\nunit-agent-x86.exe</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\nunit-agent-x86.exe</FullName>
       <ModuleName>nunit-agent-x86</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="33-E1-CA-24-52-5A-B7-C7-C4-AF-91-2C-A9-4A-C0-37-67-0D-5B-FE">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.dll</FullName>
       <ModuleName>nunit.core</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="74-74-F6-87-59-E1-5F-4F-5F-5E-6E-82-50-E8-E2-46-D4-86-15-76">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.util.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.util.dll</FullName>
       <ModuleName>nunit.util</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="D3-A4-4D-85-55-F7-CE-EF-A5-90-AA-EF-58-E0-9F-B6-CC-27-99-53">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.interfaces.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.interfaces.dll</FullName>
       <ModuleName>nunit.core.interfaces</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="8F-46-4B-BE-28-40-30-A2-E6-52-58-36-C3-F3-E3-75-03-AF-F4-FC">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll</FullName>
+    <Module skippedDueTo="Filter" hash="79-DD-49-29-A6-8C-BD-B2-DD-EB-1F-29-44-27-B0-62-83-FC-28-5B">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll</FullName>
       <ModuleName>System</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="65-BE-6B-9B-9C-55-6A-4D-DB-BD-03-60-FD-69-20-48-31-78-A9-5B">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Runtime.Remoting\v4.0_4.0.0.0__b77a5c561934e089\System.Runtime.Remoting.dll</FullName>
+    <Module skippedDueTo="Filter" hash="BB-22-2B-D0-CE-B1-A5-08-20-9C-FA-2B-83-97-64-3A-8B-BD-0A-39">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Runtime.Remoting\v4.0_4.0.0.0__b77a5c561934e089\System.Runtime.Remoting.dll</FullName>
       <ModuleName>System.Runtime.Remoting</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="8F-6E-E8-4F-40-6A-75-31-1B-08-C2-22-D5-EA-FE-23-3B-7B-82-15">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll</FullName>
+    <Module skippedDueTo="Filter" hash="B6-60-CE-70-25-03-8E-12-F0-FF-EB-DA-C8-94-AA-A9-02-DE-71-07">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll</FullName>
       <ModuleName>System.Configuration</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="2E-28-A3-E7-4F-05-75-91-3B-B4-A6-B7-58-E7-27-B0-EF-F7-52-11">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll</FullName>
+    <Module skippedDueTo="Filter" hash="C9-BC-DF-73-A0-25-04-46-0C-54-0E-8A-45-29-C8-24-C8-0D-43-0D">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll</FullName>
       <ModuleName>System.Xml</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="94-5A-34-31-A6-D6-12-05-CC-FE-83-07-42-48-4E-4D-B8-38-A6-C1">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_32\System.Web\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Web.dll</FullName>
+    <Module skippedDueTo="Filter" hash="AC-D9-E9-50-8F-33-3F-85-8C-0E-C2-6C-6F-B2-D7-47-AF-F7-49-EB">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_32\System.Web\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Web.dll</FullName>
+      <ModuleName>System.Web</ModuleName>
+      <Classes />
+    </Module>
+    <Module skippedDueTo="Filter" hash="5F-6E-F0-7F-89-AE-EE-2E-80-FD-08-D2-65-77-3A-A5-EE-37-E3-51">
+      <FullName>C:\WINDOWS\assembly\GAC_32\System.Web\2.0.0.0__b03f5f7f11d50a3a\System.Web.dll</FullName>
       <ModuleName>System.Web</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="33-E1-CA-24-52-5A-B7-C7-C4-AF-91-2C-A9-4A-C0-37-67-0D-5B-FE">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.dll</FullName>
       <ModuleName>nunit.core</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="8F-46-4B-BE-28-40-30-A2-E6-52-58-36-C3-F3-E3-75-03-AF-F4-FC">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll</FullName>
+    <Module skippedDueTo="Filter" hash="79-DD-49-29-A6-8C-BD-B2-DD-EB-1F-29-44-27-B0-62-83-FC-28-5B">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll</FullName>
       <ModuleName>System</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="9F-62-A2-66-54-66-BC-CE-FD-0D-1B-20-6E-F7-50-CC-76-C2-6F-D4">
-      <FullName>C:\windows\assembly\GAC_32\System.Web\2.0.0.0__b03f5f7f11d50a3a\System.Web.dll</FullName>
-      <ModuleName>System.Web</ModuleName>
-      <Classes />
-    </Module>
     <Module skippedDueTo="Filter" hash="D3-A4-4D-85-55-F7-CE-EF-A5-90-AA-EF-58-E0-9F-B6-CC-27-99-53">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.interfaces.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.interfaces.dll</FullName>
       <ModuleName>nunit.core.interfaces</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="50-05-7A-DF-26-09-B0-DE-94-DD-8C-5B-66-C0-46-41-BE-03-49-DB">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.UnitTests\bin\Debug\HttpClient.UnitTests.dll</FullName>
+    <Module skippedDueTo="Filter" hash="12-90-85-46-39-AC-66-EC-04-7F-51-64-CE-11-DD-62-2F-70-3E-11">
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.UnitTests\bin\Debug\HttpClient.UnitTests.dll</FullName>
       <ModuleName>HttpClient.UnitTests</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="0A-54-48-67-A0-1C-6C-85-82-1F-2D-9A-5C-88-99-7E-E7-CC-CC-10">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\FSharp.Core\v4.0_4.3.0.0__b03f5f7f11d50a3a\FSharp.Core.dll</FullName>
+    <Module skippedDueTo="Filter" hash="1D-2E-0A-84-E0-D4-EA-05-E6-55-EB-3A-73-79-C3-FA-4A-1A-EB-F7">
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.UnitTests\bin\Debug\FSharp.Core.dll</FullName>
       <ModuleName>FSharp.Core</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="42-83-FE-A6-9F-01-8E-2C-E8-41-E9-25-3E-1E-0D-99-81-76-6B-C9">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.UnitTests\bin\Debug\nunit.framework.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.UnitTests\bin\Debug\nunit.framework.dll</FullName>
       <ModuleName>nunit.framework</ModuleName>
       <Classes />
     </Module>
-    <Module hash="C4-5C-0A-4F-F8-4C-E3-86-46-99-73-91-3C-20-B8-43-54-30-66-76">
+    <Module hash="3D-A5-8B-4E-57-DF-05-5A-90-41-3B-96-E5-83-9D-8E-A3-94-69-34">
       <Summary numSequencePoints="399" visitedSequencePoints="52" numBranchPoints="1253" visitedBranchPoints="77" sequenceCoverage="13.03" branchCoverage="6.15" maxCyclomaticComplexity="47" minCyclomaticComplexity="0" />
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.UnitTests\bin\Debug\HttpClient.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.UnitTests\bin\Debug\HttpClient.dll</FullName>
       <ModuleName>HttpClient</ModuleName>
       <Files>
-        <File uid="1" fullPath="C:\Programs\Http.fs\Http.fs\HttpClient\HttpClient.fs" />
-        <File uid="40" fullPath="C:\Programs\Http.fs\Http.fs\HttpClient\AsyncStreamReader.fs" />
+        <File uid="1" fullPath="C:\Programming\FSharp\HTTP\Http.fs\HttpClient\HttpClient.fs" />
+        <File uid="40" fullPath="C:\Programming\FSharp\HTTP\Http.fs\HttpClient\AsyncStreamReader.fs" />
       </Files>
       <Classes>
         <Class>
@@ -7832,97 +7832,97 @@
       </Classes>
     </Module>
     <Module skippedDueTo="Filter" hash="33-E1-CA-24-52-5A-B7-C7-C4-AF-91-2C-A9-4A-C0-37-67-0D-5B-FE">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.dll</FullName>
       <ModuleName>nunit.core</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="8F-46-4B-BE-28-40-30-A2-E6-52-58-36-C3-F3-E3-75-03-AF-F4-FC">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll</FullName>
+    <Module skippedDueTo="Filter" hash="79-DD-49-29-A6-8C-BD-B2-DD-EB-1F-29-44-27-B0-62-83-FC-28-5B">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll</FullName>
       <ModuleName>System</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="D3-A4-4D-85-55-F7-CE-EF-A5-90-AA-EF-58-E0-9F-B6-CC-27-99-53">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.interfaces.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit.core.interfaces.dll</FullName>
       <ModuleName>nunit.core.interfaces</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="E6-D4-64-3D-C8-07-32-00-4B-62-10-24-7E-93-AD-8F-4B-D1-CC-BD">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\HttpClient.IntegrationTests.dll</FullName>
+    <Module skippedDueTo="Filter" hash="37-7C-73-DF-62-3C-41-B1-7C-05-12-E1-CD-59-59-BE-AB-02-C3-BC">
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\HttpClient.IntegrationTests.dll</FullName>
       <ModuleName>HttpClient.IntegrationTests</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="E0-EA-2E-08-27-CC-2D-11-46-BB-AC-1C-16-1B-25-CA-DD-75-A0-A4">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\Nancy.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\Nancy.dll</FullName>
       <ModuleName>Nancy</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="0A-54-48-67-A0-1C-6C-85-82-1F-2D-9A-5C-88-99-7E-E7-CC-CC-10">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\FSharp.Core\v4.0_4.3.0.0__b03f5f7f11d50a3a\FSharp.Core.dll</FullName>
+    <Module skippedDueTo="Filter" hash="1D-2E-0A-84-E0-D4-EA-05-E6-55-EB-3A-73-79-C3-FA-4A-1A-EB-F7">
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\FSharp.Core.dll</FullName>
       <ModuleName>FSharp.Core</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="42-83-FE-A6-9F-01-8E-2C-E8-41-E9-25-3E-1E-0D-99-81-76-6B-C9">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\nunit.framework.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\nunit.framework.dll</FullName>
       <ModuleName>nunit.framework</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="2A-C4-E5-DE-F3-EE-AD-84-E1-65-84-CC-15-90-76-96-E7-01-44-4E">
-      <FullName>C:\Programs\Http.fs\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit-console-runner.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\Tools\NUnit-2.6.3\bin\lib\nunit-console-runner.dll</FullName>
       <ModuleName>nunit-console-runner</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="8F-6E-E8-4F-40-6A-75-31-1B-08-C2-22-D5-EA-FE-23-3B-7B-82-15">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll</FullName>
+    <Module skippedDueTo="Filter" hash="B6-60-CE-70-25-03-8E-12-F0-FF-EB-DA-C8-94-AA-A9-02-DE-71-07">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll</FullName>
       <ModuleName>System.Configuration</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="2E-28-A3-E7-4F-05-75-91-3B-B4-A6-B7-58-E7-27-B0-EF-F7-52-11">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll</FullName>
+    <Module skippedDueTo="Filter" hash="C9-BC-DF-73-A0-25-04-46-0C-54-0E-8A-45-29-C8-24-C8-0D-43-0D">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll</FullName>
       <ModuleName>System.Xml</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="D5-08-A2-CE-1C-58-9B-4A-B8-D9-17-90-E7-EB-96-DA-93-A9-41-4C">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.UnitTests\bin\Debug\FsUnit.NUnit.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.UnitTests\bin\Debug\FsUnit.NUnit.dll</FullName>
       <ModuleName>FsUnit.NUnit</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="8F-6E-E8-4F-40-6A-75-31-1B-08-C2-22-D5-EA-FE-23-3B-7B-82-15">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll</FullName>
+    <Module skippedDueTo="Filter" hash="B6-60-CE-70-25-03-8E-12-F0-FF-EB-DA-C8-94-AA-A9-02-DE-71-07">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll</FullName>
       <ModuleName>System.Configuration</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="2E-28-A3-E7-4F-05-75-91-3B-B4-A6-B7-58-E7-27-B0-EF-F7-52-11">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll</FullName>
+    <Module skippedDueTo="Filter" hash="C9-BC-DF-73-A0-25-04-46-0C-54-0E-8A-45-29-C8-24-C8-0D-43-0D">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll</FullName>
       <ModuleName>System.Xml</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="ED-01-C6-50-48-DD-EE-75-DD-6E-AD-5A-FE-63-A8-84-76-1D-85-5B">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\Nancy.Hosting.Self.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\Nancy.Hosting.Self.dll</FullName>
       <ModuleName>Nancy.Hosting.Self</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="F0-AC-29-46-F9-CE-FF-96-AE-EE-4F-C0-DE-9E-59-D3-7E-1B-ED-08">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Core\v4.0_4.0.0.0__b77a5c561934e089\System.Core.dll</FullName>
+    <Module skippedDueTo="Filter" hash="43-0F-9E-14-71-13-7F-E2-26-11-26-04-62-4A-0E-92-1F-0F-04-20">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Core\v4.0_4.0.0.0__b77a5c561934e089\System.Core.dll</FullName>
       <ModuleName>System.Core</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="1D-2E-0A-84-E0-D4-EA-05-E6-55-EB-3A-73-79-C3-FA-4A-1A-EB-F7">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\FSharp.Core.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\FSharp.Core.dll</FullName>
       <ModuleName>FSharp.Core</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="D5-08-A2-CE-1C-58-9B-4A-B8-D9-17-90-E7-EB-96-DA-93-A9-41-4C">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\FsUnit.NUnit.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\FsUnit.NUnit.dll</FullName>
       <ModuleName>FsUnit.NUnit</ModuleName>
       <Classes />
     </Module>
-    <Module hash="C4-5C-0A-4F-F8-4C-E3-86-46-99-73-91-3C-20-B8-43-54-30-66-76">
+    <Module hash="3D-A5-8B-4E-57-DF-05-5A-90-41-3B-96-E5-83-9D-8E-A3-94-69-34">
       <Summary numSequencePoints="399" visitedSequencePoints="223" numBranchPoints="1253" visitedBranchPoints="234" sequenceCoverage="55.89" branchCoverage="18.68" maxCyclomaticComplexity="47" minCyclomaticComplexity="0" />
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\HttpClient.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\HttpClient.dll</FullName>
       <ModuleName>HttpClient</ModuleName>
       <Files>
-        <File uid="183" fullPath="C:\Programs\Http.fs\Http.fs\HttpClient\HttpClient.fs" />
-        <File uid="222" fullPath="C:\Programs\Http.fs\Http.fs\HttpClient\AsyncStreamReader.fs" />
+        <File uid="183" fullPath="C:\Programming\FSharp\HTTP\Http.fs\HttpClient\HttpClient.fs" />
+        <File uid="222" fullPath="C:\Programming\FSharp\HTTP\Http.fs\HttpClient\AsyncStreamReader.fs" />
       </Files>
       <Classes>
         <Class>
@@ -15601,7 +15601,7 @@
       </Classes>
     </Module>
     <Module skippedDueTo="Filter" hash="42-83-FE-A6-9F-01-8E-2C-E8-41-E9-25-3E-1E-0D-99-81-76-6B-C9">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\nunit.framework.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\nunit.framework.dll</FullName>
       <ModuleName>nunit.framework</ModuleName>
       <Classes />
     </Module>
@@ -15610,28 +15610,28 @@
       <ModuleName>Anonymously Hosted DynamicMethods Assembly</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="0D-D5-B2-1E-4C-1B-8D-16-0A-9F-65-F1-B0-E9-42-FD-A9-97-83-3E">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Drawing\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Drawing.dll</FullName>
+    <Module skippedDueTo="Filter" hash="07-60-10-FE-FC-47-C6-6E-A6-55-16-EF-B4-F8-E7-C6-29-1D-66-AB">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Drawing\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Drawing.dll</FullName>
       <ModuleName>System.Drawing</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="A5-A7-20-12-87-C4-5A-E5-08-10-C1-D7-7B-B5-AB-F9-0F-A6-71-CD">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\Microsoft.CSharp\v4.0_4.0.0.0__b03f5f7f11d50a3a\Microsoft.CSharp.dll</FullName>
+    <Module skippedDueTo="Filter" hash="C8-1B-95-44-2E-BF-5A-19-78-BF-E8-87-A8-C2-18-88-E9-90-3B-92">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\Microsoft.CSharp\v4.0_4.0.0.0__b03f5f7f11d50a3a\Microsoft.CSharp.dll</FullName>
       <ModuleName>Microsoft.CSharp</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="95-70-8D-C9-D5-9B-AC-21-EE-5B-99-F8-4F-25-4B-94-26-69-4A-3B">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Dynamic\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Dynamic.dll</FullName>
+    <Module skippedDueTo="Filter" hash="5A-6C-7F-7A-AD-9C-F7-09-A9-F6-AD-91-20-64-57-83-B8-A0-7B-EE">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Dynamic\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Dynamic.dll</FullName>
       <ModuleName>System.Dynamic</ModuleName>
       <Classes />
     </Module>
     <Module skippedDueTo="Filter" hash="D5-08-A2-CE-1C-58-9B-4A-B8-D9-17-90-E7-EB-96-DA-93-A9-41-4C">
-      <FullName>C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\FsUnit.NUnit.dll</FullName>
+      <FullName>C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\FsUnit.NUnit.dll</FullName>
       <ModuleName>FsUnit.NUnit</ModuleName>
       <Classes />
     </Module>
-    <Module skippedDueTo="Filter" hash="94-5A-34-31-A6-D6-12-05-CC-FE-83-07-42-48-4E-4D-B8-38-A6-C1">
-      <FullName>C:\windows\Microsoft.Net\assembly\GAC_32\System.Web\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Web.dll</FullName>
+    <Module skippedDueTo="Filter" hash="AC-D9-E9-50-8F-33-3F-85-8C-0E-C2-6C-6F-B2-D7-47-AF-F7-49-EB">
+      <FullName>C:\WINDOWS\Microsoft.Net\assembly\GAC_32\System.Web\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Web.dll</FullName>
       <ModuleName>System.Web</ModuleName>
       <Classes />
     </Module>

@@ -3,4 +3,4 @@
 
 @echo off
 cls
-"Tools\FAKE\Fake.exe" build.fsx
+"packages\FAKE.3.4.0\tools\Fake.exe" build.fsx
