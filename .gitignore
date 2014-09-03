@@ -10,9 +10,11 @@
 *.suo
 *.vssscc
 *.vspscc
-# Include dlls if they’re in the NuGet packages directory
+# Include dlls & exes if they’re in the NuGet packages directory
 !/packages/*/*/*.dll
 !/packages/*/lib/*/*.dll
+!/packages/*/*/*.exe
+!/packages/*/lib/*/*.exe
 # VS Upgrade stuff #
 ####################
 UpgradeLog.XML
@@ -40,7 +42,6 @@ Thumbs.db
 !/Release/NuGet/*
 !/Release/NuGet/lib/net40/*
 # Include Tools
-!/Tools/FAKE/*
 !/Tools/NUnit-2.6.3/*
 !/Tools/NUnit-2.6.3/bin/*
 !/Tools/NUnit-2.6.3/bin/lib/*
