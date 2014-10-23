@@ -324,16 +324,23 @@ type ``Integration tests`` ()=
         response.Cookies.ContainsKey "cookie1" |> should equal false
 
     [<Test>]
-    member x.``getRawResponse test`` () =
-        let response = createRequest Get "http://localhost:1234/TestServer/Raw" |> getRawResponseBody
+    member x.``reading the body as bytes works properly`` () =
+        let response = createRequest Get "http://localhost:1234/TestServer/Raw" |> getResponseBytes
 
-        let r = Array.create 4 (new Byte())
-        r.[0] <- byte(98)
-        r.[1] <- byte(111)
-        r.[2] <- byte(100)
-        r.[3] <- byte(121)
+        let bodyBytes = Array.create 4 (new Byte())
+        bodyBytes.[0] <- byte(98)
+        bodyBytes.[1] <- byte(111)
+        bodyBytes.[2] <- byte(100)
+        bodyBytes.[3] <- byte(121)
 
-        response |> should equal r
+        response |> should equal bodyBytes
+
+    [<Test>]
+    member x.``when there is no body, reading it as bytes gives an empty array`` () =
+        let response = createRequest Get "http://localhost:1234/TestServer/GoodStatusCode" |> getResponseBytes
+
+        let noBytes = Array.create 0 (new Byte())
+        response |> should equal noBytes
 
     // TODO: test proxy - approach below doesn't seem to work, even without port specified in proxy (which appends it to the end of the URL)
     // There's a script called 'test proxy' which can be used to test it manually.

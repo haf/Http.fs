@@ -489,14 +489,20 @@ let getResponseBodyAsync request = async {
     return body
 }
 
-let getRawResponseBodyAsync request = async {
+/// Sends the HTTP request and returns the response body as raw bytes, asynchronously.
+///
+/// Gives an empty array if there's no response body.
+let getResponseBytesAsync request = async {
     use! response = request |> toHttpWebRequest |> getResponseNoException
     let! raw = response |> readAsRaw
     return raw
 }
 
-let getRawResponseBody request = 
-    getRawResponseBodyAsync request |> Async.RunSynchronously
+/// Sends the HTTP request and returns the response body as raw bytes.
+///
+/// Gives an empty array if there's no response body.
+let getResponseBytes request = 
+    getResponseBytesAsync request |> Async.RunSynchronously
 
 /// Sends the HTTP request and returns the response body as a string.
 ///

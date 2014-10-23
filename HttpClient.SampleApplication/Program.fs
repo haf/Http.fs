@@ -61,13 +61,33 @@ let complexRequest() =
     printfn "%A" response
 
 let downloadImage() =
-    let response = createRequest Get "https://www.google.ru/images/srpr/logo11w.png" |> getRawResponseBody
+    let response = createRequest Get "http://fsharp.org/img/logo.png" |> getResponseBytes
 
-    printfn "Please enter path to save the image (file format added automatically)"
-    let filename = Console.ReadLine() + ".png"
+    printfn "Please enter path to save the image, e.g. c:/temp (file will be testImage.png)"
+    let filename = Console.ReadLine() + "/testImage.png"
 
     use file = File.Create(filename)
     file.Write(response, 0, response.Length)
+
+    printfn "'%s' written to disk" filename
+
+// Download some sites sequentially, using the synchronous version of getResponseCode
+let downloadImagesSequentially images =
+    let timer = System.Diagnostics.Stopwatch.StartNew()
+    images
+    |> List.map (fun url -> createRequest Get url |> getResponseBytes)
+    |> ignore
+    printfn "Images downloaded sequentially in %d ms" timer.ElapsedMilliseconds
+
+// Download some sites in parallel, using the asynchronous version of getResponseCode
+let downloadImagesInParallel images =
+    let timer = System.Diagnostics.Stopwatch.StartNew()
+    images
+    |> List.map (fun url -> createRequest Get url |> getResponseBytesAsync)
+    |> Async.Parallel
+    |> Async.RunSynchronously
+    |> ignore
+    printfn "Images downloaded in parallel in %d ms" timer.ElapsedMilliseconds
 
 [<EntryPoint>]
 let Main(_) = 
@@ -90,6 +110,17 @@ let Main(_) =
 
     printfn "\nDownloading image..."
     downloadImage()
+
+    printfn "\nDownloading images: Sequential vs Parallel..."
+
+    let images = [
+        "http://fsharp.org/img/sup/quantalea.png"
+        "http://fsharp.org/img/sup/mbrace.png"
+        "http://fsharp.org/img/sup/statfactory.jpg"
+        "http://fsharp.org/img/sup/tsunami.png"]
+
+    images |> downloadImagesSequentially
+    images |> downloadImagesInParallel
 
     returnToContinue "Press Return to exit"
     0
