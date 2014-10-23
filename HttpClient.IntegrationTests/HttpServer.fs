@@ -138,3 +138,9 @@ type FakeServer() as self =
                 let response = "body" |> Nancy.Response.op_Implicit
                 response.StatusCode <- HttpStatusCode.OK
                 response :> obj
+
+        self.Get.["Raw"] <-
+            fun _ ->
+                let response = "body" |> Nancy.Response.op_Implicit
+                response.StatusCode <- HttpStatusCode.OK
+                response :> obj

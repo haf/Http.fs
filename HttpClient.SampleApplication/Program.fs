@@ -3,6 +3,7 @@ module Program
 
 open HttpClient
 open HttpClient.SampleApplication
+open System.IO
 open System
 
 // Use our PageDownloader to count the instances of a word on the bbc news site
@@ -59,6 +60,15 @@ let complexRequest() =
     returnToContinue "Press Return to see the response"
     printfn "%A" response
 
+let downloadImage() =
+    let response = createRequest Get "https://www.google.ru/images/srpr/logo11w.png" |> getRawResponseBody
+
+    printfn "Please enter path to save the image (file format added automatically)"
+    let filename = Console.ReadLine() + ".png"
+
+    use file = File.Create(filename)
+    file.Write(response, 0, response.Length)
+
 [<EntryPoint>]
 let Main(_) = 
 
@@ -77,6 +87,9 @@ let Main(_) =
 
     printfn "\nCreating a complex request.."
     complexRequest()
+
+    printfn "\nDownloading image..."
+    downloadImage()
 
     returnToContinue "Press Return to exit"
     0

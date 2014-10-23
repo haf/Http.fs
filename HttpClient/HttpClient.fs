@@ -464,6 +464,12 @@ let private readBody encoding (response:HttpWebResponse) = async {
     return body
 }
 
+let private readAsRaw (response:HttpWebResponse) = async {
+        use ms = new MemoryStream()
+        do! response.GetResponseStream().CopyToAsync(ms) |> Async.AwaitIAsyncResult |> Async.Ignore
+        return ms.ToArray()
+    }
+
 /// Sends the HTTP request and returns the response code as an integer, asynchronously.
 let getResponseCodeAsync request = async {
     use! response = request |> toHttpWebRequest |> getResponseNoException
@@ -482,6 +488,15 @@ let getResponseBodyAsync request = async {
     let! body = response |> readBody request.ResponseCharacterEncoding
     return body
 }
+
+let getRawResponseBodyAsync request = async {
+    use! response = request |> toHttpWebRequest |> getResponseNoException
+    let! raw = response |> readAsRaw
+    return raw
+}
+
+let getRawResponseBody request = 
+    getRawResponseBodyAsync request |> Async.RunSynchronously
 
 /// Sends the HTTP request and returns the response body as a string.
 ///
