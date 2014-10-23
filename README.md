@@ -161,51 +161,34 @@ Yes, as of version 1.2.0.  This actually sets the Connection header (to 'Keep-Al
 
 ## I need details! ##
 
-There's really not that much to it, but if you want to know the details your best bet is the integration and unit tests.
+If you want to know the details your best bet is the integration and unit tests.  The titles of some of the more informative ones are shown below.
 
 Unit tests describe making the request:
   * createRequest makes a Request with a Method and URL, and sensible defaults
   * requests have cookies enabled by default
   * withAutoDecompression enables the specified decompression methods
-  * withCookiesDisabled disables cookies
-  * withHeader adds header to the request
   * withHeader Custom adds a custom header to the request
   * multiple headers of different types can be added, including custom headers with different names
   * If the same header is added multiple times, throws an exception
   * If a custom header with the same name is added multiple times, an exception is thrown
-  * withBody sets the request body
   * withBody uses default character encoding of ISO-8859-1
-  * withBodyEncoded sets the request body
-  * withBodyEncoded sets the body encoding
-  * withQueryString adds the query string item to the list
   * withCookie throws an exception if cookies are disabled
-  * withCookie adds the cookie to the request
   * withAutoFollowRedirectsDisabled turns auto-follow off
   * withBasicAuthentication sets the Authorization header with the username and password base-64 encoded
   * withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64
   * withResponseCharacterEncoding sets the response character encoding
   * withProxy sets proxy address and port
-  * withProxy can set proxy with custom credentials
-  * withProxy can set proxy with default credentials
-  * withProxy can set proxy with no credentials
   * withKeepAlive sets KeepAlive
 
 Integration tests describe submitting the request and handling the response:
   * if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones
   * if KeepAlive is false, Connection set to 'Close' on every request
-  * createRequest should set everything correctly in the HTTP request
-  * getResponseCode should return the http status code for all response types
-  * getResponseBody should return the entity body as a string
   * getResponseBody should return an empty string when there is no body
-  * all details of the response should be available after a call to getResponse
-  * getResponse should have nothing if the things don't exist
   * getResponse, given a request with an invalid url, throws an exception
   * getResponseCode, when called on a non-existant page, returns 404
   * posts to Nancy without a body don't work
-  * all of the manually-set request headers should get sent to the server
   * Content-Length header is set automatically for Posts with a body
   * accept-encoding header is set automatically when decompression scheme is set
-  * all of the response headers should be available after a call to getResponse
   * if body character encoding is specified, encodes the request body with it
   * the body is read using the character encoding specified in the content-type header
   * if a response character encoding is specified, that encoding is used regardless of what the response's content-type specifies
@@ -216,7 +199,6 @@ Integration tests describe submitting the request and handling the response:
   * if the response character encoding is specified as 'utf8', uses 'utf-8' instead
   * if the response character encoding is specified as 'utf16', uses 'utf-16' instead
   * cookies are not kept during an automatic redirect
-  * reading the body as bytes works properly
   * when there is no body, reading it as bytes gives an empty array
 
 You can also check out the *SampleApplication* folder, which contains a program demonstrating the library being used and unit tested.
