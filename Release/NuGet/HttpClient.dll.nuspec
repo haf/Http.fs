@@ -9,7 +9,8 @@
     <projectUrl>https://github.com/relentless/Http.fs</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A gloriously functional HTTP client library for F#!</description>
-    <releaseNotes></releaseNotes>
+	<tags>http client fsharp f# request response</tags>
+    <releaseNotes>Added getResponseBytes() to access raw bytes of response body</releaseNotes>
     <copyright>Copyright G Crofton 2014</copyright>
   </metadata>
 </package>

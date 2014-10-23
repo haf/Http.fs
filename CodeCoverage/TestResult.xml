@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!--This file represents the results of running a test suite-->
-<test-results name="C:\Programming\FSharp\HTTP\Http.fs\HttpClient.UnitTests\bin\Debug\HttpClient.UnitTests.dll" total="51" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2014-08-26" time="18:46:34">
-  <environment nunit-version="2.6.3.13283" clr-version="2.0.50727.8000" os-version="Microsoft Windows NT 6.2.9200.0" platform="Win32NT" cwd="C:\Programming\FSharp\HTTP\Http.fs\CodeCoverage" machine-name="GC-XPS" user="Grant" user-domain="GC-XPS" />
-  <culture-info current-culture="en-GB" current-uiculture="en-GB" />
-  <test-suite type="Test Project" name="" executed="True" result="Success" success="True" time="2.583" asserts="0">
+<test-results name="C:\Programs\Http.fs\Http.fs\HttpClient.UnitTests\bin\Debug\HttpClient.UnitTests.dll" total="52" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2014-10-23" time="13:29:36">
+  <environment nunit-version="2.6.3.13283" clr-version="2.0.50727.5483" os-version="Microsoft Windows NT 6.1.7601 Service Pack 1" platform="Win32NT" cwd="C:\Programs\Http.fs\Http.fs\CodeCoverage" machine-name="PLLPC5359" user="grantc" user-domain="CIG" />
+  <culture-info current-culture="en-GB" current-uiculture="en-US" />
+  <test-suite type="Test Project" name="" executed="True" result="Success" success="True" time="5.109" asserts="0">
     <results>
-      <test-suite type="Assembly" name="C:\Programming\FSharp\HTTP\Http.fs\HttpClient.UnitTests\bin\Debug\HttpClient.UnitTests.dll" executed="True" result="Success" success="True" time="0.418" asserts="0">
+      <test-suite type="Assembly" name="C:\Programs\Http.fs\Http.fs\HttpClient.UnitTests\bin\Debug\HttpClient.UnitTests.dll" executed="True" result="Success" success="True" time="0.573" asserts="0">
         <results>
-          <test-suite type="TestFixture" name="HttpClient_Tests" executed="True" result="Success" success="True" time="0.412" asserts="0">
+          <test-suite type="TestFixture" name="HttpClient_Tests" executed="True" result="Success" success="True" time="0.568" asserts="0">
             <results>
-              <test-case name="HttpClient_Tests.createRequest makes a Request with a Method and URL, and sensible defaults" executed="True" result="Success" success="True" time="0.039" asserts="13" />
-              <test-case name="HttpClient_Tests.if a body character encoding is somehow not specified, throws an exception" executed="True" result="Success" success="True" time="0.122" asserts="1" />
-              <test-case name="HttpClient_Tests.If a custom header with the same name is added multiple times, an exception is thrown" executed="True" result="Success" success="True" time="0.168" asserts="1" />
+              <test-case name="HttpClient_Tests.createRequest makes a Request with a Method and URL, and sensible defaults" executed="True" result="Success" success="True" time="0.036" asserts="13" />
+              <test-case name="HttpClient_Tests.if a body character encoding is somehow not specified, throws an exception" executed="True" result="Success" success="True" time="0.321" asserts="1" />
+              <test-case name="HttpClient_Tests.If a custom header with the same name is added multiple times, an exception is thrown" executed="True" result="Success" success="True" time="0.123" asserts="1" />
               <test-case name="HttpClient_Tests.If the same header is added multiple times, throws an exception" executed="True" result="Success" success="True" time="0.004" asserts="1" />
-              <test-case name="HttpClient_Tests.multiple headers of different types can be added, including custom headers with different names" executed="True" result="Success" success="True" time="0.010" asserts="5" />
+              <test-case name="HttpClient_Tests.multiple headers of different types can be added, including custom headers with different names" executed="True" result="Success" success="True" time="0.011" asserts="5" />
               <test-case name="HttpClient_Tests.requests have cookies enabled by default" executed="True" result="Success" success="True" time="0.000" asserts="1" />
               <test-case name="HttpClient_Tests.withAutoDecompression enables the specified decompression methods" executed="True" result="Success" success="True" time="0.001" asserts="2" />
               <test-case name="HttpClient_Tests.withAutoFollowRedirectsDisabled turns auto-follow off" executed="True" result="Success" success="True" time="0.001" asserts="1" />
-              <test-case name="HttpClient_Tests.withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64" executed="True" result="Success" success="True" time="0.005" asserts="1" />
+              <test-case name="HttpClient_Tests.withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64" executed="True" result="Success" success="True" time="0.004" asserts="1" />
               <test-case name="HttpClient_Tests.withBasicAuthentication sets the Authorization header with the username and password base-64 encoded" executed="True" result="Success" success="True" time="0.001" asserts="2" />
               <test-case name="HttpClient_Tests.withBody sets the request body" executed="True" result="Success" success="True" time="0.001" asserts="1" />
               <test-case name="HttpClient_Tests.withBody uses default character encoding of ISO-8859-1" executed="True" result="Success" success="True" time="0.000" asserts="1" />
               <test-case name="HttpClient_Tests.withBodyEncoded sets the body encoding" executed="True" result="Success" success="True" time="0.000" asserts="1" />
               <test-case name="HttpClient_Tests.withBodyEncoded sets the request body" executed="True" result="Success" success="True" time="0.000" asserts="1" />
               <test-case name="HttpClient_Tests.withCookie adds the cookie to the request" executed="True" result="Success" success="True" time="0.002" asserts="3" />
-              <test-case name="HttpClient_Tests.withCookie throws an exception if cookies are disabled" executed="True" result="Success" success="True" time="0.001" asserts="1" />
+              <test-case name="HttpClient_Tests.withCookie throws an exception if cookies are disabled" executed="True" result="Success" success="True" time="0.009" asserts="1" />
               <test-case name="HttpClient_Tests.withCookiesDisabled disables cookies" executed="True" result="Success" success="True" time="0.000" asserts="1" />
               <test-case name="HttpClient_Tests.withHeader adds header to the request" executed="True" result="Success" success="True" time="0.004" asserts="1" />
               <test-case name="HttpClient_Tests.withHeader Custom adds a custom header to the request" executed="True" result="Success" success="True" time="0.001" asserts="1" />
@@ -39,35 +39,36 @@
           </test-suite>
         </results>
       </test-suite>
-      <test-suite type="Assembly" name="C:\Programming\FSharp\HTTP\Http.fs\HttpClient.IntegrationTests\bin\Debug\HttpClient.IntegrationTests.dll" executed="True" result="Success" success="True" time="1.874" asserts="0">
+      <test-suite type="Assembly" name="C:\Programs\Http.fs\Http.fs\HttpClient.IntegrationTests\bin\Debug\HttpClient.IntegrationTests.dll" executed="True" result="Success" success="True" time="3.645" asserts="0">
         <results>
-          <test-suite type="TestFixture" name="HttpClient_IntegrationTests+Integration tests" executed="True" result="Success" success="True" time="1.869" asserts="0">
+          <test-suite type="TestFixture" name="HttpClient_IntegrationTests+Integration tests" executed="True" result="Success" success="True" time="3.640" asserts="0">
             <results>
-              <test-case name="HttpClient_IntegrationTests+Integration tests._if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones" executed="True" result="Success" success="True" time="0.333" asserts="4" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.accept-encoding header is set automatically when decompression scheme is set" executed="True" result="Success" success="True" time="0.006" asserts="3" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.all details of the response should be available after a call to getResponse" executed="True" result="Success" success="True" time="0.129" asserts="7" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.all of the manually-set request headers get sent to the server" executed="True" result="Success" success="True" time="0.067" asserts="32" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.all of the response headers are available after a call to getResponse" executed="True" result="Success" success="True" time="0.059" asserts="32" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.Content-Length header is set automatically for Posts with a body" executed="True" result="Success" success="True" time="0.059" asserts="2" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests._if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones" executed="True" result="Success" success="True" time="0.327" asserts="4" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.accept-encoding header is set automatically when decompression scheme is set" executed="True" result="Success" success="True" time="0.003" asserts="3" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.all details of the response should be available after a call to getResponse" executed="True" result="Success" success="True" time="0.090" asserts="7" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.all of the manually-set request headers get sent to the server" executed="True" result="Success" success="True" time="0.084" asserts="32" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.all of the response headers are available after a call to getResponse" executed="True" result="Success" success="True" time="0.099" asserts="32" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.Content-Length header is set automatically for Posts with a body" executed="True" result="Success" success="True" time="0.033" asserts="2" />
               <test-case name="HttpClient_IntegrationTests+Integration tests.cookies are not kept during an automatic redirect" executed="True" result="Success" success="True" time="0.008" asserts="2" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.createRequest should set everything correctly in the HTTP request" executed="True" result="Success" success="True" time="0.086" asserts="6" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.createRequest should set everything correctly in the HTTP request" executed="True" result="Success" success="True" time="1.479" asserts="6" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.getRawResponse test" executed="True" result="Success" success="True" time="0.033" asserts="1" />
               <test-case name="HttpClient_IntegrationTests+Integration tests.getResponse should have nothing if the things don't exist" executed="True" result="Success" success="True" time="0.002" asserts="3" />
               <test-case name="HttpClient_IntegrationTests+Integration tests.getResponse, given a request with an invalid url, throws an exception" executed="True" result="Success" success="True" time="0.004" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseBody should return an empty string when there is no body" executed="True" result="Success" success="True" time="0.005" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseBody should return the entity body as a string" executed="True" result="Success" success="True" time="0.006" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseBody should return an empty string when there is no body" executed="True" result="Success" success="True" time="0.004" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseBody should return the entity body as a string" executed="True" result="Success" success="True" time="0.005" asserts="1" />
               <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseCode should return the http status code for all response types" executed="True" result="Success" success="True" time="0.003" asserts="2" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseCode, when called on a non-existant page, returns 404" executed="True" result="Success" success="True" time="0.010" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, and character encoding is NOT specified in the response's content-type header, the body is read using ISO Latin 1 character encoding" executed="True" result="Success" success="True" time="0.008" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown" executed="True" result="Success" success="True" time="0.008" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseCode, when called on a non-existant page, returns 404" executed="True" result="Success" success="True" time="0.009" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, and character encoding is NOT specified in the response's content-type header, the body is read using ISO Latin 1 character encoding" executed="True" result="Success" success="True" time="0.034" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown" executed="True" result="Success" success="True" time="0.046" asserts="1" />
               <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, the body is read using the character encoding specified in the response's content-type header" executed="True" result="Success" success="True" time="0.001" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies" executed="True" result="Success" success="True" time="0.004" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies" executed="True" result="Success" success="True" time="0.003" asserts="1" />
               <test-case name="HttpClient_IntegrationTests+Integration tests.if an invalid body character encoding is specified, throws an exception" executed="True" result="Success" success="True" time="0.001" asserts="1" />
               <test-case name="HttpClient_IntegrationTests+Integration tests.if an invalid response character encoding is specified, an exception is thrown" executed="True" result="Success" success="True" time="0.001" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.if body character encoding is specified, encodes the request body with it" executed="True" result="Success" success="True" time="0.002" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.if KeepAlive is false, Connection set to 'Close' on every request" executed="True" result="Success" success="True" time="0.008" asserts="4" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.if the response character encoding is specified as 'utf16', uses 'utf-16' instead" executed="True" result="Success" success="True" time="0.006" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.if the response character encoding is specified as 'utf8', uses 'utf-8' instead" executed="True" result="Success" success="True" time="0.004" asserts="1" />
-              <test-case name="HttpClient_IntegrationTests+Integration tests.posts to Nancy without a body don't work" executed="True" result="Success" success="True" time="0.004" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.if body character encoding is specified, encodes the request body with it" executed="True" result="Success" success="True" time="0.001" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.if KeepAlive is false, Connection set to 'Close' on every request" executed="True" result="Success" success="True" time="0.006" asserts="4" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.if the response character encoding is specified as 'utf16', uses 'utf-16' instead" executed="True" result="Success" success="True" time="0.003" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.if the response character encoding is specified as 'utf8', uses 'utf-8' instead" executed="True" result="Success" success="True" time="0.001" asserts="1" />
+              <test-case name="HttpClient_IntegrationTests+Integration tests.posts to Nancy without a body don't work" executed="True" result="Success" success="True" time="0.001" asserts="1" />
             </results>
           </test-suite>
         </results>
