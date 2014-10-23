@@ -46,6 +46,7 @@ let request =
 request |> getResponse  
 request |> getResponseCode  
 request |> getResponseBody  
+request |> getResponseBytes
 ```
 
 3 - If you get the full response (another record), you can get things from it like so:
@@ -64,7 +65,8 @@ If you like to do things asynchronously, you're in luck, we have functions for t
 ``` fsharp
 request |> getResponseAsync  
 request |> getResponseCodeAsync  
-request |> getResponseBodyAsync  
+request |> getResponseBodyAsync
+request |> getResponseBytesAsync
 ```
     
 So you can do the old download-multiple-sites-in-parallel thing:
@@ -135,6 +137,7 @@ Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defi
 * 1.1.2 - Added utf16 to response encoding map
 * 1.1.3 - Added XML comments to public functions, made a couple of things private which should always have been (technically a breaking change, but I doubt anybody was using them)
 * 1.2.0 - Added withKeepAlive
+* 1.3.0 - Added getResponseBytes, thanks to [Sergeeeek](https://github.com/Sergeeeek)
 
 ## FAQ ##
 
@@ -213,6 +216,8 @@ Integration tests describe submitting the request and handling the response:
   * if the response character encoding is specified as 'utf8', uses 'utf-8' instead
   * if the response character encoding is specified as 'utf16', uses 'utf-16' instead
   * cookies are not kept during an automatic redirect
+  * reading the body as bytes works properly
+  * when there is no body, reading it as bytes gives an empty array
 
 You can also check out the *SampleApplication* folder, which contains a program demonstrating the library being used and unit tested.
 
