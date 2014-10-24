@@ -81,6 +81,8 @@ So you can do the old download-multiple-sites-in-parallel thing:
 |> Array.iter (printfn "%s")
 ```
 
+Check out *HttpClient.SampleApplication*, which contains a program demonstrating the library being used and (to some extent) unit tested.
+
 *Note* because some of the request and response headers have the same names, to prevent name clashes, the response versions have 'Response' stuck on the end, e.g.
 
 ``` fsharp
@@ -200,8 +202,6 @@ Integration tests describe submitting the request and handling the response:
   * if the response character encoding is specified as 'utf16', uses 'utf-16' instead
   * cookies are not kept during an automatic redirect
   * when there is no body, reading it as bytes gives an empty array
-
-You can also check out the *SampleApplication* folder, which contains a program demonstrating the library being used and unit tested.
 
 ## Why on earth would you make such a thing? ##
 
