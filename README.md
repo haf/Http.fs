@@ -3,7 +3,7 @@ Http.fs
 
 A gloriously functional HTTP client library for F#!
 
-[![Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master) [![NuGet](http://img.shields.io/badge/NuGet-1.3.0-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
 
 ## How do I use it? ##
 
