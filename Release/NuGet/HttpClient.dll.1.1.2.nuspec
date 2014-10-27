@@ -7,6 +7,7 @@
     <authors>Grant Crofton</authors>
     <owners>Grant Crofton</owners>
     <projectUrl>https://github.com/relentless/Http.fs</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/relentless/http.fs/master/docs/files/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A gloriously functional HTTP client library for F#!</description>
     <releaseNotes></releaseNotes>
