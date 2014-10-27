@@ -82,8 +82,7 @@ Target "Copy Release Files" (fun _ ->
 )
 
 // note to self - call like this: 
-// packages\FAKE.3.4.0\tools\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="hi mum"
-// Update release notes in \Release\NuGet\HttpClient.dll.nuspec, as they don't seem to work from here
+// packages\FAKE.3.4.0\tools\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="latest release"
 Target "Upload to NuGet" (fun _ ->
     // Copy the dll into the right place
     CopyFiles 

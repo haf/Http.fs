@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>Http.fs</id>
-    <version>0.0.0.0</version>
+    <id>@project@</id>
+    <version>@build.number@</version>
 	<!-- set version when calling FAKE build script -->
     <authors>Grant Crofton</authors>
     <owners>Grant Crofton</owners>
@@ -10,8 +10,8 @@
     <iconUrl>https://raw.githubusercontent.com/relentless/http.fs/master/docs/files/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A gloriously functional HTTP client library for F#!</description>
-	<tags>http client fsharp f# request response</tags>
-    <releaseNotes>Added getResponseBytes() to access raw bytes of response body</releaseNotes>
+    <tags>http client fsharp f# request response</tags>
+    <releaseNotes>@releaseNotes@</releaseNotes>
     <copyright>Copyright G Crofton 2014</copyright>
   </metadata>
 </package>
