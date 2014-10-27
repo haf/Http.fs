@@ -1,4 +1,4 @@
-Http.fs
+![Http.fs logo](https://raw.githubusercontent.com/relentless/Http.fs/master/docs/files/img/logo_small.png) Http.fs 
 =======
 
 A gloriously functional HTTP client library for F#!
