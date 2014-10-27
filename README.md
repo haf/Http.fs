@@ -140,6 +140,7 @@ Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defi
 * 1.1.3 - Added XML comments to public functions, made a couple of things private which should always have been (technically a breaking change, but I doubt anybody was using them)
 * 1.2.0 - Added withKeepAlive
 * 1.3.0 - Added getResponseBytes, thanks to [Sergeeeek](https://github.com/Sergeeeek)
+* 1.3.1 - Added project logo, thanks to [sergey-tihon](https://github.com/sergey-tihon)
 
 ## FAQ ##
 
