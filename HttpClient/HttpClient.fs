@@ -537,3 +537,12 @@ let getResponseAsync request = async {
 /// Sends the HTTP request and returns the full response as a Response record.
 let getResponse request =
     getResponseAsync request |> Async.RunSynchronously
+
+/// Passes the response stream to the passed consumer function.
+/// Useful if accessing a large file, as won't copy to memory.
+///
+/// The response stream will be closed automatically, do not access it outside the function scope.
+let getResponseStream streamConsumer request =
+    use response = request |> toHttpWebRequest |> getResponseNoException |> Async.RunSynchronously
+    use responseStream = response.GetResponseStream()
+    streamConsumer (responseStream)

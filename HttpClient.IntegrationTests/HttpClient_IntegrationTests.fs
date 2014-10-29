@@ -342,6 +342,30 @@ type ``Integration tests`` ()=
         let noBytes = Array.create 0 (new Byte())
         response |> should equal noBytes
 
+    [<Test>]
+    member x.``getResponseStream can access the response stream by passing a function`` () =
+
+        let asString (sourceStream:Stream) =
+            use reader = new StreamReader(sourceStream)
+            reader.ReadToEnd()
+
+        let responseFromStream = createRequest Get "http://localhost:1234/TestServer/Raw" |> getResponseStream asString
+
+        responseFromStream |> should equal "body"
+
+    [<Test>]
+    member x.``Closing the response stream retrieved from getResponseStream does not cause an exception`` () =
+
+        let responseStream = createRequest Get "http://localhost:1234/TestServer/Raw" |> getResponseStream id
+        responseStream.Close |> ignore
+
+    [<Test>]
+    member x.``Trying to access the response stream after getResponseStream causes an ArgumentException`` () =
+
+        (fun() -> new StreamReader(createRequest Get "http://localhost:1234/TestServer/Raw" |> getResponseStream id) |> ignore) 
+            |> should throw typeof<ArgumentException>
+
+
     // TODO: test proxy - approach below doesn't seem to work, even without port specified in proxy (which appends it to the end of the URL)
     // There's a script called 'test proxy' which can be used to test it manually.
 

@@ -63,7 +63,7 @@ let complexRequest() =
 let downloadImage() =
     let response = createRequest Get "http://fsharp.org/img/logo.png" |> getResponseBytes
 
-    printfn "Please enter path to save the image, e.g. c:/temp (file will be testImage.png)"
+    printfn "Please enter path to save the image to, e.g. c:/temp (file will be testImage.png)"
     let filename = Console.ReadLine() + "/testImage.png"
 
     use file = File.Create(filename)
@@ -89,12 +89,27 @@ let downloadImagesInParallel images =
     |> ignore
     printfn "Images downloaded in parallel in %d ms" timer.ElapsedMilliseconds
 
+// access the response stream and save it to a file directly
+let downloadLargeFile() =
+
+    printfn "Please enter path to save the 'large' file to, e.g. c:/temp (file will be large.bin)"
+    let filename = Console.ReadLine() + "/large.bin"
+
+    let saveToFile (sourceStream:Stream) =
+        use destStream = new FileStream(filename, FileMode.Create)
+        sourceStream.CopyTo(destStream)
+
+    createRequest Get "http://fsharp.org/img/logo.png" |> getResponseStream saveToFile
+
+    printfn "'%s' downloaded" filename
+
 [<EntryPoint>]
 let Main(_) = 
 
+    printfn "** Word Count **"
     countWords()
 
-    printfn "\nDownloading sites: Sequential vs Parallel..."
+    printfn "\n** Downloading sites: Sequential vs Parallel **"
 
     let sites = [
         "http://news.bbc.co.uk"
@@ -105,13 +120,13 @@ let Main(_) =
     sites |> downloadSequentially
     sites |> downloadInParallel
 
-    printfn "\nCreating a complex request.."
+    printfn "\n** Creating a complex request **"
     complexRequest()
 
-    printfn "\nDownloading image..."
+    printfn "\n** Downloading image **"
     downloadImage()
 
-    printfn "\nDownloading images: Sequential vs Parallel..."
+    printfn "\n** Downloading images: Sequential vs Parallel **"
 
     let images = [
         "http://fsharp.org/img/sup/quantalea.png"
@@ -121,6 +136,9 @@ let Main(_) =
 
     images |> downloadImagesSequentially
     images |> downloadImagesInParallel
+
+    printfn "\n** Downloading a 'large' file directly from the response stream **"
+    downloadLargeFile()
 
     returnToContinue "Press Return to exit"
     0
