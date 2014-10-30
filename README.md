@@ -3,7 +3,7 @@
 
 A gloriously functional HTTP client library for F#!
 
-[![Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master) [![NuGet](http://img.shields.io/badge/NuGet-1.3.1-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
+[![Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master) [![NuGet](http://img.shields.io/badge/NuGet-1.4.0-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
 
 ## How do I use it? ##
 
@@ -81,6 +81,20 @@ So you can do the old download-multiple-sites-in-parallel thing:
 |> Array.iter (printfn "%s")
 ```
 
+If you need direct access to the response stream for some reason (for example to download a large file), you need to write yourself a function and pass it to getResponseStream like so:
+
+``` fsharp
+open System.IO
+
+let saveToFile (responseStream:Stream) =
+  use fileStream = new FileStream("c:\\bigImage.png", FileMode.Create)
+  responseStream.CopyTo(fileStream)
+
+createRequest Get "http://fsharp.org/img/logo.png"
+|> getResponseStream saveToFile
+```
+Beware that the stream gets closed, so don't use it outside the scope of the function.
+
 Check out *HttpClient.SampleApplication*, which contains a program demonstrating the library being used and (to some extent) unit tested.
 
 *Note* because some of the request and response headers have the same names, to prevent name clashes, the response versions have 'Response' stuck on the end, e.g.
@@ -141,6 +155,7 @@ Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defi
 * 1.2.0 - Added withKeepAlive
 * 1.3.0 - Added getResponseBytes, thanks to [Sergeeeek](https://github.com/Sergeeeek)
 * 1.3.1 - Added project logo, thanks to [sergey-tihon](https://github.com/sergey-tihon)
+* 1.4.0 - Added getResponseStream, with thanks to [xkrt](https://github.com/xkrt)
 
 ## FAQ ##
 
@@ -203,6 +218,9 @@ Integration tests describe submitting the request and handling the response:
   * if the response character encoding is specified as 'utf16', uses 'utf-16' instead
   * cookies are not kept during an automatic redirect
   * when there is no body, reading it as bytes gives an empty array
+  * getResponseStream can access the response stream by passing a function
+  * Closing the response stream retrieved from getResponseStream does not cause an exception
+  * Trying to access the response stream after getResponseStream causes an ArgumentException
 
 ## Why on earth would you make such a thing? ##
 
