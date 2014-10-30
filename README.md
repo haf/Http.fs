@@ -95,13 +95,15 @@ createRequest Get "http://fsharp.org/img/logo.png"
 ```
 Beware that the stream gets closed, so don't use it outside the scope of the function.
 
-Check out *HttpClient.SampleApplication*, which contains a program demonstrating the library being used and (to some extent) unit tested.
-
 *Note* because some of the request and response headers have the same names, to prevent name clashes, the response versions have 'Response' stuck on the end, e.g.
 
 ``` fsharp
 response.Headers.[ContentTypeResponse]
 ```
+
+## Examples ##
+
+Check out *HttpClient.SampleApplication*, which contains a program demonstrating the various functions of the library being used and (to a limited extent) unit tested.
         
 ## Cool!  So how do I get it in my code? ##
 
