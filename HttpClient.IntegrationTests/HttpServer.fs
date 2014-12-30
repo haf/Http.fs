@@ -63,10 +63,16 @@ type FakeServer() as self =
                 response.ContentType <- "text/plain; charset=windows-1251"
                 response :> obj
 
-        self.Get.["MoonLanguageNoEncoding"] <- 
+        self.Get.["MoonLanguageTextPlainNoEncoding"] <- 
             fun _ -> 
                 let response = new EncodedResponse("яЏ§§їДЙ", "windows-1251")
                 response.ContentType <- "text/plain"
+                response :> obj
+
+        self.Get.["MoonLanguageApplicationXmlNoEncoding"] <- 
+            fun _ -> 
+                let response = new EncodedResponse("яЏ§§їДЙ", "windows-1251")
+                response.ContentType <- "application/xml"
                 response :> obj
 
         self.Get.["MoonLanguageInvalidEncoding"] <- 

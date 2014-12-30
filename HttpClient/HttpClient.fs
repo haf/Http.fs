@@ -456,7 +456,7 @@ let private readBody encoding (response:HttpWebResponse) = async {
         match encoding with
         | None -> 
             match response.CharacterSet with
-            | null -> Encoding.GetEncoding(ISO_Latin_1)
+            | null | "" -> Encoding.GetEncoding(ISO_Latin_1)
             | responseCharset -> Encoding.GetEncoding(responseCharset |> mapEncoding)
         | Some(enc) -> Encoding.GetEncoding(enc:string)
     use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)

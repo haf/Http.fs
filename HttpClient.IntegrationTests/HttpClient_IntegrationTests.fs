@@ -295,8 +295,13 @@ type ``Integration tests`` ()=
 
     [<Test>]
     member x.``if a response character encoding is NOT specified, and character encoding is NOT specified in the response's content-type header, the body is read using ISO Latin 1 character encoding`` () =
-        let response = createRequest Get "http://localhost:1234/TestServer/MoonLanguageNoEncoding" |> getResponse
-        response.EntityBody.Value |> should equal "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
+        let expected = "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
+
+        let response = createRequest Get "http://localhost:1234/TestServer/MoonLanguageTextPlainNoEncoding" |> getResponse
+        response.EntityBody.Value |> should equal expected
+
+        let response = createRequest Get "http://localhost:1234/TestServer/MoonLanguageApplicationXmlNoEncoding" |> getResponse
+        response.EntityBody.Value |> should equal expected
 
     [<Test>]
     member x.``if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown`` () =
