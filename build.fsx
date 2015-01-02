@@ -1,5 +1,6 @@
+#!/usr/bin/env fsharpi
 // include Fake lib
-#r @"packages\FAKE.3.4.0\tools\FakeLib.dll"
+#r @"packages/FAKE.3.4.0/tools/FakeLib.dll"
 open Fake 
 
 // Paths
