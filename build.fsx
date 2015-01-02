@@ -1,6 +1,7 @@
 #!/usr/bin/env fsharpi
-// include Fake lib
-#r @"packages/FAKE.3.4.0/tools/FakeLib.dll"
+
+#I "packages/Nuget.Core/lib/net40-Client"
+#r "packages/FAKE/tools/FakeLib.dll"
 open Fake 
 
 // Paths
