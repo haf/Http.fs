@@ -11,7 +11,7 @@ open Microsoft.FSharp.Control.WebExtensions
 
 let private ISO_Latin_1 = "ISO-8859-1"
 
-type HttpMethod = Options | Get | Head | Post | Put | Delete | Trace | Connect
+type HttpMethod = Options | Get | Head | Post | Put | Delete | Trace | Patch | Connect
 
 // Same as System.Net.DecompressionMethods, but I didn't want to expose that
 type DecompressionScheme = 
