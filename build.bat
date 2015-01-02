@@ -3,4 +3,6 @@
 
 @echo off
 cls
+"Tools\paket.bootstrapper.exe"
+"Tools\paket.exe" install
 "packages\FAKE.3.4.0\tools\Fake.exe" build.fsx
