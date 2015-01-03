@@ -10,11 +10,7 @@
 *.suo
 *.vssscc
 *.vspscc
-# Include dlls & exes if they’re in the NuGet packages directory
-!/packages/*/*/*.dll
-!/packages/*/lib/*/*.dll
-!/packages/*/*/*.exe
-!/packages/*/lib/*/*.exe
+packages/
 # VS Upgrade stuff #
 ####################
 UpgradeLog.XML

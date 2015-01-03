@@ -1,0 +1,13 @@
+NUGET
+  remote: https://www.nuget.org/api/v2
+  specs:
+    FAKE (3.4.0)
+    FsUnit (1.2.1.0)
+      NUnit (>= 2.6.2)
+    Microsoft.Web.Xdt (2.1.1)
+    Nancy (0.22.2)
+    Nancy.Hosting.Self (0.22.2)
+      Nancy (>= 0.22.2)
+    Nuget.Core (2.8.3)
+      Microsoft.Web.Xdt (>= 2.1.0)
+    NUnit (2.6.3)
