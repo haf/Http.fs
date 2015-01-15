@@ -18,23 +18,26 @@ let nUnitToolPath = "Tools/NUnit-2.6.3/bin"
 let outputFolder baseDir =
     baseDir + "bin/Debug/"
 
+let binFolder baseDir =
+    baseDir + "bin/"
+
 let projectFolder baseDir =
     baseDir + "*.fsproj"
 
 let BuildTarget targetName baseDirectory =
     Target targetName (fun _ ->
         !! (baseDirectory |> projectFolder)
-        |> MSBuildRelease (baseDirectory |> outputFolder) "Build"
+        |> MSBuildReleaseExt (baseDirectory |> outputFolder) ["TreatWarningsAsErrors","true"] "Build"
         |> Log (targetName + "-Output: ")
     )
 
 // Targets
 Target "Clean" (fun _ ->
     CleanDirs [
-        httpClientDir |> outputFolder
-        unitTestsDir |> outputFolder
-        integrationTestsDir |> outputFolder
-        sampleApplicationDir |> outputFolder
+        httpClientDir |> binFolder
+        unitTestsDir |> binFolder
+        integrationTestsDir |> binFolder
+        sampleApplicationDir |> binFolder
     ]
 )
 
