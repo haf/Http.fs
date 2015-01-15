@@ -12,9 +12,15 @@ open Nancy
 open Nancy.Hosting.Self
 open HttpServer
 
+let hostConfig = new HostConfiguration()
+hostConfig.AllowChunkedEncoding <- false
+// Enabling chunked encoding breaks HEAD requests if you're self-hosting.
+// It also seems to mean the Content-Length isn't set in some cases.
+hostConfig.UrlReservations<-UrlReservations(CreateAutomatically=true)
+
 let nancyHost = 
     new NancyHost(
-        new HostConfiguration(UrlReservations=UrlReservations(CreateAutomatically=true)), 
+        hostConfig, 
         new Uri("http://localhost:1234/TestServer/"))
 
 [<TestFixture>] 
@@ -100,7 +106,7 @@ type ``Integration tests`` ()=
         let response = createRequest Get "http://localhost:1234/TestServer/AllTheThings" |> getResponse
         response.StatusCode |> should equal 418
         response.EntityBody.Value |> should equal "Some JSON or whatever"
-        response.ContentLength |> should equal -1 // nancy isn't setting the content-length for some reason
+        response.ContentLength |> should equal 21
         response.Cookies.["cookie1"] |> should equal "chocolate+chip" // cookies get encoded
         response.Cookies.["cookie2"] |> should equal "smarties"
         response.Headers.[ContentEncoding] |> should equal "gzip"
@@ -248,7 +254,7 @@ type ``Integration tests`` ()=
         response.Headers.[Server] |> should equal "Microsoft-HTTPAPI/2.0"
         response.Headers.[StrictTransportSecurity] |> should equal "max-age=16070400; includeSubDomains"
         response.Headers.[Trailer] |> should equal "Max-Forwards"
-        response.Headers.[TransferEncoding] |> should equal "chunked"
+        response.Headers.[TransferEncoding] |> should equal "identity"
         response.Headers.[Vary] |> should equal "*"
         response.Headers.[ViaResponse] |> should equal "1.0 fred, 1.1 example.com (Apache/1.1)"
         response.Headers.[WarningResponse] |> should equal "199 Miscellaneous warning"
@@ -389,9 +395,9 @@ type ``Integration tests`` ()=
     member x.``Patch method works`` () =
         createRequest Patch "http://localhost:1234/TestServer/Patch" |> getResponseCode |> should equal 200
 
-    //[<Test>]
-    //member x.``Head method works`` () =
-    //    createRequest Head "http://localhost:1234/TestServer/Get" |> getResponseCode |> should equal 200
+    [<Test>]
+    member x.``Head method works`` () =
+        createRequest Head "http://localhost:1234/TestServer/Get" |> getResponseCode |> should equal 200
         // Head method automatically handled for Get methods in Nancy
 
     [<Test>]
