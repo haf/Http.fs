@@ -370,6 +370,43 @@ type ``Integration tests`` ()=
         (fun() -> new StreamReader(createRequest Get "http://localhost:1234/TestServer/Raw" |> getResponseStream id) |> ignore) 
             |> should throw typeof<ArgumentException>
 
+    [<Test>]
+    member x.``Get method works`` () =
+        createRequest Get "http://localhost:1234/TestServer/Get" |> getResponseCode |> should equal 200
+
+    [<Test>]
+    member x.``Options method works`` () =
+        createRequest Options "http://localhost:1234/TestServer/Options" |> getResponseCode |> should equal 200
+
+    [<Test>]
+    member x.``Post method works`` () =
+        createRequest Post "http://localhost:1234/TestServer/Post" 
+        |> withBody "hi mum" // posts need a body in Nancy
+        |> getResponseCode 
+        |> should equal 200
+
+    [<Test>]
+    member x.``Patch method works`` () =
+        createRequest Patch "http://localhost:1234/TestServer/Patch" |> getResponseCode |> should equal 200
+
+    //[<Test>]
+    //member x.``Head method works`` () =
+    //    createRequest Head "http://localhost:1234/TestServer/Get" |> getResponseCode |> should equal 200
+        // Head method automatically handled for Get methods in Nancy
+
+    [<Test>]
+    member x.``Put method works`` () =
+        createRequest Put "http://localhost:1234/TestServer/Put" 
+        |> withBody "hi mum" // puts need a body in Nancy
+        |> getResponseCode 
+        |> should equal 200
+
+    [<Test>]
+    member x.``Delete method works`` () =
+        createRequest Delete "http://localhost:1234/TestServer/Delete" |> getResponseCode |> should equal 200
+
+
+    // Nancy doesn't support Trace or Connect HTTP methods, so we can't test them easily
 
     // TODO: test proxy - approach below doesn't seem to work, even without port specified in proxy (which appends it to the end of the URL)
     // There's a script called 'test proxy' which can be used to test it manually.

@@ -11,7 +11,7 @@ open Microsoft.FSharp.Control.WebExtensions
 
 let private ISO_Latin_1 = "ISO-8859-1"
 
-type HttpMethod = Options | Get | Head | Post | Put | Delete | Trace | Connect
+type HttpMethod = Options | Get | Head | Post | Put | Delete | Trace | Patch | Connect
 
 // Same as System.Net.DecompressionMethods, but I didn't want to expose that
 type DecompressionScheme = 
@@ -254,14 +254,15 @@ let withKeepAlive value request =
 
 let private getMethodAsString request =
     match request.Method with
-        | Options -> "Options"
-        | Get -> "Get"
+        | Options -> "OPTIONS"
+        | Get -> "GET"
         | Head -> "HEAD"
         | Post -> "POST"
         | Put -> "PUT"
         | Delete -> "DELETE"
         | Trace -> "TRACE"
         | Connect -> "CONNECT"
+        | Patch -> "PATCH"
 
 let private getQueryString request = 
     match request.QueryStringItems.IsSome with
@@ -456,7 +457,7 @@ let private readBody encoding (response:HttpWebResponse) = async {
         match encoding with
         | None -> 
             match response.CharacterSet with
-            | null -> Encoding.GetEncoding(ISO_Latin_1)
+            | null | "" -> Encoding.GetEncoding(ISO_Latin_1)
             | responseCharset -> Encoding.GetEncoding(responseCharset |> mapEncoding)
         | Some(enc) -> Encoding.GetEncoding(enc:string)
     use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)

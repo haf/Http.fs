@@ -254,14 +254,15 @@ let withKeepAlive value request =
 
 let private getMethodAsString request =
     match request.Method with
-        | Options -> "Options"
-        | Get -> "Get"
+        | Options -> "OPTIONS"
+        | Get -> "GET"
         | Head -> "HEAD"
         | Post -> "POST"
         | Put -> "PUT"
         | Delete -> "DELETE"
         | Trace -> "TRACE"
         | Connect -> "CONNECT"
+        | Patch -> "PATCH"
 
 let private getQueryString request = 
     match request.QueryStringItems.IsSome with

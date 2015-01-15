@@ -150,3 +150,11 @@ type FakeServer() as self =
                 let response = "body" |> Nancy.Response.op_Implicit
                 response.StatusCode <- HttpStatusCode.OK
                 response :> obj
+
+        self.Get.["Get"] <- fun _ -> 200 :> obj
+        // Head method automatically handled for Get methods in Nancy
+        self.Post.["Post"] <- fun _ -> 200 :> obj
+        self.Options.["Options"] <- fun _ -> 200 :> obj
+        self.Put.["Put"] <- fun _ -> 200 :> obj
+        self.Delete.["Delete"] <- fun _ -> 200 :> obj
+        self.Patch.["Patch"] <- fun _ -> 200 :> obj
