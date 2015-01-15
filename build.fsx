@@ -1,5 +1,5 @@
 // include Fake lib
-#r @"packages\FAKE.3.4.0\tools\FakeLib.dll"
+#r @"packages\FAKE.3.14.0\tools\FakeLib.dll"
 open Fake 
 
 // Paths
@@ -86,7 +86,7 @@ Target "Copy Release Files" (fun _ ->
 
 // BEFORE doing this, set the correct version in AssemblyInfo!
 // note to self - call like this: 
-// packages\FAKE.3.4.0\tools\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="latest release"
+// packages\FAKE.3.14.0\tools\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="latest release"
 Target "Upload to NuGet" (fun _ ->
     // Copy the dll into the right place
     CopyFiles 
