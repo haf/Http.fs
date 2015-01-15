@@ -1,6 +1,6 @@
-// include Fake lib
 #r @"packages\FAKE.3.14.0\tools\FakeLib.dll"
 open Fake 
+open Fake.AssemblyInfoFile
 
 // Paths
 let httpClientDir = "./HttpClient/"
@@ -15,14 +15,10 @@ let nuGetProjectDll = nuGetDir + "lib/net40/HttpClient.dll"
 let nUnitToolPath = "Tools/NUnit-2.6.3/bin"
 
 // Helper Functions
-let outputFolder baseDir =
-    baseDir + "bin/Debug/"
-
-let binFolder baseDir =
-    baseDir + "bin/"
-
-let projectFolder baseDir =
-    baseDir + "*.fsproj"
+let outputFolder baseDir = baseDir + "bin/Debug/"
+let binFolder baseDir = baseDir + "bin/"
+let projectFolder baseDir = baseDir + "*.fsproj"
+let assemblyInfo baseDir = baseDir + "AssemblyInfo.fs"
 
 let BuildTarget targetName baseDirectory =
     Target targetName (fun _ ->
@@ -38,6 +34,17 @@ Target "Clean" (fun _ ->
         unitTestsDir |> binFolder
         integrationTestsDir |> binFolder
         sampleApplicationDir |> binFolder
+    ]
+)
+
+Target "Update Assembly Version" (fun _ ->
+    CreateFSharpAssemblyInfo (httpClientDir |> assemblyInfo) [
+         Attribute.Title "HttpClient"
+         Attribute.Description "An HTTP client for F#"
+         Attribute.Guid "4ead3524-8220-4f0b-b77d-edd088597fcf"
+         Attribute.Product "Http.fs"
+         Attribute.Version (getBuildParam "nuget-version")
+         Attribute.FileVersion (getBuildParam "nuget-version")
     ]
 )
 
@@ -84,7 +91,6 @@ Target "Copy Release Files" (fun _ ->
         ]
 )
 
-// BEFORE doing this, set the correct version in AssemblyInfo!
 // note to self - call like this: 
 // packages\FAKE.3.14.0\tools\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="latest release"
 Target "Upload to NuGet" (fun _ ->
@@ -117,6 +123,7 @@ Target "All" (fun _ ->
 
 // Dependencies
 "Clean" 
+    =?> ("Update Assembly Version", hasBuildParam "nuget-version")
     ==> "BuildClient"
     ==> "BuildUnitTests" <=> "BuildIntegrationTests" <=> "BuildSampleApplication"
     ==> "Run Unit Tests" <=> "Run Integration Tests"
