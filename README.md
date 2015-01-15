@@ -3,7 +3,7 @@
 
 A gloriously functional HTTP client library for F#!
 
-[![Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master) [![NuGet](http://img.shields.io/badge/NuGet-1.4.0-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
+[![Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master) [![NuGet](http://img.shields.io/badge/NuGet-1.5.1-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
 
 ## How do I use it? ##
 
@@ -158,6 +158,8 @@ Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defi
 * 1.3.0 - Added getResponseBytes, thanks to [Sergeeeek](https://github.com/Sergeeeek)
 * 1.3.1 - Added project logo, thanks to [sergey-tihon](https://github.com/sergey-tihon)
 * 1.4.0 - Added getResponseStream, with thanks to [xkrt](https://github.com/xkrt)
+* 1.5.0 - Added support for Patch method with help from [haf](https://github.com/haf), and [xkrt](https://github.com/xkrt) fixed an issue with an empty response.CharacterSet
+* 1.5.1 - Corrected the assembly version
 
 ## FAQ ##
 
