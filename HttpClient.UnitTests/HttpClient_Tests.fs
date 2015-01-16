@@ -17,7 +17,7 @@ let ``createRequest makes a Request with a Method and URL, and sensible defaults
     createdRequest.Method |> should equal Get
     createdRequest.AutoDecompression |> should equal DecompressionScheme.None
     createdRequest.AutoFollowRedirects |> should equal true
-    createdRequest.Body.IsNone |> should equal true
+    createdRequest.Body |> should equal NoBody
     createdRequest.BodyCharacterEncoding.IsNone |> should equal true
     createdRequest.Cookies.IsNone |> should equal true
     createdRequest.CookiesEnabled |> should equal true
@@ -104,7 +104,7 @@ let ``If a custom header with the same name is added multiple times, an exceptio
 
 [<Test>]
 let ``withBody sets the request body`` () =
-    (createValidRequest |> withBody """Hello mum!%2\/@$""").Body.Value |> should equal """Hello mum!%2\/@$"""
+    (createValidRequest |> withBody """Hello mum!%2\/@$""").Body |> should equal <| TextBody("""Hello mum!%2\/@$""")
 
 [<Test>]
 let ``withBody uses default character encoding of ISO-8859-1`` () =
@@ -112,7 +112,7 @@ let ``withBody uses default character encoding of ISO-8859-1`` () =
 
 [<Test>]
 let ``withBodyEncoded sets the request body`` () =
-    (createValidRequest |> withBodyEncoded """Hello mum!%2\/@$""" "UTF-8").Body.Value |> should equal """Hello mum!%2\/@$"""
+    (createValidRequest |> withBodyEncoded """Hello mum!%2\/@$""" "UTF-8").Body |> should equal <| TextBody("""Hello mum!%2\/@$""")
 
 [<Test>]
 let ``withBodyEncoded sets the body encoding`` () =
@@ -208,3 +208,30 @@ let ``withProxy can set proxy with no credentials`` () =
 [<Test>]
 let ``withKeepAlive sets KeepAlive`` () =
     (createValidRequest |> withKeepAlive false).KeepAlive |> should equal false
+
+[<Test>]
+let ``withBodyBytes sets the request body`` () =
+    let bodyBytes = Array.create 4 (new Byte())
+
+    bodyBytes.[0] <- byte(98)
+    bodyBytes.[1] <- byte(111)
+    bodyBytes.[2] <- byte(100)
+    bodyBytes.[3] <- byte(121)
+
+    (createValidRequest |> withBodyBytes bodyBytes).Body |> should equal <| BytesBody(bodyBytes)
+
+[<Test>]
+let ``If withBodyBytes is called after withBody, the body will be text`` () =
+    let bodyBytes = Array.create 0 (new Byte())
+
+    (createValidRequest 
+    |> withBody "hi mum"
+    |> withBodyBytes bodyBytes).Body |> should equal <| BytesBody(bodyBytes)
+
+[<Test>]
+let ``If withBody is called after withBodyBytes, the body will be text`` () =
+    let bodyBytes = Array.create 0 (new Byte())
+
+    (createValidRequest 
+    |> withBodyBytes bodyBytes
+    |> withBody "hi mum").Body |> should equal <| TextBody("hi mum")

@@ -19,8 +19,8 @@ type DecompressionScheme =
     | GZip = 1
     | Deflate = 2
 
-// Defines mappings between encodings which might be specified to the names
-// which work with the .net encoder
+// Defines mappings between encodings which might be specified and 
+// the names which work with the .net encoder
 let private responseEncodingMappings =
     Map.empty
         .Add("utf8", "utf-8")
@@ -109,6 +109,11 @@ type Proxy = {
     Credentials: ProxyCredentials 
 }
 
+type RequestBody =
+    | NoBody
+    | TextBody of string
+    | BytesBody of byte[]
+
 type Request = {
     Url: string
     Method: HttpMethod
@@ -116,7 +121,7 @@ type Request = {
     AutoFollowRedirects: bool
     AutoDecompression: DecompressionScheme
     Headers: RequestHeader list option
-    Body: string option
+    Body: RequestBody
     BodyCharacterEncoding: string option
     QueryStringItems: NameValue list option
     Cookies: NameValue list option
@@ -144,7 +149,7 @@ let createRequest httpMethod url = {
     AutoFollowRedirects = true;
     AutoDecompression = DecompressionScheme.None;
     Headers = None; 
-    Body = None;
+    Body = NoBody;
     BodyCharacterEncoding = None;
     QueryStringItems = None;
     Cookies = None;
@@ -207,11 +212,15 @@ let withAutoDecompression decompressionSchemes request =
 ///
 /// Only certain request types should have a body, e.g. Posts.
 let withBody body request =
-    {request with Body = Some(body); BodyCharacterEncoding = Some(ISO_Latin_1)}
+    {request with Body = TextBody(body); BodyCharacterEncoding = Some(ISO_Latin_1)}
 
 /// Sets the request body, using the provided character encoding.
 let withBodyEncoded body characterEncoding request =
-    {request with Body = Some(body); BodyCharacterEncoding = Some(characterEncoding)}
+    {request with Body = TextBody(body); BodyCharacterEncoding = Some(characterEncoding)}
+
+/// Sets the request body using a byte array.
+let withBodyBytes body request =
+    {request with Body = BytesBody(body)}
 
 /// Adds the provided QueryString record onto the request URL.
 /// Multiple items can be appended.
@@ -321,7 +330,7 @@ let private setCookies (cookies:NameValue list option) url (webRequest:HttpWebRe
 
 // Sets proxy on HttpWebRequest.
 // Mutates HttpWebRequest.
-let setProxy proxy (webRequest:HttpWebRequest) =
+let private setProxy proxy (webRequest:HttpWebRequest) =
     proxy |> Option.iter (fun proxy ->
         let webProxy = WebProxy(proxy.Address, proxy.Port)
 
@@ -333,19 +342,24 @@ let setProxy proxy (webRequest:HttpWebRequest) =
 
         webRequest.Proxy <- webProxy)
 
-// Sets body on HttpWebRequest.
-// Mutates HttpWebRequest.
-let setBody (body:string option) (encoding:string option) (webRequest:HttpWebRequest) =
-    if body.IsSome then
+// Sets the budy of the HttpWebRequest as bytes.
+// Mutates the HttpWebRequest.
+let private setBodyBytes (body:byte[]) (webRequest:HttpWebRequest) =
+    // Getting the request stream seems to be actually connecting to the internet in some way
+    use requestStream = webRequest.GetRequestStream() 
+    requestStream.AsyncWrite(body, 0, body.Length) |> Async.RunSynchronously
 
-        if encoding.IsNone then
-            failwith "Body Character Encoding not set"
-
-        let bodyBytes = Encoding.GetEncoding(encoding.Value).GetBytes(body.Value)
-
-        // Getting the request stream seems to be actually connecting to the internet in some way
-        use requestStream = webRequest.GetRequestStream() 
-        requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
+// Sets the body on the HttpWebRequest using the text or bytes specified in the Request (if any).
+// Mutates the HttpWebRequest.
+let private setBody body (encoding:string option) (webRequest:HttpWebRequest) =
+    
+    match body with
+    | NoBody -> ()
+    | BytesBody(byteContent) -> webRequest |> setBodyBytes byteContent
+    | TextBody(textContent) -> 
+        if encoding.IsNone then failwith "Body Character Encoding not set"
+        let bodyAsBytes = Encoding.GetEncoding(encoding.Value).GetBytes(textContent)
+        webRequest |> setBodyBytes bodyAsBytes
 
 // The nasty business of turning a Request into an HttpWebRequest
 let private toHttpWebRequest request =

@@ -279,6 +279,26 @@ type ``Integration tests`` ()=
             |> should throw typeof<ArgumentException>
 
     [<Test>]
+    member x.``the request body can be specified as a byte array`` () =
+        
+        let bodyBytes = Array.create 4 (new Byte())
+        bodyBytes.[0] <- byte(98)
+        bodyBytes.[1] <- byte(111)
+        bodyBytes.[2] <- byte(100)
+        bodyBytes.[3] <- byte(121)
+        
+        createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
+        |> withBodyBytes bodyBytes
+        |> getResponseCode |> ignore
+
+        use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body)
+        bodyStream.Read() |> should equal 98
+        bodyStream.Read() |> should equal 111
+        bodyStream.Read() |> should equal 100
+        bodyStream.Read() |> should equal 121
+        bodyStream.Read() |> should equal -1
+
+    [<Test>]
     member x.``if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies`` () =
         let response = 
             createRequest Get "http://localhost:1234/TestServer/MoonLanguageCorrectEncoding" 
