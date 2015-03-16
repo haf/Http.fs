@@ -104,6 +104,8 @@ response.Headers.[ContentTypeResponse]
 ## Examples ##
 
 Check out *HttpClient.SampleApplication*, which contains a program demonstrating the various functions of the library being used and (to a limited extent) unit tested.
+
+[SamplePostApplication](https://github.com/relentless/Http.fs/blob/master/HttpClient.SamplePostApplication/README.md) shows how you can create a post with a body containing forms.
         
 ## Cool!  So how do I get it in my code? ##
 
