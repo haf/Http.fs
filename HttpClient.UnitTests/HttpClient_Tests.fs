@@ -1,6 +1,7 @@
 ﻿module HttpClient_Tests
 
 open System
+open System.Net
 open NUnit.Framework
 open FsUnit
 open HttpClient
@@ -235,3 +236,32 @@ let ``If withBody is called after withBodyBytes, the body will be text`` () =
     (createValidRequest 
     |> withBodyBytes bodyBytes
     |> withBody "hi mum").Body |> should equal <| TextBody("hi mum")
+
+[<Test>]
+[<Category("UnitFluentBuilder")>]
+let ``requests have timeout set by default`` () =
+    let createdRequest = createValidRequest
+    
+    createdRequest.Timeout |> should equal 100000
+
+[<Test>]
+[<Category("UnitFluentBuilder")>]
+let ``withTimeout can set Timeout`` () =
+    let createdRequest = 
+        createValidRequest
+        |> withTimeout 150000
+
+    createdRequest.Timeout |> should equal 150000
+
+[<Test>]
+[<Category("MagicConstants")>]
+let ``Timeout magic constant is up to date with HttpWebRequest.Timeout default value`` () =
+    // Random request with defaults.
+    let createdRequest = createValidRequest
+    
+    // Actual HttpWebRequest.
+    let url = "http://www.google.com"
+    let webRequest = HttpWebRequest.Create(url) :?> HttpWebRequest
+
+
+    createdRequest.Timeout |> should equal webRequest.Timeout
