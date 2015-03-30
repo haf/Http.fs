@@ -151,6 +151,13 @@ type FakeServer() as self =
                 response.StatusCode <- HttpStatusCode.OK
                 response :> obj
 
+        self.Post.["SlowResponse"] <- 
+            fun _ -> 
+                async { 
+                    do! Async.Sleep(10000)
+                } |> Async.RunSynchronously
+                200 :> obj
+
         self.Get.["Get"] <- fun _ -> 200 :> obj
         // Head method automatically handled for Get methods in Nancy
         self.Post.["Post"] <- fun _ -> 200 :> obj

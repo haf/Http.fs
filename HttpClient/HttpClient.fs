@@ -128,6 +128,7 @@ type Request = {
     ResponseCharacterEncoding: string option
     Proxy: Proxy option
     KeepAlive: bool
+    Timeout: int
 }
 
 type Response = {
@@ -156,6 +157,9 @@ let createRequest httpMethod url = {
     ResponseCharacterEncoding = None;
     Proxy = None;
     KeepAlive = true;
+    /// The default value is 100,000 milliseconds (100 seconds).
+    /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
+    Timeout = 100000
 }
 
 // Adds an element to a list which may be none
@@ -260,6 +264,10 @@ let withProxy proxy request =
 /// NOTE: If true, headers only sent on first request.
 let withKeepAlive value request =
     {request with KeepAlive = value}
+
+/// Sets the request body, using the provided character encoding.
+let withTimeout value request =
+    {request with Timeout = value}
 
 let private getMethodAsString request =
     match request.Method with
@@ -384,6 +392,7 @@ let private toHttpWebRequest request =
     webRequest |> setBody request.Body request.BodyCharacterEncoding
 
     webRequest.KeepAlive <- request.KeepAlive
+    webRequest.Timeout <- request.Timeout
 
     webRequest
 
