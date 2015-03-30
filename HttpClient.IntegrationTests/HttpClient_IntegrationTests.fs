@@ -397,6 +397,17 @@ type ``Integration tests`` ()=
             |> should throw typeof<ArgumentException>
 
     [<Test>]
+    /// Timeout follows .Net behaviour and throws WebException exception when reached.
+    /// https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx
+    member x.``if the resource is not returned within Timeout, throw WebException`` () =
+        (fun() ->
+            createRequest Post "http://localhost:1234/TestServer/SlowResponse" 
+            |> withTimeout 1000
+            |> withBody "hi mum"
+            |> getResponseCode |> ignore)
+            |> should throw typeof<WebException>
+
+    [<Test>]
     member x.``Get method works`` () =
         createRequest Get "http://localhost:1234/TestServer/Get" |> getResponseCode |> should equal 200
 
