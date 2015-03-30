@@ -10,7 +10,6 @@ open Microsoft.FSharp.Control.CommonExtensions
 open Microsoft.FSharp.Control.WebExtensions
 
 let private ISO_Latin_1 = "ISO-8859-1"
-let Timeout_Default = 100000
 
 type HttpMethod = Options | Get | Head | Post | Put | Delete | Trace | Patch | Connect
 
@@ -95,7 +94,6 @@ type RequestHeader =
     | Via of string
     | Warning of string
     | Custom of NameValue
-    | Timeout of int
 
 type UserDetails = { username:string; password:string }
 
@@ -130,7 +128,6 @@ type Request = {
     ResponseCharacterEncoding: string option
     Proxy: Proxy option
     KeepAlive: bool
-    mutable Timeout: int
 }
 
 type Response = {
@@ -159,7 +156,6 @@ let createRequest httpMethod url = {
     ResponseCharacterEncoding = None;
     Proxy = None;
     KeepAlive = true;
-    Timeout = Timeout_Default;
 }
 
 // Adds an element to a list which may be none
@@ -265,12 +261,6 @@ let withProxy proxy request =
 let withKeepAlive value request =
     {request with KeepAlive = value}
 
-/// The number of milliseconds to wait before the request times out. The default value is 100,000 milliseconds (100 seconds).
-/// Or System.ThreadingTimeout.Infinite field, value -1. 
-/// https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx
-let withTimeout value timeout =
-    {timeout with Timeout = value}
-
 let private getMethodAsString request =
     match request.Method with
         | Options -> "OPTIONS"
@@ -303,7 +293,6 @@ let private setHeaders (headers:RequestHeader list option) (webRequest:HttpWebRe
         |> List.iter (fun header ->
             match header with
             | Accept(value) -> webRequest.Accept <- value
-            | Timeout(value) -> webRequest.Timeout <- value
             | AcceptCharset(value) -> webRequest.Headers.Add("Accept-Charset", value)
             | AcceptDatetime(value) -> webRequest.Headers.Add("Accept-Datetime", value)
             | AcceptLanguage(value) -> webRequest.Headers.Add("Accept-Language", value)
@@ -395,8 +384,6 @@ let private toHttpWebRequest request =
     webRequest |> setBody request.Body request.BodyCharacterEncoding
 
     webRequest.KeepAlive <- request.KeepAlive
-
-    webRequest.Timeout <- request.Timeout
 
     webRequest
 

@@ -60,7 +60,6 @@
     <None Include="app.config" />
     <Compile Include="HttpServer.fs" />
     <Compile Include="HttpClient_IntegrationTests.fs" />
-    <Compile Include="HttpClient_ManualIntegrationTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
