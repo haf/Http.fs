@@ -221,6 +221,10 @@ let ``withBodyBytes sets the request body`` () =
     (createValidRequest |> withBodyBytes bodyBytes).Body |> should equal <| BytesBody(bodyBytes)
 
 [<Test>]
+let ``withTimeout sets Timeout`` () =
+    (createValidRequest |> withTimeout 500).Timeout |> should equal 500
+
+[<Test>]
 let ``If withBodyBytes is called after withBody, the body will be text`` () =
     let bodyBytes = Array.create 0 (new Byte())
 
