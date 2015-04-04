@@ -1,6 +1,7 @@
 ﻿module HttpServer
 
 open Nancy
+open Nancy.Extensions
 open Nancy.Hosting.Self
 open System
 open System.Threading
@@ -157,6 +158,21 @@ type FakeServer() as self =
                     do! Async.Sleep(10000)
                 } |> Async.RunSynchronously
                 200 :> obj
+
+        /// The response to the request can be found under another URI using a GET method. 
+        /// When received in response to a POST (or PUT/DELETE), it should be assumed that the server has 
+        /// received the data and the redirect should be issued with a separate GET message.
+        /// However, some Web applications and frameworks use the 302 status code as if it were the 303.
+        /// See http://en.wikipedia.org/wiki/List_of_HTTP_status_codes.
+        self.Post.["Redirect"] <- 
+            fun _ -> 
+                //let response = "body" |> Nancy.Response.op_Implicit
+                let r = new Responses.RedirectResponse(
+                            // Use existing route with code 200.
+                            "http://localhost:1234/TestServer/GoodStatusCode",
+                            // Redirect this request using HTTP GET (303), no 302 code.
+                            Nancy.Responses.RedirectResponse.RedirectType.SeeOther) 
+                r :> obj
 
         self.Get.["Get"] <- fun _ -> 200 :> obj
         // Head method automatically handled for Get methods in Nancy

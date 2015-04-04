@@ -137,6 +137,9 @@ type Response = {
     ContentLength: int64
     Cookies: Map<string,string>
     Headers: Map<ResponseHeader,string>
+    /// A Uri that contains the URI of the Internet resource that responded to the request.
+    /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebresponse.responseuri%28v=vs.110%29.aspx"/>.
+    ResponseUri : System.Uri
 }
 
 /// <summary>Creates the Request record which can be used to make an HTTP request</summary>
@@ -555,6 +558,7 @@ let getResponseAsync request = async {
         ContentLength = response.ContentLength
         Cookies = cookies
         Headers = headers
+        ResponseUri = response.ResponseUri
     }
 }
 

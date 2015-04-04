@@ -442,6 +442,16 @@ type ``Integration tests`` ()=
     member x.``Delete method works`` () =
         createRequest Delete "http://localhost:1234/TestServer/Delete" |> getResponseCode |> should equal 200
 
+    [<Test>]
+    member x.``geResponse.ResponseUri should contain URI that responded to the request`` () =
+        // Is going to redirect to another route and return GET 200.
+        let request = 
+            createRequest Post "http://localhost:1234/TestServer/Redirect" 
+            |> withBody "hi mum" // posts need a body in Nancy
+        
+        let resp = request |> getResponse 
+        resp.StatusCode |> should equal 200
+        resp.ResponseUri.ToString() |> should equal "http://localhost:1234/TestServer/GoodStatusCode"
 
     // Nancy doesn't support Trace or Connect HTTP methods, so we can't test them easily
 
