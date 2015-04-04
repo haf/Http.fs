@@ -23,7 +23,8 @@ type ``Integration tests`` ()=
     [<TestFixtureSetUp>]
     member x.fixtureSetup() =
         // disable caching in HttpWebRequest/Response in case it interferes with the tests
-        HttpWebRequest.DefaultCachePolicy <- HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore)
+        try HttpWebRequest.DefaultCachePolicy <- HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore)
+        with _ -> ()
         nancyHost.Start()
 
     [<TestFixtureTearDown>]
