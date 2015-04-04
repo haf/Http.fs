@@ -42,7 +42,7 @@ type ``Integration tests`` ()=
         createRequest Get "http://localhost:1234/TestServer/RecordRequest"
         |> getResponseCode |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
-        HttpServer.recordedRequest.Value.Headers.Connection |> should equal "Keep-Alive"
+        HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "keep-alive"
 
         HttpServer.recordedRequest := null
         createRequest Get "http://localhost:1234/TestServer/RecordRequest"
@@ -57,14 +57,14 @@ type ``Integration tests`` ()=
         |> withKeepAlive false
         |> getResponseCode |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
-        HttpServer.recordedRequest.Value.Headers.Connection |> should equal "Close"
+        HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "close"
 
         HttpServer.recordedRequest := null
         createRequest Get "http://localhost:1234/TestServer/RecordRequest"
         |> withKeepAlive false
         |> getResponseCode |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
-        HttpServer.recordedRequest.Value.Headers.Connection |> should equal "Close"
+        HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "close"
 
     [<Test>] 
     member x.``createRequest should set everything correctly in the HTTP request`` ()=
@@ -246,7 +246,7 @@ type ``Integration tests`` ()=
         response.Headers.[ProxyAuthenticate] |> should equal "Basic"
         response.Headers.[Refresh] |> should equal "5; url=http://www.w3.org/pub/WWW/People.html"
         response.Headers.[RetryAfter] |> should equal "120"
-        response.Headers.[Server] |> should equal "Microsoft-HTTPAPI/2.0"
+        response.Headers.[Server] |> should contain "HTTPAPI/"
         response.Headers.[StrictTransportSecurity] |> should equal "max-age=16070400; includeSubDomains"
         response.Headers.[Trailer] |> should equal "Max-Forwards"
         response.Headers.[TransferEncoding] |> should equal "chunked"
