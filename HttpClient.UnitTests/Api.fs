@@ -1,6 +1,7 @@
 ﻿module HttpClient.Tests.Api
 
 open System
+open System.Text
 open Fuchu
 open HttpClient
 
@@ -18,12 +19,12 @@ let api =
             "has get method", fun r -> Assert.Equal(r.Method, Get)
             "has no decompression scheme", fun r -> Assert.Equal(r.AutoDecompression, DecompressionScheme.None)
             "should follow redirects", fun r -> Assert.IsTrue r.AutoFollowRedirects
-            "has no body", fun r -> Assert.IsNone r.Body
-            "has no body character encoding", fun r -> Assert.IsNone r.BodyCharacterEncoding
-            "has no cookies", fun r -> Assert.IsNone r.Cookies
+            "has empty body", fun r -> Assert.Equal (r.Body, BodyRaw [||])
+            "has UTF8 body character encoding", fun r -> Assert.Equal (r.BodyCharacterEncoding, Encoding.UTF8)
+            "has no cookies", fun r -> Assert.Empty r.Cookies
             "has cookies enabled", fun r -> Assert.IsTrue r.CookiesEnabled
-            "has no special headers", fun r -> Assert.IsNone r.Headers
-            "has no query string", fun r -> Assert.IsNone r.QueryStringItems
+            "has no special headers", fun r -> Assert.Empty r.Headers
+            "has no query string", fun r -> Assert.Empty r.QueryStringItems
             "has no response char encoding", fun r -> Assert.IsNone r.ResponseCharacterEncoding
             "has no proxy configured", fun r -> Assert.IsNone r.Proxy
             "uses keep-alive", fun r -> Assert.IsTrue r.KeepAlive
@@ -43,14 +44,14 @@ let api =
             let header =
                 (createValidRequest
                 |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36"))
-                  .Headers.Value
+                  .Headers
             Assert.Equal(header, [ UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36" ])
 
         testCase "withHeader Custom adds a custom header to the request" <| fun _ ->
             let header =
                 (createValidRequest
                 |> withHeader (Custom { name="X-Hello-Mum"; value="Happy Birthday!"}))
-                  .Headers.Value
+                  .Headers
             Assert.Equal(header, [ Custom { name="X-Hello-Mum"; value="Happy Birthday!"} ])
         
         given "multiple headers of different types can be added, including custom headers with different names" 
@@ -59,7 +60,7 @@ let api =
             |> withHeader (Referer "ref")
             |> withHeader (Custom { name="c1"; value="v1"})
             |> withHeader (Custom { name="c2"; value="v2"})
-            |> fun x -> x.Headers.Value)
+            |> fun x -> x.Headers)
             [   "has four items", fun hs -> Assert.Equal(hs.Length, 4)
                 "contains 'ua' UserAgent", fun hs -> Assert.Contains (hs, UserAgent "ua")
                 "contains a referrer", fun hs -> Assert.Contains (hs, Referer "ref")
@@ -71,23 +72,26 @@ let api =
             let createdRequest =
                 createValidRequest
                 |> withBasicAuthentication "myUsername" "myPassword"
-            Assert.Contains(createdRequest.Headers.Value, Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk")
+            Assert.Contains(createdRequest.Headers, Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk")
 
         testCase "withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64" <| fun _ ->
             let createdRequest =
                 createValidRequest
                 |> withBasicAuthentication "Ãµ¶" "ÖØ" // ISO-8859-1 characters not present in ASCII
-            Assert.Contains(createdRequest.Headers.Value, Authorization "Basic w7W2OtbY")
+            Assert.Contains(createdRequest.Headers, Authorization "Basic w7W2OtbY")
 
         testCase "If the same header is added multiple times, throws an exception" <| fun _ ->
-            Assert.Raise("header added twice", typeof<Exception>, (fun () ->
+            try
                 createValidRequest
                 |> withHeader (UserAgent "ua1")
                 |> withHeader (UserAgent "ua2")
-                |> ignore))
+                |> ignore
+            with
+            | DuplicateHeader _ -> ()
+            | e -> reraise ()
           
         testCase "If a custom header with the same name is added multiple times, an exception is thrown" <| fun _ ->
-            Assert.Raise("header added twice", typeof<Exception>, (fun () ->
+            Assert.Raise("header added twice", typeof<DuplicateHeader>, (fun () ->
                 createValidRequest
                 |> withHeader (Custom { name="c1"; value="v1"})
                 |> withHeader (Custom { name="c1"; value="v2"})
@@ -97,7 +101,7 @@ let api =
             (createValidRequest
             |> withQueryStringItem {name="f1"; value="v1"}
             |> withQueryStringItem {name="f2"; value="v2"}
-            |> fun r -> r.QueryStringItems.Value)
+            |> fun r -> r.QueryStringItems)
             [   "has two items", fun qs -> Assert.Equal(2, qs.Length)
                 "contains first item", fun qs -> Assert.Contains(qs, {name="f1"; value="v1"})
                 "contains second item", fun qs -> Assert.Contains(qs, {name="f2"; value="v2"})
@@ -113,7 +117,7 @@ let api =
             (createRequest Get "http://www.google.com/"
             |> withCookie { name = "c1"; value = "v1" }
             |> withCookie { name = "c2"; value = "v2" }
-            |> fun x -> x.Cookies.Value)
+            |> fun x -> x.Cookies)
             [   "should have two cookies", fun cs -> Assert.Equal(2, cs.Length)
                 "should have first cookie", fun cs -> Assert.Contains(cs, { name = "c1"; value = "v1" })
                 "should have second cookie", fun cs -> Assert.Contains(cs, { name = "c2"; value = "v2" })

@@ -1,4 +1,5 @@
-﻿namespace System
+﻿namespace HttpClientAsm
+
 open System.Reflection
 open System.Runtime.InteropServices
 

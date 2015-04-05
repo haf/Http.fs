@@ -26,3 +26,8 @@ type Assert with
         match List.tryFind ((=) value) items with
         | None -> Tests.failtest "couldn't find %A in list %A" value items
         | Some x -> ()
+
+    static member Empty (xs : 'a list) =
+        match xs with
+        | [] -> ()
+        | xs -> Tests.failtestf "expected empty list, but got %A" xs

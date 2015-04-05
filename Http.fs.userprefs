@@ -1,14 +1,26 @@
 ﻿<Properties StartupItem="HttpClient.UnitTests/HttpClient.UnitTests.fsproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="HttpClient.UnitTests/UnitTests.fs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="HttpClient.UnitTests/Program.fs">
     <Files>
-      <File FileName="HttpClient.UnitTests/UnitTests.fs" Line="28" Column="48" />
+      <File FileName="HttpClient/HttpClient.fs" Line="309" Column="16" />
+      <File FileName="HttpClient.UnitTests/RequestBody.fs" Line="27" Column="78" NotebookId="1" />
+      <File FileName="HttpClient.UnitTests/Program.fs" Line="6" Column="5" NotebookId="1" />
     </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="Solution Items" expanded="True" />
+          <Node name="HttpClient" expanded="True" />
+          <Node name="HttpClient.IntegrationTests" expanded="True" />
+          <Node name="HttpClient.UnitTests" expanded="True">
+            <Node name="Program.fs" selected="True" />
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore>
-      <Breakpoint file="/Users/henrik.feldt/dev/haf/Http.fs/HttpClient.IntegrationTests/HttpClient_IntegrationTests.fs" line="170" column="86" />
-    </BreakpointStore>
+    <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>

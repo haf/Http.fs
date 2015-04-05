@@ -41,6 +41,7 @@
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InternalsVisibleTo.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="AsyncStreamReader.fs" />
     <Compile Include="HttpClient.fs" />
