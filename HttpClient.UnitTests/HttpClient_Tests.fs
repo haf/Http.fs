@@ -21,8 +21,8 @@ let ``createRequest makes a Request with a Method and URL, and sensible defaults
     createdRequest.BodyCharacterEncoding.IsNone |> should equal true
     createdRequest.Cookies.IsNone |> should equal true
     createdRequest.CookiesEnabled |> should equal true
-    createdRequest.Headers.IsNone |> should equal true
-    createdRequest.QueryStringItems.IsNone |> should equal true
+    createdRequest.Headers.Length |> should equal 0
+    createdRequest.QueryStringItems.IsEmpty |> should equal true
     createdRequest.ResponseCharacterEncoding.IsNone |> should equal true
     createdRequest.Proxy.IsNone |> should equal true
     createdRequest.KeepAlive |> should equal true
@@ -46,13 +46,13 @@ let ``withCookiesDisabled disables cookies`` () =
 [<Test>]
 let ``withHeader adds header to the request`` () =
     (createValidRequest
-    |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")).Headers.Value
+    |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")).Headers
     |> should equal [ UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36" ]
 
 [<Test>]
 let ``withHeader Custom adds a custom header to the request`` () =
     (createValidRequest
-    |> withHeader (Custom { name="X-Hello-Mum"; value="Happy Birthday!"})).Headers.Value
+    |> withHeader (Custom { name="X-Hello-Mum"; value="Happy Birthday!"})).Headers
     |> should equal [ Custom { name="X-Hello-Mum"; value="Happy Birthday!"} ]
 
 [<Test>]
@@ -63,26 +63,26 @@ let ``multiple headers of different types can be added, including custom headers
         |> withHeader (Referer "ref")
         |> withHeader (Custom { name="c1"; value="v1"})
         |> withHeader (Custom { name="c2"; value="v2"})
-    createdRequest.Headers.Value |> should haveLength 4
-    createdRequest.Headers.Value |> should contain (UserAgent "ua")
-    createdRequest.Headers.Value |> should contain (Referer "ref")
-    createdRequest.Headers.Value |> should contain (Custom { name = "c1"; value = "v1" })
-    createdRequest.Headers.Value |> should contain (Custom { name = "c2"; value = "v2"})
+    createdRequest.Headers |> should haveLength 4
+    createdRequest.Headers |> should contain (UserAgent "ua")
+    createdRequest.Headers |> should contain (Referer "ref")
+    createdRequest.Headers |> should contain (Custom { name = "c1"; value = "v1" })
+    createdRequest.Headers |> should contain (Custom { name = "c2"; value = "v2"})
 
 [<Test>]
 let ``withBasicAuthentication sets the Authorization header with the username and password base-64 encoded`` () =
     let createdRequest =
         createValidRequest
         |> withBasicAuthentication "myUsername" "myPassword"
-    createdRequest.Headers |> Option.isSome |> should equal true
-    createdRequest.Headers.Value |> should contain (Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk")
+    createdRequest.Headers.Length |> should equal 1
+    createdRequest.Headers |> should contain (Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk")
 
 [<Test>]
 let ``withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64`` () =
     let createdRequest =
         createValidRequest
         |> withBasicAuthentication "Ãµ¶" "ÖØ" // ISO-8859-1 characters not present in ASCII
-    createdRequest.Headers.Value |> should contain (Authorization "Basic w7W2OtbY")
+    createdRequest.Headers |> should contain (Authorization "Basic w7W2OtbY")
 
 [<Test>]
 let ``If the same header is added multiple times, throws an exception`` () =
@@ -135,9 +135,9 @@ let ``withQueryString adds the query string item to the list`` () =
         createValidRequest
         |> withQueryStringItem {name="f1"; value="v1"}
         |> withQueryStringItem {name="f2"; value="v2"}
-    createdRequest.QueryStringItems.Value |> should haveLength 2
-    createdRequest.QueryStringItems.Value |> should contain {name="f1"; value="v1"}
-    createdRequest.QueryStringItems.Value |> should contain {name="f2"; value="v2"}
+    createdRequest.QueryStringItems |> should haveLength 2
+    createdRequest.QueryStringItems |> should contain {name="f1"; value="v1"}
+    createdRequest.QueryStringItems |> should contain {name="f2"; value="v2"}
 
 [<Test>]
 let ``withCookie throws an exception if cookies are disabled`` () =
