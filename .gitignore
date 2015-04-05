@@ -10,11 +10,6 @@
 *.suo
 *.vssscc
 *.vspscc
-# Include dlls & exes if they’re in the NuGet packages directory
-!/packages/*/*/*.dll
-!/packages/*/lib/*/*.dll
-!/packages/*/*/*.exe
-!/packages/*/lib/*/*.exe
 # VS Upgrade stuff #
 ####################
 UpgradeLog.XML
@@ -24,6 +19,7 @@ _UpgradeReport_Files/
 bin/
 obj/
 packages/
+Release/
 TestResults/
 # Web publish log #
 ###################
@@ -38,17 +34,3 @@ TestResults/
 ehthumbs.db
 Icon?
 Thumbs.db
-# Include release files
-!/Release/*
-!/Release/NuGet/*
-!/Release/NuGet/lib/net40/*
-# Include Tools
-!/Tools/NUnit-2.6.3/*
-!/Tools/NUnit-2.6.3/bin/*
-!/Tools/NUnit-2.6.3/bin/lib/*
-!/Tools/OpenCover.4.5.2506/*
-!/Tools/OpenCover.4.5.2506/x64/*
-!/Tools/OpenCover.4.5.2506/x86/*
-!/Tools/ReportGenerator_1.9.1.0/*
-!/Tools/ReportGenerator_1.9.1.0/bin/*
-!/Tools/NuGet/NuGet.exe
