@@ -23,6 +23,8 @@ let nancyHost =
         hostConfig, 
         new Uri("http://localhost:1234/TestServer/"))
 
+let utf8 = Encoding.UTF8
+
 [<TestFixture>] 
 type ``Integration tests`` ()=
 
@@ -148,7 +150,7 @@ type ``Integration tests`` ()=
         |> withHeader (Authorization  "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
         |> withHeader (Connection "conn1" )
         |> withHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
-        |> withHeader (ContentType "application/json" )
+        |> withHeader (ContentType { typ = "application"; subtype = "json"; charset = None})
         |> withHeader (Date (new DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
         |> withHeader (From "user@example.com" )
         |> withHeader (IfMatch "737060cd8c284d8af7ad3082f209582d" )
@@ -264,7 +266,7 @@ type ``Integration tests`` ()=
     member x.``if body character encoding is specified, encodes the request body with it`` () =
         let response = 
             createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
-            |> withBodyEncoded "¥§±Æ" "UTF-8" // random UTF-8 characters
+            |> withBodyEncoded "¥§±Æ" utf8 // random UTF-8 characters
             |> getResponseCode |> ignore
         use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body,Encoding.GetEncoding("UTF-8"))
         bodyStream.ReadToEnd() |> should equal "¥§±Æ"
@@ -276,26 +278,6 @@ type ``Integration tests`` ()=
             |> withBodyEncoded "hi mum" "notAValidEncoding"
             |> getResponseCode |> ignore)
             |> should throw typeof<ArgumentException>
-
-    [<Test>]
-    member x.``the request body can be specified as a byte array`` () =
-        
-        let bodyBytes = Array.create 4 (new Byte())
-        bodyBytes.[0] <- byte(98)
-        bodyBytes.[1] <- byte(111)
-        bodyBytes.[2] <- byte(100)
-        bodyBytes.[3] <- byte(121)
-        
-        createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
-        |> withBodyBytes bodyBytes
-        |> getResponseCode |> ignore
-
-        use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body)
-        bodyStream.Read() |> should equal 98
-        bodyStream.Read() |> should equal 111
-        bodyStream.Read() |> should equal 100
-        bodyStream.Read() |> should equal 121
-        bodyStream.Read() |> should equal -1
 
     [<Test>]
     member x.``if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies`` () =

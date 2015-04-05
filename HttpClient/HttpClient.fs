@@ -167,7 +167,7 @@ type FormData =
     /// Will use: multipart/form-data
     | SingleFile of name:FormEntryName * File
     /// Use when you post multiple files as a multi-file-browse control
-    /// Will use: multipart/mixed
+    /// Will use: multipart/mixed inside a multipart/form-data.
     | MultiFile of name:FormEntryName * files:File list
     /// Use when you simply post form data
     | NameValue of NameValue
@@ -447,7 +447,7 @@ let withCookie cookie request =
 ///
 /// Many web pages define the character encoding in the HTML. This will not be used.
 let withResponseCharacterEncoding encoding request : Request = 
-    {request with ResponseCharacterEncoding = Some(encoding)}
+    { request with ResponseCharacterEncoding = Some encoding }
 
 /// Sends the request via the provided proxy.
 ///
@@ -523,11 +523,13 @@ module internal DotNetWrapper =
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
     let setBody state (encoding, body) (webRequest : HttpWebRequest) =
-        let bodyBytes = formatBody state (encoding, body)
-        // Getting the request stream seems to be actually connecting to the internet in some way
-        use requestStream = webRequest.GetRequestStream()
-        // TODO: expose async body
-        requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
+        match formatBody state (encoding, body) with
+        | [||] -> ()
+        | bodyBytes ->
+            // Getting the request stream seems to be actually connecting to the internet in some way
+            use requestStream = webRequest.GetRequestStream()
+            // TODO: expose async body
+            requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
 
     /// The nasty business of turning a Request into an HttpWebRequest
     let toHttpWebRequest state request =
