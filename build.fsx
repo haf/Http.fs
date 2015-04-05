@@ -1,7 +1,8 @@
 #!/usr/bin/env fsharpi
-#I @"packages/FAKE.3.14.0/tools"
+#I @"packages/FAKE/tools"
 #r @"FakeLib.dll"
 open Fake
+open System.IO
 open Fake.AssemblyInfoFile
 
 // Paths
@@ -14,13 +15,20 @@ let releaseDir = "Release/"
 let nuGetDir = releaseDir + "NuGet/"
 let nuSpecFile = nuGetDir + "HttpClient.dll.nuspec"
 let nuGetProjectDll = nuGetDir + "lib/net40/HttpClient.dll"
-let nUnitToolPath = "Tools/NUnit-2.6.3/bin"
+let nUnitToolPath = "packages/NUnit.Runners/tools/"
 
 // Helper Functions
-let outputFolder baseDir = baseDir + "bin/Debug/"
-let binFolder baseDir = baseDir + "bin/"
-let projectFolder baseDir = baseDir + "*.fsproj"
-let assemblyInfo baseDir = baseDir + "AssemblyInfo.fs"
+let outputFolder baseDir =
+    baseDir + "bin/Debug/"
+
+let projectFolder baseDir =
+    baseDir + "*.fsproj"
+
+let binFolder baseDir =
+    baseDir + "bin/"
+
+let assemblyInfo baseDir =
+    baseDir + "AssemblyInfo.fs"
 
 let BuildTarget targetName baseDirectory =
     Target targetName (fun _ ->
@@ -61,12 +69,10 @@ BuildTarget "BuildSampleApplication" sampleApplicationDir
 Target "Run Unit Tests" (fun _ ->
     let unitTestOutputFolder = unitTestsDir |> outputFolder
 
-    !! (unitTestOutputFolder + "/*.UnitTests.dll")
-    |> NUnit (fun p ->
-        {p with
-            ToolPath = nUnitToolPath;
-            DisableShadowCopy = true;
-            OutputFile = unitTestOutputFolder + "TestResults.xml"})
+    ProcessHelper.directExec (fun procInfo ->
+        procInfo.FileName <- Path.Combine(unitTestsDir, "bin/Release", "HttpClient.UnitTests.exe")
+    ) |> ignore
+
 )
 
 // If these fail, it might be because the test server URL isn't registered - see RegisterURL.bat
@@ -94,7 +100,7 @@ Target "Copy Release Files" (fun _ ->
 )
 
 // note to self - call like this: 
-// packages\FAKE.3.14.0\tools\fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="latest release"
+// packages/FAKE/tools/fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="latest release"
 Target "Upload to NuGet" (fun _ ->
     // Copy the dll into the right place
     CopyFiles 
