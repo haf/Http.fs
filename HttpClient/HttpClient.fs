@@ -28,8 +28,21 @@ let private responseEncodingMappings =
         .Add("utf8", "utf-8")
         .Add("utf16", "utf-16")
 
-type NameValue = { name:string; value:string }
-type ContentRange = {start:int64; finish:int64 }
+type NameValue = {
+    name:string
+    value:string
+}
+
+type ContentRange = {
+    start : int64
+    finish : int64
+}
+
+
+type ContentType = {
+    typ : string
+    subtype : string
+}
 
 type ResponseHeader =
     | AccessControlAllowOrigin 
@@ -77,7 +90,7 @@ type RequestHeader =
     | Authorization of string
     | Connection of string
     | ContentMD5 of string
-    | ContentType of string
+    | ContentType of ContentType
     | Date of DateTime
     | Expect of int
     | From of string
@@ -111,10 +124,38 @@ type Proxy = {
     Credentials: ProxyCredentials 
 }
 
+/// http://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html
+/// section 19.5.1 Content-Disposition, BNF.
+type ContentDisposition = {
+    typ      : string // "form-data" or "attachment"
+    filename : string option
+    /// e.g. "name=user_name"
+    exts     : NameValue list
+}
+
+/// The key you have in &lt;input name="key" ... /&gt;
+type FormEntryName = string
+
+/// An optional file name
+type FileName = string
+
+/// http://www.w3.org/TR/html401/interact/forms.html
+type FormData =
+    /// Use when you post a single file
+    /// Will use: multipart/form-data
+    | SingleFile of name:FormEntryName * filename:FileName * contentType:ContentType * data:byte []
+    /// Use when you post multiple files as a multi-select
+    | MultiFile of name:FormEntryName * files:(FileName * ContentType * byte []) list // multipart/mixed
+    /// Use when you simply post form data
+    | NameValue of NameValue
+
+/// You often pass form-data to the server, e.g. curl -X POST <url> -F k=v -F file1=@file.png
+type Form = FormData list
+
 type RequestBody =
-    | NoBody
-    | TextBody of string
-    | BytesBody of byte[]
+    | BodyFormData of FormData list // * TransferEncodingHint option (7bit/8bit/binary)
+    | BodyRaw of byte []
+    //| BodySocket of SocketTask // for all the nitty-gritty details, see #64
 
 type Request = {
     Url: string
@@ -122,10 +163,10 @@ type Request = {
     CookiesEnabled: bool
     AutoFollowRedirects: bool
     AutoDecompression: DecompressionScheme
-    Headers: RequestHeader list
+    Headers: RequestHeader list option
     Body: RequestBody
     BodyCharacterEncoding: string option
-    QueryStringItems: NameValue list
+    QueryStringItems: NameValue list option
     Cookies: NameValue list option
     ResponseCharacterEncoding: string option
     Proxy: Proxy option
@@ -149,19 +190,19 @@ type Response = {
 /// <param name="url">The URL of the resource including protocol, e.g. 'http://www.relentlessdevelopment.net'</param>
 /// <returns>The Request record</returns>
 let createRequest httpMethod url = {
-    Url = url; 
-    Method = httpMethod;
-    CookiesEnabled = true;
-    AutoFollowRedirects = true;
-    AutoDecompression = DecompressionScheme.None;
-    Headers = None; 
-    Body = None;
-    BodyCharacterEncoding = None;
-    QueryStringItems = None;
-    Cookies = None;
-    ResponseCharacterEncoding = None;
-    Proxy = None;
-    KeepAlive = true;
+    Url = url
+    Method = httpMethod
+    CookiesEnabled = true
+    AutoFollowRedirects = true
+    AutoDecompression = DecompressionScheme.None
+    Headers = None
+    Body = BodyRaw [||]
+    BodyCharacterEncoding = None
+    QueryStringItems = None
+    Cookies = None
+    ResponseCharacterEncoding = None
+    Proxy = None
+    KeepAlive = true
     /// The default value is 100,000 milliseconds (100 seconds).
     /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
     Timeout = 100000<ms>
@@ -170,8 +211,8 @@ let createRequest httpMethod url = {
 // Adds an element to a list which may be none
 let private append item listOption =
     match listOption with
-    | None -> Some([item])
-    | Some(existingList) -> Some(existingList@[item])
+    | None -> Some [item]
+    | Some existingList -> Some (existingList@[item])
 
 // Checks if a header already exists in a list
 // (standard headers just checks type, custom headers also checks 'name' field).
