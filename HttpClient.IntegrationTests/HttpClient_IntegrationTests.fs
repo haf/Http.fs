@@ -144,7 +144,6 @@ type ``Integration tests`` ()=
         |> withHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
         |> withHeader (ContentType "application/json" )
         |> withHeader (Date (new DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
-        |> withHeader (Expect 100 )
         |> withHeader (From "user@example.com" )
         |> withHeader (IfMatch "737060cd8c284d8af7ad3082f209582d" )
         |> withHeader (IfModifiedSince (new DateTime(2000, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
@@ -176,7 +175,6 @@ type ``Integration tests`` ()=
         HttpServer.recordedRequest.Value.Headers.["Content-MD5"] |> should equal ["Q2hlY2sgSW50ZWdyaXR5IQ=="]
         HttpServer.recordedRequest.Value.Headers.ContentType |> should equal "application/json"
         HttpServer.recordedRequest.Value.Headers.Date.Value |> should equal (new DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc))
-        HttpServer.recordedRequest.Value.Headers.["Expect"] |> should equal ["100"]
         HttpServer.recordedRequest.Value.Headers.["From"] |> should equal ["user@example.com"]
         HttpServer.recordedRequest.Value.Headers.IfMatch |> should equal ["737060cd8c284d8af7ad3082f209582d"]
         HttpServer.recordedRequest.Value.Headers.IfModifiedSince |> should equal (new DateTime(2000, 12, 31, 11, 59, 59, DateTimeKind.Utc))
