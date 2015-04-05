@@ -154,10 +154,10 @@ let createRequest httpMethod url = {
     CookiesEnabled = true;
     AutoFollowRedirects = true;
     AutoDecompression = DecompressionScheme.None;
-    Headers = List.empty; 
-    Body = NoBody;
+    Headers = None; 
+    Body = None;
     BodyCharacterEncoding = None;
-    QueryStringItems = List.empty;
+    QueryStringItems = None;
     Cookies = None;
     ResponseCharacterEncoding = None;
     Proxy = None;
@@ -185,10 +185,13 @@ let private headerExists header headerList =
                 | _ -> existingHeader.GetType() = header.GetType())
 
 // Adds a header to the collection as long as it isn't already in it
-let private appendHeaderNoRepeat newHeader headerList = 
-    if headerList |> headerExists newHeader then
-        failwithf "Header %A already exists" newHeader
-    headerList@[newHeader]
+let private appendHeaderNoRepeat newHeader headerList =
+    match headerList with
+    | None -> Some([newHeader])
+    | Some(existingList) -> 
+        if existingList |> headerExists newHeader then
+            failwithf "Header %A already exists" newHeader
+        Some(existingList@[newHeader])
 
 /// Disables cookies, which are enabled by default
 let withCookiesDisabled request = 
@@ -218,20 +221,16 @@ let withAutoDecompression decompressionSchemes request =
 ///
 /// Only certain request types should have a body, e.g. Posts.
 let withBody body request =
-    {request with Body = TextBody(body); BodyCharacterEncoding = Some(ISO_Latin_1)}
+    {request with Body = Some(body); BodyCharacterEncoding = Some(ISO_Latin_1)}
 
 /// Sets the request body, using the provided character encoding.
 let withBodyEncoded body characterEncoding request =
-    {request with Body = TextBody(body); BodyCharacterEncoding = Some(characterEncoding)}
-
-/// Sets the request body using a byte array.
-let withBodyBytes body request =
-    {request with Body = BytesBody(body)}
+    {request with Body = Some(body); BodyCharacterEncoding = Some(characterEncoding)}
 
 /// Adds the provided QueryString record onto the request URL.
 /// Multiple items can be appended.
 let withQueryStringItem item request =
-    {request with QueryStringItems = request.QueryStringItems |> List.append [item]}
+    {request with QueryStringItems = request.QueryStringItems |> append item}
 
 /// Adds a cookie to the request
 /// The domain will be taken from the URL, and the path set to '/'.
@@ -273,8 +272,8 @@ let withTimeout value request =
 
 let private getMethodAsString request =
     match request.Method with
-        | Options -> "OPTIONS"
-        | Get -> "GET"
+        | Options -> "Options"
+        | Get -> "Get"
         | Head -> "HEAD"
         | Post -> "POST"
         | Put -> "PUT"
@@ -284,8 +283,8 @@ let private getMethodAsString request =
         | Patch -> "PATCH"
 
 let private getQueryString request = 
-    match not(request.QueryStringItems.IsEmpty) with
-    | true -> request.QueryStringItems 
+    match request.QueryStringItems.IsSome with
+    | true -> request.QueryStringItems.Value 
                 |> List.fold (
                     fun currentQueryString queryStringItem -> 
                         (if currentQueryString = "?" then currentQueryString else currentQueryString + "&" ) 
@@ -297,9 +296,9 @@ let private getQueryString request =
 
 // Sets headers on HttpWebRequest.
 // Mutates HttpWebRequest.
-let private setHeaders (headers:RequestHeader list) (webRequest:HttpWebRequest) =
-    
-        headers
+let private setHeaders (headers:RequestHeader list option) (webRequest:HttpWebRequest) =
+    if headers.IsSome then
+        headers.Value
         |> List.iter (fun header ->
             match header with
             | Accept(value) -> webRequest.Accept <- value
@@ -340,7 +339,7 @@ let private setCookies (cookies:NameValue list option) url (webRequest:HttpWebRe
 
 // Sets proxy on HttpWebRequest.
 // Mutates HttpWebRequest.
-let private setProxy proxy (webRequest:HttpWebRequest) =
+let setProxy proxy (webRequest:HttpWebRequest) =
     proxy |> Option.iter (fun proxy ->
         let webProxy = WebProxy(proxy.Address, proxy.Port)
 
@@ -352,24 +351,19 @@ let private setProxy proxy (webRequest:HttpWebRequest) =
 
         webRequest.Proxy <- webProxy)
 
-// Sets the budy of the HttpWebRequest as bytes.
-// Mutates the HttpWebRequest.
-let private setBodyBytes (body:byte[]) (webRequest:HttpWebRequest) =
-    // Getting the request stream seems to be actually connecting to the internet in some way
-    use requestStream = webRequest.GetRequestStream() 
-    requestStream.AsyncWrite(body, 0, body.Length) |> Async.RunSynchronously
+// Sets body on HttpWebRequest.
+// Mutates HttpWebRequest.
+let setBody (body:string option) (encoding:string option) (webRequest:HttpWebRequest) =
+    if body.IsSome then
 
-// Sets the body on the HttpWebRequest using the text or bytes specified in the Request (if any).
-// Mutates the HttpWebRequest.
-let private setBody body (encoding:string option) (webRequest:HttpWebRequest) =
-    
-    match body with
-    | NoBody -> ()
-    | BytesBody(byteContent) -> webRequest |> setBodyBytes byteContent
-    | TextBody(textContent) -> 
-        if encoding.IsNone then failwith "Body Character Encoding not set"
-        let bodyAsBytes = Encoding.GetEncoding(encoding.Value).GetBytes(textContent)
-        webRequest |> setBodyBytes bodyAsBytes
+        if encoding.IsNone then
+            failwith "Body Character Encoding not set"
+
+        let bodyBytes = Encoding.GetEncoding(encoding.Value).GetBytes(body.Value)
+
+        // Getting the request stream seems to be actually connecting to the internet in some way
+        use requestStream = webRequest.GetRequestStream() 
+        requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
 
 // The nasty business of turning a Request into an HttpWebRequest
 let private toHttpWebRequest request =

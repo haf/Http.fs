@@ -58,8 +58,9 @@
     <None Include="paket.references" />
     <None Include="app.config" />
     <Compile Include="Fuchu.Assert.fs" />
-    <Compile Include="UnitTests.fs" />
+    <Compile Include="RequestBody.fs" />
     <Compile Include="Program.fs" />
+    <Compile Include="Api.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HttpClient\HttpClient.fsproj">

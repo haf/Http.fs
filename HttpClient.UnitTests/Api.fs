@@ -1,4 +1,4 @@
-﻿module HttpClient.UnitTests
+﻿module HttpClient.Tests.Api
 
 open System
 open Fuchu
@@ -13,7 +13,7 @@ let api =
     testList "api" [
         // an example of creating a DSL that still gives nice output when a test fails!
         // doable because we're using values and not 'programming language'
-        given "a request with Method and Url" (createRequest Get "http://www.google.com") [
+        given "a default request with Method and Url" (createRequest Get "http://www.google.com") [
             "has same url", fun r -> Assert.Equal(r.Url, "http://www.google.com")
             "has get method", fun r -> Assert.Equal(r.Method, Get)
             "has no decompression scheme", fun r -> Assert.Equal(r.AutoDecompression, DecompressionScheme.None)
@@ -92,28 +92,6 @@ let api =
                 |> withHeader (Custom { name="c1"; value="v1"})
                 |> withHeader (Custom { name="c1"; value="v2"})
                 |> ignore))
-
-        testCase "withBody sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBody """Hello mum!%2\/@$""").Body.Value, """Hello mum!%2\/@$""")
-
-        testCase "withBody uses default character encoding of ISO-8859-1" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBody "whatever").BodyCharacterEncoding.Value, "ISO-8859-1")
-
-        testCase "withBodyEncoded sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyEncoded """Hello mum!%2\/@$""" "UTF-8").Body.Value, """Hello mum!%2\/@$""")
-
-        testCase "withBodyEncoded sets the body encoding" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyEncoded "Hi Mum" "UTF-8").BodyCharacterEncoding.Value, "UTF-8")
-
-        testCase "if a body character encoding is somehow not specified, throws an exception" <| fun _ ->
-            let request =
-                createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
-                |> withBodyEncoded "¥§±Æ" "UTF-8" // random UTF-8 characters
-                    
-            let dodgyRequest = { request with BodyCharacterEncoding = None }
-
-            Assert.Raise("when no body char encoding", typeof<Exception>,
-                         fun () -> dodgyRequest |> getResponseCode |> ignore)
 
         given "withQueryString adds the query string item to the list"
             (createValidRequest
