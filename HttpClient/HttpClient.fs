@@ -304,46 +304,62 @@ module internal Impl =
         // https://github.com/rack/rack/issues/323#issuecomment-3609743
         s.Replace("\"", "\\\"")
 
-    let generateFormData (encoding : Encoding) boundary formData =
-        let generateFileData contentType contents = seq {
-            match contentType, contents with
-            | { typ = "text"; subtype = "plain" }, Plain text ->
-                yield ""
-                yield text
-            | _, Plain text ->
-                yield "Content-Transfer-Encoding: base64"
-                yield ""
-                yield text |> encoding.GetBytes |> Convert.ToBase64String
-            | _, Binary bytes ->
-                yield "Content-Transfer-Encoding: base64"
-                yield ""
-                yield bytes |> Convert.ToBase64String
-        }
+    let generateFileData (encoding : Encoding) contentType contents = seq {
+        match contentType, contents with
+        | { typ = "text"; subtype = "plain" }, Plain text ->
+            yield ""
+            yield text
+        | _, Plain text ->
+            yield "Content-Transfer-Encoding: base64"
+            yield ""
+            yield text |> encoding.GetBytes |> Convert.ToBase64String
+        | _, Binary bytes ->
+            yield "Content-Transfer-Encoding: base64"
+            yield ""
+            yield bytes |> Convert.ToBase64String
+    }
 
-        let rec generateFormDataInner values = seq {
+    let generateContentDispos value (kvs : (string * string) list) =
+        let formatKv = function
+            | (k, v) -> k + "=" + "\"" + escapeQuotes v + "\""
+        String.concat "; " [ yield "Content-Disposition: " + value
+                             yield! (kvs |> List.map formatKv)
+                           ]
+
+    let generateFormData state (encoding : Encoding) boundary formData =
+        let rec generateFormDataInner boundary values isMultiFile = seq {
             match values with
-            | [] -> ()
+            | [] ->
+                yield "--" + boundary + "--"
             | h :: rest ->
                 yield "--" + boundary
                 match h with
                 | SingleFile (name, (fileName, contentType, contents)) ->
-                    yield "Content-Disposition: form-data; name=\""
-                          + escapeQuotes name + "\"; filename=\""
-                          + escapeQuotes fileName + "\""
-                    yield "Content-Type: " + (contentType.ToString())
-                    yield! generateFileData contentType contents
+                    let dispos = if isMultiFile then "file" else "form-data"
+                    yield generateContentDispos dispos [
+                        if not isMultiFile then yield "name", name
+                        yield "filename", fileName
+                    ]
+                    yield sprintf "Content-Type: %O" contentType
+                    yield! generateFileData encoding contentType contents
 
                 | MultiFile (name, files) ->
-                    yield "Content-Disposition: form-data; name=\"" + escapeQuotes name + "\""
-                    failwith "TODO"
+                    let boundary' = generateBoundary state
+                    yield "Content-Type: multipart/mixed; boundary=" + boundary'
+                    yield generateContentDispos "form-data" [
+                        "name", name
+                    ]
+                    yield ""
+                    let files' = files |> List.map (fun f -> SingleFile (name, f))
+                    yield! generateFormDataInner boundary' files' true
 
                 | NameValue { name = name; value = value } ->
                     yield "Content-Disposition: form-data; name=\"" + escapeQuotes name + "\""
                     yield ""
                     yield value
-                yield! generateFormDataInner rest
+                yield! generateFormDataInner boundary rest isMultiFile
         }
-        generateFormDataInner formData
+        generateFormDataInner boundary formData false
 
     let formatBody (clientState : HttpClientState) : Encoding * RequestBody -> byte [] = function
         | _, BodyRaw raw ->
@@ -360,8 +376,7 @@ module internal Impl =
             seq {
                 yield "Content-Type: multipart/form-data; boundary=" + boundary
                 yield ""
-                yield! generateFormData encoding boundary formData
-                yield "--" + boundary + "--"
+                yield! generateFormData clientState encoding boundary formData
             }
             |> String.concat CRLF
             |> encoding.GetBytes

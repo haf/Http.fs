@@ -68,7 +68,49 @@ let bodyFormatting =
             Assert.Equal("should have correct body", expected, subject)
 
         testCase "can format multipart/formdata with multipart/mixed for multi-file upload" <| fun _ ->
-            Tests.failtest "TODO"
+            /// can't lift outside, because test cases may run in parallel
+            let clientState = { DefaultHttpClientState with random = Random testSeed }
+
+            let firstCt, secondCt, fileContents =
+                ContentType.Parse "text/plain" |> Option.get,
+                ContentType.Parse "text/plain" |> Option.get,
+                "Hello World"
+
+            let form =
+                // example from http://www.w3.org/TR/html401/interact/forms.html
+                [   NameValue { name = "submit-name"; value = "Larry" }
+                    MultiFile ("files",
+                               [ "file1.txt", firstCt, Plain fileContents
+                                 "file2.gif", secondCt, Plain "...contents of file2.gif..."
+                               ])
+                ]
+
+            let subject = Impl.formatBody clientState (utf8, BodyForm form) |> utf8.GetString
+            let expected =
+                [ "Content-Type: multipart/form-data; boundary=mACKqCcIID-J''_PL:hfbFiOLC/cew"
+                  ""
+                  "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
+                  "Content-Disposition: form-data; name=\"submit-name\""
+                  ""
+                  "Larry"
+                  "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
+                  "Content-Type: multipart/mixed; boundary=iDnsCZhfTqMSYsj:LhBTftNfVog:eA"
+                  "Content-Disposition: form-data; name=\"files\""
+                  ""
+                  "--iDnsCZhfTqMSYsj:LhBTftNfVog:eA"
+                  "Content-Disposition: file; filename=\"file1.txt\""
+                  "Content-Type: text/plain"
+                  ""
+                  "Hello World"
+                  "--iDnsCZhfTqMSYsj:LhBTftNfVog:eA"
+                  "Content-Disposition: file; filename=\"file2.gif\""
+                  "Content-Type: text/plain"
+                  ""
+                  "...contents of file2.gif..."
+                  "--iDnsCZhfTqMSYsj:LhBTftNfVog:eA--"
+                  "--mACKqCcIID-J''_PL:hfbFiOLC/cew--" ]
+                |> String.concat "\r\n"
+            Assert.Equal("should have correct body", expected, subject)
 
         testCase "can format urlencoded" <| fun _ ->
             Tests.failtest "TODO"
