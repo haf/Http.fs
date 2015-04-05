@@ -5,6 +5,7 @@ NUGET
     FSharp.Core (3.1.2.1)
     FsUnit (1.2.1.0)
       NUnit (>= 2.6.2)
+    Fuchu (0.4.0.0)
     Nancy (0.22.2)
     Nancy.Hosting.Self (0.22.2)
       Nancy (>= 0.22.2)
