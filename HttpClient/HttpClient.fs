@@ -120,10 +120,10 @@ type Request = {
     CookiesEnabled: bool
     AutoFollowRedirects: bool
     AutoDecompression: DecompressionScheme
-    Headers: RequestHeader list option
+    Headers: RequestHeader list
     Body: RequestBody
     BodyCharacterEncoding: string option
-    QueryStringItems: NameValue list option
+    QueryStringItems: NameValue list
     Cookies: NameValue list option
     ResponseCharacterEncoding: string option
     Proxy: Proxy option
@@ -137,6 +137,9 @@ type Response = {
     ContentLength: int64
     Cookies: Map<string,string>
     Headers: Map<ResponseHeader,string>
+    /// A Uri that contains the URI of the Internet resource that responded to the request.
+    /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebresponse.responseuri%28v=vs.110%29.aspx"/>.
+    ResponseUri : System.Uri
 }
 
 /// <summary>Creates the Request record which can be used to make an HTTP request</summary>
@@ -149,10 +152,10 @@ let createRequest httpMethod url = {
     CookiesEnabled = true;
     AutoFollowRedirects = true;
     AutoDecompression = DecompressionScheme.None;
-    Headers = None; 
+    Headers = List.empty; 
     Body = NoBody;
     BodyCharacterEncoding = None;
-    QueryStringItems = None;
+    QueryStringItems = List.empty;
     Cookies = None;
     ResponseCharacterEncoding = None;
     Proxy = None;
@@ -180,13 +183,10 @@ let private headerExists header headerList =
                 | _ -> existingHeader.GetType() = header.GetType())
 
 // Adds a header to the collection as long as it isn't already in it
-let private appendHeaderNoRepeat newHeader headerList =
-    match headerList with
-    | None -> Some([newHeader])
-    | Some(existingList) -> 
-        if existingList |> headerExists newHeader then
-            failwithf "Header %A already exists" newHeader
-        Some(existingList@[newHeader])
+let private appendHeaderNoRepeat newHeader headerList = 
+    if headerList |> headerExists newHeader then
+        failwithf "Header %A already exists" newHeader
+    headerList@[newHeader]
 
 /// Disables cookies, which are enabled by default
 let withCookiesDisabled request = 
@@ -229,7 +229,7 @@ let withBodyBytes body request =
 /// Adds the provided QueryString record onto the request URL.
 /// Multiple items can be appended.
 let withQueryStringItem item request =
-    {request with QueryStringItems = request.QueryStringItems |> append item}
+    {request with QueryStringItems = request.QueryStringItems |> List.append [item]}
 
 /// Adds a cookie to the request
 /// The domain will be taken from the URL, and the path set to '/'.
@@ -282,8 +282,8 @@ let private getMethodAsString request =
         | Patch -> "PATCH"
 
 let private getQueryString request = 
-    match request.QueryStringItems.IsSome with
-    | true -> request.QueryStringItems.Value 
+    match not(request.QueryStringItems.IsEmpty) with
+    | true -> request.QueryStringItems 
                 |> List.fold (
                     fun currentQueryString queryStringItem -> 
                         (if currentQueryString = "?" then currentQueryString else currentQueryString + "&" ) 
@@ -295,9 +295,9 @@ let private getQueryString request =
 
 // Sets headers on HttpWebRequest.
 // Mutates HttpWebRequest.
-let private setHeaders (headers:RequestHeader list option) (webRequest:HttpWebRequest) =
-    if headers.IsSome then
-        headers.Value
+let private setHeaders (headers:RequestHeader list) (webRequest:HttpWebRequest) =
+    
+        headers
         |> List.iter (fun header ->
             match header with
             | Accept(value) -> webRequest.Accept <- value
@@ -555,6 +555,7 @@ let getResponseAsync request = async {
         ContentLength = response.ContentLength
         Cookies = cookies
         Headers = headers
+        ResponseUri = response.ResponseUri
     }
 }
 
