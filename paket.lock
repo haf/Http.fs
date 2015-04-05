@@ -2,6 +2,7 @@ NUGET
   remote: https://www.nuget.org/api/v2
   specs:
     FAKE (3.26.7)
+    FSharp.Core (3.1.2.1)
     FsUnit (1.2.1.0)
       NUnit (>= 2.6.2)
     Nancy (0.22.2)
