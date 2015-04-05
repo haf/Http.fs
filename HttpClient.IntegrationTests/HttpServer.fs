@@ -117,7 +117,6 @@ type FakeServer() as self =
                 //response.Headers.Add("Server", "") // will be 'Microsoft-HTTPAPI/2.0'
                 response.Headers.Add("Strict-Transport-Security", "max-age=16070400; includeSubDomains")
                 response.Headers.Add("Trailer", "Max-Forwards")
-                response.Headers.Add("Transfer-Encoding", "chunked")
                 response.Headers.Add("Vary", "*")
                 response.Headers.Add("Via", "1.0 fred, 1.1 example.com (Apache/1.1)")
                 response.Headers.Add("Warning", "199 Miscellaneous warning")
