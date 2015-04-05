@@ -29,9 +29,6 @@ let api =
             "uses keep-alive", fun r -> Assert.IsTrue r.KeepAlive
         ]
 
-        testCase "requests have cookies enabled by default" <| fun _ ->
-            createValidRequest.CookiesEnabled |> should equal true
-
         testCase "withAutoDecompression enables the specified decompression methods" <| fun _ ->
             let createdRequest = 
                 createValidRequest 
