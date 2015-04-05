@@ -1,9 +1,8 @@
 ﻿<Properties StartupItem="HttpClient.IntegrationTests/HttpClient.IntegrationTests.fsproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="HttpClient.IntegrationTests/HttpClient_IntegrationTests.fs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="HttpClient.UnitTests/UnitTests.fs">
     <Files>
-      <File FileName="HttpClient.IntegrationTests/HttpServer.fs" Line="30" Column="25" />
-      <File FileName="HttpClient.IntegrationTests/HttpClient_IntegrationTests.fs" Line="155" Column="75" />
+      <File FileName="HttpClient.UnitTests/UnitTests.fs" Line="28" Column="48" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
