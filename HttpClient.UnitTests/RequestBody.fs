@@ -30,5 +30,44 @@ let apiUsage =
 
             Assert.Raise("when no body char encoding", typeof<Exception>,
                          fun () -> dodgyRequest |> getResponseCode |> ignore)
+    ]
 
+
+let useCase = testCase
+
+(* Use cases for RequestBody.
+
+   It should be possible to send data using all formattings that are common
+   to use - raw, urlencoded and formdata.
+
+   A good reference is the implementation of the MailGun API since it really
+   uses HTTP as an application protocol.
+
+   https://documentation.mailgun.com/api-sending.html
+*)
+
+[<Tests>]
+let useCases =
+    testList "use cases" [
+        testList "sending forms" [
+            useCase "sending key-value pairs (urlencoded style)" <| fun _ ->
+                ()
+
+            useCase "sending key-value paris (formdata style)" <| fun _ ->
+                ()
+        ]
+
+        testList "sending files" [
+            useCase "regular files" <| fun _ ->
+                ()
+
+            useCase "sending UTF8 file names" <| fun _ ->
+                ()
+        ]
+
+        testCase "sending raw bytes" <| fun _ ->
+            ()
+
+        testCase "sending using socket" <| fun _ ->
+            ()
     ]
