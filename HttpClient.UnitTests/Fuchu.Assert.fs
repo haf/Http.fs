@@ -1,6 +1,7 @@
 ﻿module Fuchu
 
 open global.Fuchu
+open System
 
 let given msg (o : 'a) (tests : (string * ('a -> unit)) list) =
     let toTestCase (name, f) =
@@ -20,3 +21,8 @@ type Assert with
 
     static member IsNone(value) =
         Assert.Equal("should be None", None, value)
+
+    static member Contains (items, value) =
+        match List.tryFind ((=) value) items with
+        | None -> Tests.failtest "couldn't find %A in list %A" value items
+        | Some x -> ()

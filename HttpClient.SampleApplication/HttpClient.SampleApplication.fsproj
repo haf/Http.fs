@@ -4,8 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8907fee4-9689-4988-881c-d768ac5d5a24}</ProjectGuid>
+    <ProjectGuid>{8907FEE4-9689-4988-881C-D768AC5D5A24}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>HttpClient.SampleApplication</RootNamespace>
     <AssemblyName>HttpClient.SampleApplication</AssemblyName>
@@ -46,8 +45,7 @@
   <ItemGroup>
     <ProjectReference Include="..\HttpClient\HttpClient.fsproj">
       <Name>HttpClient</Name>
-      <Project>{dc478a22-3190-46cb-a085-88014cc36957}</Project>
-      <Private>True</Private>
+      <Project>{DC478A22-3190-46CB-A085-88014CC36957}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
@@ -154,7 +152,6 @@
   <ItemGroup>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit\lib\nunit.framework.dll</HintPath>
-      <Private>True</Private>
       <Paket>True</Paket>
     </Reference>
   </ItemGroup>

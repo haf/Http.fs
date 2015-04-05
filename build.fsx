@@ -2,6 +2,7 @@
 #I @"packages/FAKE/tools"
 #r @"FakeLib.dll"
 open Fake
+open System.IO
 
 // Paths
 let httpClientDir = "./HttpClient/"
@@ -50,12 +51,10 @@ BuildTarget "BuildSampleApplication" sampleApplicationDir
 Target "Run Unit Tests" (fun _ ->
     let unitTestOutputFolder = unitTestsDir |> outputFolder
 
-    !! (unitTestOutputFolder + "/*.UnitTests.dll")
-    |> NUnit (fun p ->
-        {p with
-            ToolPath = nUnitToolPath;
-            DisableShadowCopy = true;
-            OutputFile = unitTestOutputFolder + "TestResults.xml"})
+    ProcessHelper.directExec (fun procInfo ->
+        procInfo.FileName <- Path.Combine(unitTestsDir, "bin/Release", "HttpClient.UnitTests.exe")
+    ) |> ignore
+
 )
 
 // If these fail, it might be because the test server URL isn't registered - see RegisterURL.bat
