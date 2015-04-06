@@ -1,7 +1,8 @@
 #!/usr/bin/env fsharpi
-#I @"packages/FAKE/tools"
+#I @"packages/FAKE.3.14.0/tools"
 #r @"FakeLib.dll"
 open Fake
+open Fake.AssemblyInfoFile
 
 // Paths
 let httpClientDir = "./HttpClient/"
@@ -13,7 +14,7 @@ let releaseDir = "Release/"
 let nuGetDir = releaseDir + "NuGet/"
 let nuSpecFile = nuGetDir + "HttpClient.dll.nuspec"
 let nuGetProjectDll = nuGetDir + "lib/net40/HttpClient.dll"
-let nUnitToolPath = "packages/NUnit.Runners/tools/"
+let nUnitToolPath = "Tools/NUnit-2.6.3/bin"
 
 // Helper Functions
 let outputFolder baseDir = baseDir + "bin/Debug/"
