@@ -1,0 +1,2 @@
+language: fsharp
+solution: Http.fs.sln
