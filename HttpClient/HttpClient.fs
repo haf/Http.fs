@@ -245,32 +245,39 @@ module internal Impl =
         | Trace -> "TRACE"
         | Connect -> "CONNECT"
 
-    let uriEncodeUtf8 =
+    /// URI encoding: for each byte in the byte-representation of the string,
+    /// as seen after encoding with a given `byteEncoding`, print the %xx character
+    /// as an ASCII character, for transfer.
+    ///
+    /// Pass the byteEncoding -- this is equivalent of the
+    /// `accept-charset` attribute on the form-element in HTML. If you don't
+    /// know what to do: pass UTF8 and it will 'just work'.
+    let uriEncode byteEncoding =
         List.map (fun kv ->
             String.Concat [
-                HttpUtility.UrlEncode kv.name
+                HttpUtility.UrlEncode (kv.name, byteEncoding)
                 "="
-                HttpUtility.UrlEncode kv.value
+                HttpUtility.UrlEncode (kv.value, byteEncoding)
             ])
         >> String.concat "&"
 
-    let getQueryString request =
+    let getQueryString byteEncoding request =
         match request.QueryStringItems with
         | [] -> ""
-        | items -> String.Concat [ "?"; uriEncodeUtf8 items ]
+        | items -> String.Concat [ "?"; uriEncode byteEncoding items ]
 
     // Adds an element to a list which may be none
     let append item = function
         | [] -> [ item ]
         | existingList -> existingList @ [ item ]
 
-    // Checks if a header already exists in a list
-    // (standard headers just checks type, custom headers also checks 'name' field).
+    /// Checks if a header already exists in a list
+    /// (standard headers just checks type, custom headers also checks 'name' field).
     let headerExists header =
         List.exists (fun existingHeader -> 
             match existingHeader, header with
-            | Custom {name = existingName; value = existingValue },
-              Custom {name = newName; value = newValue } ->
+            | Custom { name = existingName; value = existingValue },
+              Custom { name = newName; value = newValue } ->
                 existingName = newName
             | _ ->
                 existingHeader.GetType() = header.GetType())
@@ -352,6 +359,7 @@ module internal Impl =
                         "name", name
                     ]
                     yield ""
+                    // remap the multi-files to single files and recursively call myself
                     let files' = files |> List.map (fun f -> SingleFile (name, f))
                     yield! generateFormDataInner boundary' files' true
 
@@ -362,6 +370,27 @@ module internal Impl =
                 yield! generateFormDataInner boundary rest isMultiFile
         }
         generateFormDataInner boundary formData false
+
+    let private formatBodyUrlencoded bodyEncoding formData =
+        formData
+        |> List.map (function
+            | NameValue kv -> kv
+            | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
+        |> uriEncode bodyEncoding
+        // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
+        // and none-the-less; they will map 1-1 with the UTF8 set if the server
+        // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
+        |> ISOLatin1.GetBytes
+
+    let private formatBodyFormData clientState encoding formData =
+        let boundary = generateBoundary clientState
+        seq {
+            yield "Content-Type: multipart/form-data; boundary=" + boundary
+            yield ""
+            yield! generateFormData clientState encoding boundary formData
+        }
+        |> String.concat CRLF
+        |> encoding.GetBytes
 
     let formatBody (clientState : HttpClientState) : Encoding * RequestBody -> byte [] = function
         | _, BodyRaw raw ->
@@ -374,14 +403,10 @@ module internal Impl =
             [||]
 
         | encoding, BodyForm formData ->
-            let boundary = generateBoundary clientState
-            seq {
-                yield "Content-Type: multipart/form-data; boundary=" + boundary
-                yield ""
-                yield! generateFormData clientState encoding boundary formData
-            }
-            |> String.concat CRLF
-            |> encoding.GetBytes
+            if formData |> List.forall (function | NameValue _ -> true | _ -> false) then
+                formatBodyUrlencoded encoding formData
+            else
+                formatBodyFormData clientState encoding formData
 
 open Impl
 
@@ -549,9 +574,16 @@ module internal DotNetWrapper =
             requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
 
     /// The nasty business of turning a Request into an HttpWebRequest
-    let toHttpWebRequest state request =
+    let toHttpWebRequest state (request : Request) =
 
-        let url = request.Url + (request |> getQueryString)
+        let contentEncoding =
+            // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
+            request.Headers
+            |> List.tryFind (function | ContentType ct -> true | _ -> false)
+            |> function | Some (ContentType { charset = Some enc }) -> Some enc | _ -> None
+            |> Option.fold (fun s t -> t) request.BodyCharacterEncoding
+
+        let url = request.Url + (request |> getQueryString contentEncoding)
         let webRequest = HttpWebRequest.Create(url) :?> HttpWebRequest
 
         webRequest.Method <- (request |> getMethodAsString)
@@ -569,14 +601,7 @@ module internal DotNetWrapper =
         webRequest |> setCookies request.Cookies request.Url
         webRequest |> setProxy request.Proxy
 
-        let encoding =
-            // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
-            request.Headers
-            |> List.tryFind (function | ContentType ct -> true | _ -> false)
-            |> function | Some (ContentType { charset = Some enc }) -> Some enc | _ -> None
-            |> Option.fold (fun s t -> t) request.BodyCharacterEncoding
-
-        webRequest |> setBody state (encoding, request.Body)
+        webRequest |> setBody state (contentEncoding, request.Body)
 
         webRequest.KeepAlive <- request.KeepAlive
         webRequest.Timeout <- (int)request.Timeout

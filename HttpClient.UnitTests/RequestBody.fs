@@ -112,7 +112,7 @@ let bodyFormatting =
                 |> String.concat "\r\n"
             Assert.Equal("should have correct body", expected, subject)
 
-        testCase "can format urlencoded" <| fun _ ->
+        testCase "can format urlencoded data" <| fun _ ->
             // http://www.url-encode-decode.com/
             // https://unspecified.wordpress.com/2008/07/08/browser-uri-encoding-the-best-we-can-do/
             // http://stackoverflow.com/questions/912811/what-is-the-proper-way-to-url-encode-unicode-characters
@@ -120,9 +120,23 @@ let bodyFormatting =
             // http://www.w3.org/TR/html401/interact/forms.html
             // http://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
             Assert.Equal("Should encode Swedish properly",
-                         "user_name=%c3%85sa+den+R%c3%b6de",
-                         Impl.uriEncodeUtf8 [ { name = "user_name"; value = "Åsa den Röde" } ])
+                         "user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87",
+                         Impl.uriEncode utf8 [
+                            { name = "user_name"; value = "Åsa den Röde" }
+                            { name = "user_pass"; value = "Bović" }
+                         ])
 
+        testCase "can format urlencoded form" <| fun _ ->
+            let clientState = { DefaultHttpClientState with random = Random testSeed }
+            // example from http://www.w3.org/TR/html401/interact/forms.html
+            [   NameValue { name = "submit"; value = "Join Now!" }
+                NameValue { name = "user_name"; value = "Åsa den Röde" }
+                NameValue { name = "user_pass"; value = "Bović" }
+            ]
+            |> fun form -> Impl.formatBody clientState (utf8, BodyForm form)
+            |> utf8.GetString
+            |> fun result ->
+                Assert.Equal(result, "submit=Join+Now!&user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87")
     ]
 
 let useCase = testCase
