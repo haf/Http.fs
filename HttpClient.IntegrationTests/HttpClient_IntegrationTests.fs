@@ -272,28 +272,12 @@ type ``Integration tests`` ()=
         bodyStream.ReadToEnd() |> should equal "¥§±Æ"
 
     [<Test>]
-    member x.``if an invalid body character encoding is specified, throws an exception`` () =
-        (fun() ->
-            createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
-            |> withBodyEncoded "hi mum" "notAValidEncoding"
-            |> getResponseCode |> ignore)
-            |> should throw typeof<ArgumentException>
-
-    [<Test>]
     member x.``if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies`` () =
         let response = 
             createRequest Get "http://localhost:1234/TestServer/MoonLanguageCorrectEncoding" 
-            |> withResponseCharacterEncoding "utf-16"
+            |> withResponseCharacterEncoding (Encoding.GetEncoding "utf-16")
             |> getResponse
         response.EntityBody.Value |> should equal "迿ꞧ쒿" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with utf-16
-    
-    [<Test>]
-    member x.``if an invalid response character encoding is specified, an exception is thrown`` () =
-        (fun() -> createRequest Get "http://localhost:1234/TestServer/MoonLanguageCorrectEncoding" 
-                    |> withResponseCharacterEncoding "gibberish"
-                    |> getResponse 
-                    |> ignore) 
-            |> should throw typeof<ArgumentException>
 
     [<Test>]
     member x.``if a response character encoding is NOT specified, the body is read using the character encoding specified in the response's content-type header`` () =
@@ -384,7 +368,7 @@ type ``Integration tests`` ()=
         (fun() ->
             createRequest Post "http://localhost:1234/TestServer/SlowResponse" 
             |> withTimeout 1000<ms>
-            |> withBody "hi mum"
+            |> withBodyString "hi mum"
             |> getResponseCode |> ignore)
             |> should throw typeof<WebException>
 
@@ -399,7 +383,7 @@ type ``Integration tests`` ()=
     [<Test>]
     member x.``Post method works`` () =
         createRequest Post "http://localhost:1234/TestServer/Post" 
-        |> withBody "hi mum" // posts need a body in Nancy
+        |> withBodyString "hi mum" // posts need a body in Nancy
         |> getResponseCode 
         |> should equal 200
 
@@ -415,7 +399,7 @@ type ``Integration tests`` ()=
     [<Test>]
     member x.``Put method works`` () =
         createRequest Put "http://localhost:1234/TestServer/Put" 
-        |> withBody "hi mum" // puts need a body in Nancy
+        |> withBodyString "hi mum" // puts need a body in Nancy
         |> getResponseCode 
         |> should equal 200
 
@@ -428,7 +412,7 @@ type ``Integration tests`` ()=
         // Is going to redirect to another route and return GET 200.
         let request = 
             createRequest Post "http://localhost:1234/TestServer/Redirect" 
-            |> withBody "hi mum" // posts need a body in Nancy
+            |> withBodyString "hi mum" // posts need a body in Nancy
         
         let resp = request |> getResponse 
         resp.StatusCode |> should equal 200

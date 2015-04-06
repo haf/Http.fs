@@ -1,5 +1,7 @@
 ﻿module HttpClient
 
+#nowarn "25"
+
 open System
 open System.IO
 open System.Net
@@ -195,7 +197,7 @@ type Request = {
     BodyCharacterEncoding: Encoding
     QueryStringItems: NameValue list
     Cookies: NameValue list
-    ResponseCharacterEncoding: string option
+    ResponseCharacterEncoding: Encoding option
     Proxy: Proxy option
     KeepAlive: bool
     Timeout: int<ms>
@@ -247,6 +249,7 @@ module internal Impl =
         | Delete -> "DELETE"
         | Trace -> "TRACE"
         | Connect -> "CONNECT"
+        | Patch   -> "PATCH"
 
     /// URI encoding: for each byte in the byte-representation of the string,
     /// as seen after encoding with a given `byteEncoding`, print the %xx character
@@ -531,6 +534,9 @@ let withProxy proxy request =
 let withKeepAlive value request =
     { request with KeepAlive = value }
 
+let withTimeout timeout request =
+    { request with Timeout = timeout }
+
 module internal DotNetWrapper =
     /// Sets headers on HttpWebRequest.
     /// Mutates HttpWebRequest.
@@ -744,7 +750,7 @@ module internal DotNetWrapper =
                 match response.CharacterSet with
                 | null -> ISOLatin1
                 | responseCharset -> Encoding.GetEncoding(responseCharset |> mapEncoding)
-            | Some(enc) -> Encoding.GetEncoding(enc:string)
+            | Some enc -> enc
         use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)
         let! body = responseStream.ReadToEnd()
         return body

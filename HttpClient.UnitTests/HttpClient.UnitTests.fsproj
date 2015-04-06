@@ -47,7 +47,6 @@
       <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="FSharp.Core">
@@ -94,6 +93,7 @@
   <ItemGroup>
     <Reference Include="Fuchu">
       <HintPath>..\packages\Fuchu\lib\Fuchu.dll</HintPath>
+      <Private>True</Private>
       <Paket>True</Paket>
     </Reference>
   </ItemGroup>

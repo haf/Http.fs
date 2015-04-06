@@ -1,23 +1,12 @@
 ﻿<Properties StartupItem="HttpClient.IntegrationTests/HttpClient.IntegrationTests.fsproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="HttpClient.UnitTests/Program.fs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="HttpClient.IntegrationTests/HttpClient_SuaveIntegrationTests.fs">
     <Files>
-      <File FileName="HttpClient/HttpClient.fs" Line="309" Column="16" />
-      <File FileName="HttpClient.UnitTests/RequestBody.fs" Line="27" Column="78" NotebookId="1" />
-      <File FileName="HttpClient.UnitTests/Program.fs" Line="6" Column="5" NotebookId="1" />
+      <File FileName="HttpClient.IntegrationTests/HttpClient_SuaveIntegrationTests.fs" Line="51" Column="33" />
+      <File FileName="HttpClient.IntegrationTests/HttpClient_IntegrationTests.fs" Line="91" Column="8" NotebookId="1" />
+      <File FileName="HttpClient.UnitTests/RequestBody.fs" Line="1" Column="1" NotebookId="1" />
+      <File FileName="HttpClient/HttpClient.fs" Line="1" Column="1" NotebookId="1" />
     </Files>
-    <Pads>
-      <Pad Id="ProjectPad">
-        <State expanded="True">
-          <Node name="Solution Items" expanded="True" />
-          <Node name="HttpClient" expanded="True" />
-          <Node name="HttpClient.IntegrationTests" expanded="True" />
-          <Node name="HttpClient.UnitTests" expanded="True">
-            <Node name="Program.fs" selected="True" />
-          </Node>
-        </State>
-      </Pad>
-    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />

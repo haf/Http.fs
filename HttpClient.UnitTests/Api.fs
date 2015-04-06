@@ -129,8 +129,8 @@ let api =
         testCase "withResponseCharacterEncoding sets the response character encoding" <| fun _ ->
             let createdRequest =
                 createRequest Get "http://www.google.com/"
-                |> withResponseCharacterEncoding "utf-8"
-            Assert.Equal(createdRequest.ResponseCharacterEncoding.Value, "utf-8")
+                |> withResponseCharacterEncoding Encoding.UTF8
+            Assert.Equal(createdRequest.ResponseCharacterEncoding.Value, Encoding.UTF8)
 
         given "a request withProxy"
             (createValidRequest 
