@@ -1,7 +1,7 @@
-#I @"packages/FAKE/tools/"
+#!/usr/bin/env fsharpi
+#I @"packages/FAKE/tools"
 #r @"FakeLib.dll"
-open Fake 
-open Fake.AssemblyInfoFile
+open Fake
 
 // Paths
 let httpClientDir = "./HttpClient/"
@@ -13,7 +13,7 @@ let releaseDir = "Release/"
 let nuGetDir = releaseDir + "NuGet/"
 let nuSpecFile = nuGetDir + "HttpClient.dll.nuspec"
 let nuGetProjectDll = nuGetDir + "lib/net40/HttpClient.dll"
-let nUnitToolPath = "Tools/NUnit-2.6.3/bin"
+let nUnitToolPath = "packages/NUnit.Runners/tools/"
 
 // Helper Functions
 let outputFolder baseDir = baseDir + "bin/Debug/"
@@ -104,8 +104,8 @@ Target "Upload to NuGet" (fun _ ->
     trace <| "buildParam nuget-api-key: " + getBuildParam "nuget-api-key"
 
     // Create and upload package
-    NuGet (fun n -> 
-        {n with          
+    NuGet (fun n ->
+        {n with
             OutputPath = nuGetDir
             WorkingDir = nuGetDir
             Project = "Http.fs"
