@@ -1,2 +1,4 @@
 language: csharp
-solution: Http.fs.sln
+
+script: 
+  - ./build.sh Default
