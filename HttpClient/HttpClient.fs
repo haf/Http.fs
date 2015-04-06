@@ -37,6 +37,9 @@ type ContentType = {
     charset : Encoding option
 }
 with
+    member x.Equals(typ : string, subtype : string) =
+        x.typ = typ && x.subtype = subtype
+
     override x.ToString() =
         match x.charset with
         | None ->
@@ -282,6 +285,17 @@ module internal Impl =
             | _ ->
                 existingHeader.GetType() = header.GetType())
 
+    let putHeader predicate header headers =
+         // warning is wrong; by lemma excluded middle (predicate h xor not predicate h)
+        let rec replaceHeaderInner = function
+            | [] ->
+                header :: headers
+            | h :: hs when predicate h ->
+                header :: hs
+            | h :: hs when not (predicate h) ->
+                h :: replaceHeaderInner hs
+        replaceHeaderInner headers
+
     // Adds a header to the collection as long as it isn't already in it
     let appendHeaderNoRepeat newHeader headerList =
         match headerList with
@@ -392,20 +406,28 @@ module internal Impl =
         |> String.concat CRLF
         |> encoding.GetBytes
 
-    let formatBody (clientState : HttpClientState) : Encoding * RequestBody -> byte [] = function
-        | _, BodyRaw raw ->
-            raw
+    let formatBody (clientState : HttpClientState)
+                   // we may actually change the content type if it's wrong
+                   : ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
+        function
+        | userCt, _, BodyRaw raw ->
+            userCt, raw
 
-        | encoding, BodyString str ->
-            encoding.GetBytes str
+        | userCt, encoding, BodyString str ->
+            userCt, encoding.GetBytes str
 
-        | _, BodyForm [] ->
-            [||]
+        | userCt, _, BodyForm [] ->
+            userCt, [||]
 
-        | encoding, BodyForm formData ->
-            if formData |> List.forall (function | NameValue _ -> true | _ -> false) then
+        | userCt, encoding, BodyForm formData ->
+            let onlyNameValues =
+                formData |> List.forall (function | NameValue _ -> true | _ -> false)
+
+            if onlyNameValues then
+                ContentType.Parse "application/x-www-form-urlencoded",
                 formatBodyUrlencoded encoding formData
             else
+                ContentType.Parse "multipart/form-data",
                 formatBodyFormData clientState encoding formData
 
 open Impl
@@ -564,27 +586,50 @@ module internal DotNetWrapper =
 
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
-    let setBody state (encoding, body) (webRequest : HttpWebRequest) =
-        match formatBody state (encoding, body) with
-        | [||] -> ()
+    let setBody state body (webRequest : HttpWebRequest) =
+        match body with
+        | [||] ->
+            ()
         | bodyBytes ->
             // Getting the request stream seems to be actually connecting to the internet in some way
             use requestStream = webRequest.GetRequestStream()
             // TODO: expose async body
             requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
 
+    let matchCtHeader = function
+        | RequestHeader.ContentType _ -> true
+        | _ -> false
+
     /// The nasty business of turning a Request into an HttpWebRequest
     let toHttpWebRequest state (request : Request) =
+        let contentType =
+            request.Headers
+            |> List.tryFind matchCtHeader
+            |> function | Some (ContentType value) -> Some value | _ -> None
 
         let contentEncoding =
             // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
-            request.Headers
-            |> List.tryFind (function | ContentType ct -> true | _ -> false)
-            |> function | Some (ContentType { charset = Some enc }) -> Some enc | _ -> None
+            contentType
+            |> function
+            | Some { charset = Some enc } -> Some enc
+            | _ -> None
             |> Option.fold (fun s t -> t) request.BodyCharacterEncoding
 
-        let url = request.Url + (request |> getQueryString contentEncoding)
-        let webRequest = HttpWebRequest.Create(url) :?> HttpWebRequest
+        let url =
+            request.Url + (request |> getQueryString contentEncoding)
+
+        let webRequest =
+            HttpWebRequest.Create(url) :?> HttpWebRequest
+
+        let newContentType, body =
+            formatBody state (contentType, contentEncoding, request.Body)
+
+        let request =
+            newContentType
+            |> Option.fold (fun (req : Request) newCt ->
+                let header = RequestHeader.ContentType newCt
+                { req with Headers = req.Headers |> putHeader matchCtHeader header })
+                request
 
         webRequest.Method <- (request |> getMethodAsString)
         webRequest.ProtocolVersion <- HttpVersion.Version11
@@ -601,7 +646,7 @@ module internal DotNetWrapper =
         webRequest |> setCookies request.Cookies request.Url
         webRequest |> setProxy request.Proxy
 
-        webRequest |> setBody state (contentEncoding, request.Body)
+        webRequest |> setBody state body
 
         webRequest.KeepAlive <- request.KeepAlive
         webRequest.Timeout <- (int)request.Timeout
@@ -690,7 +735,7 @@ module internal DotNetWrapper =
     let readBody encoding (response:HttpWebResponse) = async {
         let charset = 
             match encoding with
-            | None -> 
+            | None ->
                 match response.CharacterSet with
                 | null -> ISOLatin1
                 | responseCharset -> Encoding.GetEncoding(responseCharset |> mapEncoding)

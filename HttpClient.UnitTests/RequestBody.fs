@@ -35,8 +35,9 @@ let bodyFormatting =
     testList "formatting different sorts of body" [
         testCase "can format raw" <| fun _ ->
             let clientState = { DefaultHttpClientState with random = Random testSeed }
-            let body = Impl.formatBody clientState (utf8, BodyRaw [|1uy; 2uy; 3uy|])
+            let newCt, body = Impl.formatBody clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
             Assert.Equal("body should be verbatim", [|1uy; 2uy; 3uy|], body)
+            Assert.Equal("no new content type for byte body", None, newCt)
 
         testCase "can format multipart/formdata single file" <| fun _ ->
             /// can't lift outside, because test cases may run in parallel
@@ -51,7 +52,10 @@ let bodyFormatting =
                 [   NameValue { name = "submit-name"; value = "Larry" }
                     SingleFile ("files", ("file1.txt", fileCt, Plain fileContents)) ]
 
-            let subject = Impl.formatBody clientState (utf8, BodyForm form) |> utf8.GetString
+            let newCt, subject =
+                Impl.formatBody clientState (None, utf8, BodyForm form)
+                |> fun (newCt, body) -> newCt, body |> utf8.GetString
+
             let expected = [ "Content-Type: multipart/form-data; boundary=mACKqCcIID-J''_PL:hfbFiOLC/cew"
                              ""
                              "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
@@ -65,7 +69,11 @@ let bodyFormatting =
                              "Hello World"
                              "--mACKqCcIID-J''_PL:hfbFiOLC/cew--" ]
                            |> String.concat "\r\n"
+
             Assert.Equal("should have correct body", expected, subject)
+            Assert.Equal("should have new ct",
+                         ContentType.Parse "multipart/form-data",
+                         newCt)
 
         testCase "can format multipart/formdata with multipart/mixed for multi-file upload" <| fun _ ->
             /// can't lift outside, because test cases may run in parallel
@@ -85,7 +93,10 @@ let bodyFormatting =
                                ])
                 ]
 
-            let subject = Impl.formatBody clientState (utf8, BodyForm form) |> utf8.GetString
+            let newCt, subject =
+                Impl.formatBody clientState (None, utf8, BodyForm form)
+                |> fun (newCt, body) -> newCt, body |> utf8.GetString
+
             let expected =
                 [ "Content-Type: multipart/form-data; boundary=mACKqCcIID-J''_PL:hfbFiOLC/cew"
                   ""
@@ -133,10 +144,13 @@ let bodyFormatting =
                 NameValue { name = "user_name"; value = "Åsa den Röde" }
                 NameValue { name = "user_pass"; value = "Bović" }
             ]
-            |> fun form -> Impl.formatBody clientState (utf8, BodyForm form)
-            |> utf8.GetString
-            |> fun result ->
-                Assert.Equal(result, "submit=Join+Now!&user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87")
+            |> fun form -> Impl.formatBody clientState (None, utf8, BodyForm form)
+            |> fun (newCt, body) -> newCt, body |> utf8.GetString
+            |> fun (newCt, body) ->
+                Assert.Equal(body, "submit=Join+Now!&user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87")
+                Assert.Equal("should have new ct",
+                             ContentType.Parse "application/x-www-form-urlencoded",
+                             newCt)
     ]
 
 let useCase = testCase
