@@ -113,7 +113,15 @@ let bodyFormatting =
             Assert.Equal("should have correct body", expected, subject)
 
         testCase "can format urlencoded" <| fun _ ->
-            Tests.failtest "TODO"
+            // http://www.url-encode-decode.com/
+            // https://unspecified.wordpress.com/2008/07/08/browser-uri-encoding-the-best-we-can-do/
+            // http://stackoverflow.com/questions/912811/what-is-the-proper-way-to-url-encode-unicode-characters
+            // https://www.ietf.org/rfc/rfc1738.txt
+            // http://www.w3.org/TR/html401/interact/forms.html
+            // http://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+            Assert.Equal("Should encode Swedish properly",
+                         "user_name=%c3%85sa+den+R%c3%b6de",
+                         Impl.uriEncodeUtf8 [ { name = "user_name"; value = "Åsa den Röde" } ])
 
     ]
 

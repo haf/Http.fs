@@ -245,22 +245,24 @@ module internal Impl =
         | Trace -> "TRACE"
         | Connect -> "CONNECT"
 
+    let uriEncodeUtf8 =
+        List.map (fun kv ->
+            String.Concat [
+                HttpUtility.UrlEncode kv.name
+                "="
+                HttpUtility.UrlEncode kv.value
+            ])
+        >> String.concat "&"
+
     let getQueryString request =
         match request.QueryStringItems with
         | [] -> ""
-        | items ->
-            items
-            |> List.fold (fun currentQueryString queryStringItem -> 
-                (if currentQueryString = "?" then currentQueryString else currentQueryString + "&" ) 
-                + HttpUtility.UrlEncode(queryStringItem.name)
-                + "=" 
-                + HttpUtility.UrlEncode(queryStringItem.value)) 
-                "?"
+        | items -> String.Concat [ "?"; uriEncodeUtf8 items ]
 
     // Adds an element to a list which may be none
     let append item = function
-        | [] -> [item]
-        | existingList -> existingList @ [item]
+        | [] -> [ item ]
+        | existingList -> existingList @ [ item ]
 
     // Checks if a header already exists in a list
     // (standard headers just checks type, custom headers also checks 'name' field).
@@ -291,7 +293,7 @@ module internal Impl =
         |> fun headerValue -> Authorization headerValue
 
     let generateBoundary =
-        let boundaryChars = "abcdefghijklmnopqrstovwxyz_-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        let boundaryChars = "abcdefghijklmnopqrstuvwxyz_-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         let boundaryLen = 30
         fun clientState ->
             let rnd = clientState.random
