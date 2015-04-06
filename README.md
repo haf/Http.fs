@@ -125,25 +125,14 @@ open HttpClient
 printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
 ```
 
-If you can't use NuGet (perhaps you're writing a script), or want to use the source files, everything you need's in the Release folder.  You can either reference the DLL, or include the two source files directly.
+If you can't use NuGet (perhaps you're writing a script), check out the [Releases](https://github.com/relentless/Http.fs/releases), where you should be able to find the latest version.
 
-So to use it from a script, it would be this:
+To use it from a script, it would be this:
 
 ``` fsharp
 #r "HttpClient.dll"
 
 open HttpClient  
-
-printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
-```
-
-or this:
-
-``` fsharp
-#load "AsyncStreamReader.fs"
-#load "HttpClient.fs"
-
-open HttpClient
 
 printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
 ```
