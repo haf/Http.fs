@@ -625,6 +625,8 @@ module internal DotNetWrapper =
             formatBody state (contentType, contentEncoding, request.Body)
 
         let request =
+            // if we have a new content type, from using BodyForm, then this
+            // updates the request value with that header
             newContentType
             |> Option.fold (fun (req : Request) newCt ->
                 let header = RequestHeader.ContentType newCt
