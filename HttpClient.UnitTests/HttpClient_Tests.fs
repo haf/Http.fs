@@ -26,6 +26,7 @@ let ``createRequest makes a Request with a Method and URL, and sensible defaults
     createdRequest.ResponseCharacterEncoding.IsNone |> should equal true
     createdRequest.Proxy.IsNone |> should equal true
     createdRequest.KeepAlive |> should equal true
+    createdRequest.Timeout |> should equal 100000<ms>
 
 [<Test>]
 let ``requests have cookies enabled by default`` () =
@@ -222,7 +223,7 @@ let ``withBodyBytes sets the request body`` () =
 
 [<Test>]
 let ``withTimeout sets Timeout`` () =
-    (createValidRequest |> withTimeout 500).Timeout |> should equal 500
+    (createValidRequest |> withTimeout 500<ms>).Timeout |> should equal 500
 
 [<Test>]
 let ``If withBodyBytes is called after withBody, the body will be text`` () =

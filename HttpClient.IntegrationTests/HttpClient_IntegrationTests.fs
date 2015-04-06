@@ -402,7 +402,7 @@ type ``Integration tests`` ()=
     member x.``if the resource is not returned within Timeout, throw WebException`` () =
         (fun() ->
             createRequest Post "http://localhost:1234/TestServer/SlowResponse" 
-            |> withTimeout 1000
+            |> withTimeout 1000<ms>
             |> withBody "hi mum"
             |> getResponseCode |> ignore)
             |> should throw typeof<WebException>

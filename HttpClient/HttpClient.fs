@@ -11,6 +11,8 @@ open Microsoft.FSharp.Control.WebExtensions
 
 let private ISO_Latin_1 = "ISO-8859-1"
 
+[<Measure>] type ms
+
 type HttpMethod = Options | Get | Head | Post | Put | Delete | Trace | Patch | Connect
 
 // Same as System.Net.DecompressionMethods, but I didn't want to expose that
@@ -128,7 +130,7 @@ type Request = {
     ResponseCharacterEncoding: string option
     Proxy: Proxy option
     KeepAlive: bool
-    Timeout: int
+    Timeout: int<ms>
 }
 
 type Response = {
@@ -162,7 +164,7 @@ let createRequest httpMethod url = {
     KeepAlive = true;
     /// The default value is 100,000 milliseconds (100 seconds).
     /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
-    Timeout = 100000
+    Timeout = 100000<ms>
 }
 
 // Adds an element to a list which may be none
@@ -392,7 +394,7 @@ let private toHttpWebRequest request =
     webRequest |> setBody request.Body request.BodyCharacterEncoding
 
     webRequest.KeepAlive <- request.KeepAlive
-    webRequest.Timeout <- request.Timeout
+    webRequest.Timeout <- (int)request.Timeout
 
     webRequest
 
