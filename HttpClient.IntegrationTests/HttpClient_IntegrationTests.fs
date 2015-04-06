@@ -25,7 +25,7 @@ let nancyHost =
 
 let utf8 = Encoding.UTF8
 
-[<TestFixture>] 
+[<TestFixture>]
 type ``Integration tests`` ()=
 
     [<TestFixtureSetUp>]
@@ -81,7 +81,7 @@ type ``Integration tests`` ()=
         |> withQueryStringItem {name="qs2"; value="hi mum"}
         |> withHeader (Accept "application/xml")
         |> withCookie {name="SESSIONID"; value="1234"}
-        |> withBody "some JSON or whatever"
+        |> withBodyString "some XML or whatever"
         |> getResponseCode |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
         HttpServer.recordedRequest.Value.Query?search.ToString() |> should equal "jeebus"
@@ -89,7 +89,7 @@ type ``Integration tests`` ()=
         HttpServer.recordedRequest.Value.Headers.Accept |> should contain ("application/xml", 1m)
         HttpServer.recordedRequest.Value.Cookies.["SESSIONID"] |> should contain "1234"
         use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body,Encoding.GetEncoding(1252))
-        bodyStream.ReadToEnd() |> should equal "some JSON or whatever"
+        bodyStream.ReadToEnd() |> should equal "some XML or whatever"
 
     [<Test>]
     member x.``getResponseCode should return the http status code for all response types`` () =
@@ -205,7 +205,7 @@ type ``Integration tests`` ()=
     [<Test>]
     member x.``Content-Length header is set automatically for Posts with a body`` () =
         createRequest Post "http://localhost:1234/TestServer/RecordRequest"
-        |> withBody "Hi Mum"
+        |> withBodyString "Hi Mum"
         |> getResponseCode |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
         HttpServer.recordedRequest.Value.Headers.ContentLength |> should equal 6
@@ -266,7 +266,7 @@ type ``Integration tests`` ()=
     member x.``if body character encoding is specified, encodes the request body with it`` () =
         let response = 
             createRequest Post "http://localhost:1234/TestServer/RecordRequest" 
-            |> withBodyEncoded "¥§±Æ" utf8 // random UTF-8 characters
+            |> withBodyStringEncoded "¥§±Æ" utf8 // random UTF-8 characters
             |> getResponseCode |> ignore
         use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body,Encoding.GetEncoding("UTF-8"))
         bodyStream.ReadToEnd() |> should equal "¥§±Æ"

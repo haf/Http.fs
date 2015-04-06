@@ -9,3 +9,4 @@ nuget Nancy.Hosting.Self ~> 0.22
 nuget NUnit ~> 2.6.3
 nuget NUnit.Runners ~> 2.6.3
 nuget OpenCover ~> 4.5
+nuget Suave

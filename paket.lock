@@ -3,6 +3,7 @@ NUGET
   specs:
     FAKE (3.26.7)
     FSharp.Core (3.1.2.1)
+    FsPickler (1.0.16)
     FsUnit (1.2.1.0)
       NUnit (>= 2.6.2)
     Fuchu (0.4.0.0)
@@ -12,3 +13,6 @@ NUGET
     NUnit (2.6.3)
     NUnit.Runners (2.6.4)
     OpenCover (4.5.3723)
+    Suave (0.26.1)
+      FSharp.Core (>= 3.1.2.1)
+      FsPickler (>= 1.0.7)

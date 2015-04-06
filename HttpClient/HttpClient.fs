@@ -479,14 +479,17 @@ let withBasicAuthentication username password (request:Request) =
 let withAutoDecompression decompressionSchemes request =
     { request with AutoDecompression = decompressionSchemes}
 
+let withBody body request =
+    { request with Body = body }
+
 /// Sets the the request body, using UTF-8 character encoding.
 ///
 /// Only certain request types should have a body, e.g. Posts.
-let withBody body request =
+let withBodyString body request =
     { request with Body = BodyString body }
 
 /// Sets the request body, using the provided character encoding.
-let withBodyEncoded body characterEncoding request =
+let withBodyStringEncoded body characterEncoding request =
     { request with Body = BodyString body; BodyCharacterEncoding = characterEncoding }
 
 /// Adds the provided QueryString record onto the request URL.

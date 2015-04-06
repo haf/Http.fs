@@ -1,4 +1,4 @@
-﻿<Properties StartupItem="HttpClient.UnitTests/HttpClient.UnitTests.fsproj">
+﻿<Properties StartupItem="HttpClient.IntegrationTests/HttpClient.IntegrationTests.fsproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="HttpClient.UnitTests/Program.fs">
     <Files>

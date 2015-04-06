@@ -14,17 +14,17 @@ let utf8 = Encoding.UTF8
 let apiUsage =
     testList "api usage" [
         testCase "withBody sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBody """Hello mum!%2\/@$""").Body, BodyString """Hello mum!%2\/@$""")
+            Assert.Equal((createValidRequest |> withBodyString """Hello mum!%2\/@$""").Body, BodyString """Hello mum!%2\/@$""")
 
         testCase "withBody uses default character encoding of UTF-8" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBody "whatever").BodyCharacterEncoding, utf8)
+            Assert.Equal((createValidRequest |> withBodyString "whatever").BodyCharacterEncoding, utf8)
 
         testCase "withBodyEncoded sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyEncoded """Hello mum!%2\/@$""" utf8).Body,
+            Assert.Equal((createValidRequest |> withBodyStringEncoded """Hello mum!%2\/@$""" utf8).Body,
                          BodyString """Hello mum!%2\/@$""")
 
         testCase "withBodyEncoded sets the body encoding" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyEncoded "Hi Mum" utf8).BodyCharacterEncoding,
+            Assert.Equal((createValidRequest |> withBodyStringEncoded "Hi Mum" utf8).BodyCharacterEncoding,
                          utf8)
     ]
 
