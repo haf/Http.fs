@@ -1,0 +1,15 @@
+﻿<Properties StartupItem="HttpClient.IntegrationTests/HttpClient.IntegrationTests.fsproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="HttpClient.IntegrationTests/HttpClient_IntegrationTests.fs">
+    <Files>
+      <File FileName="HttpClient.IntegrationTests/HttpServer.fs" Line="30" Column="25" />
+      <File FileName="HttpClient.IntegrationTests/HttpClient_IntegrationTests.fs" Line="155" Column="75" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/Users/henrik.feldt/dev/haf/Http.fs/HttpClient.IntegrationTests/HttpClient_IntegrationTests.fs" line="170" column="86" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

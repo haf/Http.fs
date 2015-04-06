@@ -1,6 +1,7 @@
-#I @"packages/FAKE/tools/"
+#!/usr/bin/env fsharpi
+#I @"packages/FAKE.3.14.0/tools"
 #r @"FakeLib.dll"
-open Fake 
+open Fake
 open Fake.AssemblyInfoFile
 
 // Paths
@@ -104,8 +105,8 @@ Target "Upload to NuGet" (fun _ ->
     trace <| "buildParam nuget-api-key: " + getBuildParam "nuget-api-key"
 
     // Create and upload package
-    NuGet (fun n -> 
-        {n with          
+    NuGet (fun n ->
+        {n with
             OutputPath = nuGetDir
             WorkingDir = nuGetDir
             Project = "Http.fs"
