@@ -7,7 +7,7 @@ open Fake.AssemblyInfoFile
 
 // Paths
 let httpClientDir = "./HttpClient/"
-let unitTestsDir = "./HttpClient.UnitTests/"
+let unitTestsDir = "HttpClient.UnitTests/"
 let integrationTestsDir = "./HttpClient.IntegrationTests/"
 let sampleApplicationDir = "./HttpClient.SampleApplication/"
 
