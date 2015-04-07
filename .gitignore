@@ -45,3 +45,5 @@ AssemblyInfo.fs
 !/Tools/OpenCover.4.5.2506/x86/*
 !/Tools/ReportGenerator_1.9.1.0/*
 !/Tools/ReportGenerator_1.9.1.0/bin/*
+build/
+AssemblyVersionInfo.fs
