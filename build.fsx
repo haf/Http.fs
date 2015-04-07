@@ -13,7 +13,7 @@ let sampleApplicationDir = "./HttpClient.SampleApplication/"
 
 let releaseDir = "Release/"
 let nuGetDir = releaseDir + "NuGet/"
-let nuGetProjectDll = nuGetDir + "lib/net40/HttpClient.dll"
+let nuGetProjectDll = nuGetDir + "lib/net45/HttpClient.dll"
 let nUnitToolPath = "packages/NUnit.Runners/tools/"
 
 // Helper Functions
@@ -103,14 +103,15 @@ Target "Copy Release Files" (fun _ ->
 Target "Upload to NuGet" (fun _ ->
     // Copy the dll into the right place
     CopyFiles 
-        (releaseDir + "NuGet/lib/net40")
+        (releaseDir + "NuGet/lib/net45")
         [(httpClientDir |> outputFolder) + "HttpClient.dll"]
 
     trace <| "buildParam nuget-version: " + getBuildParam "nuget-version"
     trace <| "buildParam nuget-api-key: " + getBuildParam "nuget-api-key"
 
     let version = getBuildParam "nuget-version"
-    File.WriteAllText(Path.Combine(nuGetDir, sprintf "Http.fs.%s.nuspec" version),
+    let nuspec = Path.Combine(nuGetDir, "Http.fs.nuspec")
+    File.WriteAllText(nuspec,
                       """<?xml version="1.0" encoding="utf-8"?>
 <package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
@@ -146,8 +147,14 @@ Target "Upload to NuGet" (fun _ ->
             ReleaseNotes = getBuildParam "nuget-release-notes"
             PublishTrials = 3
             Publish = bool.Parse(getBuildParamOrDefault "nuget-publish" "true")
-            ToolPath = "./packages/NuGet.CommandLine/tools/NuGet.exe" })
-        (Path.Combine(nuGetDir, "Http.fs.nuspec"))
+            ToolPath = FullName "./packages/NuGet.CommandLine/tools/NuGet.exe"
+            Files =
+                [ "lib\\net45\\*.dll", Some "lib\\net45", None
+                  "lib\\net45\\*.mdb", Some "lib\\net45", None 
+                  "lib\\net45\\*.xml", Some "lib\\net45", None ]
+            Dependencies =
+                [   "FSharp.Core", GetPackageVersion "./packages" "FSharp.Core" ] })
+        nuspec
 )
 
 Target "All" (fun _ ->
