@@ -4,6 +4,7 @@
 #r "HttpClient.dll"
 
 open HttpClient
+System.Net.ServicePointManager.Expect100Continue <- false
 
 let firstCt, secondCt, thirdCt =
     ContentType.Create("text", "plain"),
