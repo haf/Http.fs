@@ -408,7 +408,7 @@ type ``Integration tests`` ()=
         createRequest Delete "http://localhost:1234/TestServer/Delete" |> getResponseCode |> should equal 200
 
     [<Test>]
-    member x.``geResponse.ResponseUri should contain URI that responded to the request`` () =
+    member x.``getResponse.ResponseUri should contain URI that responded to the request`` () =
         // Is going to redirect to another route and return GET 200.
         let request = 
             createRequest Post "http://localhost:1234/TestServer/Redirect" 
@@ -429,3 +429,29 @@ type ``Integration tests`` ()=
 //        |> withProxy { Address = "localhost:1234/TestServer/RecordRequest"; Port = 1234; Credentials = ProxyCredentials.Default }
 //        |> getResponseCode |> ignore
 //        HttpServer.recordedRequest.Value |> should not' (equal null)
+
+    [<Test>]
+    member x.``returns the uploaded file names`` () =
+        let firstCt, secondCt =
+            ContentType.Parse "text/plain" |> Option.get,
+            ContentType.Parse "text/plain" |> Option.get
+
+        let req =
+            createRequest Post "http://localhost:1234/TestServer/filenames"
+            |> withBody
+                //([ SingleFile ("file", ("file1.txt", firstCt, Plain "Hello World")) ]|> BodyForm)
+
+                                // example from http://www.w3.org/TR/html401/interact/forms.html
+                ([   NameValue { name = "submit-name"; value = "Larry" }
+                     MultiFile ("files",
+                                [ "file1.txt", firstCt, Plain "Hello World"
+                                  "file2.gif", secondCt, Plain "...contents of file2.gif..."
+                                ])
+                ]
+                |> BodyForm)
+
+        let response = req |> getResponseBody
+
+        for fileName in [ "file1.txt"; "file2.gif" ] do
+            Assert.That(response, Is.StringContaining(fileName))
+        ()

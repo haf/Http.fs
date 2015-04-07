@@ -1,0 +1,89 @@
+ <!DOCTYPE html>
+<html>
+<head>
+  <title>Page Title</title>
+</head>
+
+<body>
+  <form action="http://localhost:1234" method="post" enctype="multipart/form-data">
+    <p><input type="text" name="message" value="Hello World">
+    <p><input type="file" name="images" multiple>
+    <p><button type="submit">Submit</button>
+  </form>
+
+
+  <h2>Instructions</h2>
+  <p>On the server</p>
+  <pre>
+    while true; do printf '' | nc -l localhost 1234; done
+  </pre>
+  <p>Send through curl:</p>
+  <pre>
+    curl -F "message=Hello+World" -F "file=@pic1.gif" -F "file=@pic2.gif" localhost:1234
+  </pre>
+
+  <h2>What Firefox OS X sends:<h2>
+
+  <pre>
+POST / HTTP/1.1
+Host: localhost:1234
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:37.0) Gecko/20100101 Firefox/37.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Type: multipart/form-data; boundary=---------------------------16701619336528579941090352635
+Content-Length: 599
+
+-----------------------------16701619336528579941090352635
+Content-Disposition: form-data; name="message"
+
+Hello World
+-----------------------------16701619336528579941090352635
+Content-Disposition: form-data; name="images"; filename="testfile1.txt"
+Content-Type: text/plain
+
+Hello World, no trailling newlines
+-----------------------------16701619336528579941090352635
+Content-Disposition: form-data; name="images"; filename="testfile2.txt"
+Content-Type: text/plain
+
+Hello world, with TWO newlines at the end (NOT CRLF)
+
+
+-----------------------------16701619336528579941090352635--
+  </pre>
+  <h2>What Safari OS X sends</h2>
+  <pre>
+POST / HTTP/1.1
+Host: localhost:1234
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryN8Y1MQiNiQs7fEEd
+Origin: file://
+Connection: keep-alive
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/600.4.10 (KHTML, like Gecko) Version/7.1.4 Safari/537.85.13
+Content-Length: 527
+Accept-Language: en-us
+Accept-Encoding: gzip, deflate
+
+------WebKitFormBoundaryN8Y1MQiNiQs7fEEd
+Content-Disposition: form-data; name="message"
+
+Hello World
+------WebKitFormBoundaryN8Y1MQiNiQs7fEEd
+Content-Disposition: form-data; name="images"; filename="testfile1.txt"
+Content-Type: text/plain
+
+Hello World, no trailling newlines
+------WebKitFormBoundaryN8Y1MQiNiQs7fEEd
+Content-Disposition: form-data; name="images"; filename="testfile2.txt"
+Content-Type: text/plain
+
+Hello world, with TWO newlines at the end (NOT CRLF)
+
+
+------WebKitFormBoundaryN8Y1MQiNiQs7fEEd--
+  </pre>
+</body>
+
+</html> 

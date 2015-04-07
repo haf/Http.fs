@@ -181,3 +181,10 @@ type FakeServer() as self =
         self.Put.["Put"] <- fun _ -> 200 :> obj
         self.Delete.["Delete"] <- fun _ -> 200 :> obj
         self.Patch.["Patch"] <- fun _ -> 200 :> obj
+
+        self.Post.["filenames"] <-
+            fun _ ->
+                self.Request.Files
+                |> Seq.map (fun file -> file.Name)
+                |> String.concat "\n"
+                |> box

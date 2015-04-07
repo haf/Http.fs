@@ -55,6 +55,7 @@
     <Compile Include="HttpClient_IntegrationTests.fs" />
     <None Include="paket.references" />
     <Compile Include="HttpClient_SuaveIntegrationTests.fs" />
+    <Compile Include="sample-form-post.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsUnit.NUnit">
