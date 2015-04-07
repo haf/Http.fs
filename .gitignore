@@ -34,6 +34,7 @@ TestResults/
 ehthumbs.db
 Icon?
 Thumbs.db
+*.userprefs
 # Include Tools
 !/Tools/NUnit-2.6.3/*
 !/Tools/NUnit-2.6.3/bin/*
