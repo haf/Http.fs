@@ -43,7 +43,7 @@ let request =
 
         // a single file form control, selecting two files from browser
         FormFile ("file", ("file1.txt", ContentType.Create("text", "plain"), Plain "Hello World"))
-        FormFile ("file", ("file2.txt", ContentType.Create("text", "plain"), Plain "Goodbye World"))
+        FormFile ("file", ("file2.txt", ContentType.Create("text", "plain"), Plain "Goodbye World")) // or Binary( .. )
 
         // you can also use MultipartMixed for servers supporting it (this is not the browser-default)
         MultipartMixed ("file2", [
