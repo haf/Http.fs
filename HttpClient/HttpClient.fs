@@ -138,7 +138,10 @@ type RequestHeader =
     | Warning of string
     | Custom of NameValue
 
-type UserDetails = { username:string; password:string }
+type UserDetails = {
+    username : string
+    password : string
+}
 
 [<RequireQualifiedAccess>]
 type ProxyCredentials =
