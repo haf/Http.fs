@@ -505,6 +505,7 @@ let withBasicAuthentication username password (request:Request) =
 let withAutoDecompression decompressionSchemes request =
     { request with AutoDecompression = decompressionSchemes}
 
+/// Lets you set your own body - use the RequestBody type to build it up.
 let withBody body request =
     { request with Body = body }
 

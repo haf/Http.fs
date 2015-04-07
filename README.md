@@ -1,10 +1,10 @@
-![Http.fs logo](https://raw.githubusercontent.com/relentless/Http.fs/master/docs/files/img/logo_small.png) Http.fs 
+![Http.fs logo](https://raw.githubusercontent.com/relentless/Http.fs/master/docs/files/img/logo_small.png) Http.fs
 =======
 
 A gloriously functional HTTP client library for F#!
 
-.Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)  
-Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/relentless/Http.fs.svg?branch=master)](https://travis-ci.org/relentless/Http.fs)  
+.Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)
+Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/relentless/Http.fs.svg?branch=master)](https://travis-ci.org/relentless/Http.fs)
 NuGet package: [![NuGet](http://img.shields.io/badge/NuGet-1.5.1-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
 
 ## How do I use it? ##
@@ -12,42 +12,62 @@ NuGet package: [![NuGet](http://img.shields.io/badge/NuGet-1.5.1-blue.svg?style=
 In it's simplest form, this will get you a web page:
 
 ``` fsharp
-createRequest Get "http://somesite.com" |> getResponseBody  
+createRequest Get "http://somesite.com" |> getResponseBody
 ```
 
-To get into the details a bit more, there are two or three steps to getting what you want from a web page/HTTP response.
+To get into the details a bit more, there are two or three steps to getting what
+you want from a web page/HTTP response.
 
-1 - A Request (an immutable record type) is built up in a [Fluent Builder](http://stefanoricciardi.com/2010/04/14/a-fluent-builder-in-c/) stylee as follows:
+1 - A Request (an immutable record type) is built up in a [Fluent
+Builder](http://stefanoricciardi.com/2010/04/14/a-fluent-builder-in-c/) style
+as follows:
 
 ``` fsharp
-let request =  
-    createRequest Post "http://somesite.com"  
-    |> withQueryStringItem {name="search"; value="jeebus"}  
+let request =
+    createRequest Post "http://somesite.com"
+    |> withQueryStringItem {name="search"; value="jeebus"}
     |> withBasicAuthentication "myUsername" "myPassword"
-    |> withHeader (UserAgent "Chrome or summat")  
-    |> withHeader (Custom {name="X-My-Header"; value="hi mum"})  
-    |> withAutoDecompression DecompressionScheme.GZip  
-    |> withAutoFollowRedirectsDisabled  
-    |> withCookie {name="session"; value="123"}  
-    |> withBody "Check out my sexy body"  
-    |> withBodyEncoded "Check out my sexy foreign body" "ISO-8859-5"
+    |> withHeader (UserAgent "Chrome or summat")
+    |> withHeader (Custom {name="X-My-Header"; value="hi mum"}) 
+    |> withAutoDecompression DecompressionScheme.GZip 
+    |> withAutoFollowRedirectsDisabled
+    |> withCookie {name="session"; value="123"} 
+    |> withBodyString "Check out my sexy body"
+    |> withBodyStringEncoded "Check out my sexy foreign body" "ISO-8859-5"
+    |> withBody (BodyRaw [| 1uy; 2uy; 3uy |])
+    |> withBody (BodyString "this is a greeting from Santa")
+    // if you submit a BodyForm, then Http.fs will also set the correct Content-Type, so you don't have to
+    |> withBody (BodyForm [
+        // if you only have this in your form, it will be submitted as application/x-www-form-urlencoded
+        NameValue ("submit", "Hit Me!")
+
+        // a single file form control, selecting two files from browser
+        FormFile ("file", ("file1.txt", ContentType.Create("text", "plain"), Plain "Hello World"))
+        FormFile ("file", ("file2.txt", ContentType.Create("text", "plain"), Plain "Goodbye World"))
+
+        // you can also use MultipartMixed for servers supporting it (this is not the browser-default)
+        MultipartMixed ("file2", [
+          ("file3.txt", ContentType.Create("text". "plain"), Plain "Awesome!")
+          ("file4.txt", ContentType.Create("text". "plain"), Plain "Sauce!")
+        ])
+    ])
     |> withResponseCharacterEncoding "utf-8"
     |> withKeepAlive false
-    |> withProxy { 
-          Address = "proxy.com"; 
-          Port = 8080; 
-          Credentials = 
+    |> withProxy {
+          Address = "proxy.com";
+          Port = 8080;
+          Credentials =
               ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
 ```
-  
+
 (with everything after createRequest being optional)
   
 2 - The Http response (or just the response code/body) is retrieved using one of the following:
 
 ``` fsharp
-request |> getResponse  
-request |> getResponseCode  
-request |> getResponseBody  
+request |> getResponse
+request |> getResponseCode
+request |> getResponseBody
 request |> getResponseBytes
 ```
 
