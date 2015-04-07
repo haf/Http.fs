@@ -384,6 +384,7 @@ module internal Impl =
             match values with
             | [] ->
                 yield "--" + boundary + "--"
+                yield CRLF
             | h :: rest ->
                 yield "--" + boundary
                 match h with

@@ -71,7 +71,8 @@ let bodyFormatting =
                              "Content-Type: text/plain"
                              ""
                              "Hello World"
-                             "--mACKqCcIID-J''_PL:hfbFiOLC/cew--" ]
+                             "--mACKqCcIID-J''_PL:hfbFiOLC/cew--"
+                             "" ]
                            |> String.concat "\r\n"
 
             Assert.Equal("should have correct body", expected, subject)
