@@ -34,7 +34,7 @@ let app =
         ]
     ]
 
-[<TestFixture>]
+[<TestFixture; Ignore "pending: https://github.com/SuaveIO/suave/issues/228">]
 type ``Suave Integration Tests`` ()=
     let cts = new CancellationTokenSource()
 
