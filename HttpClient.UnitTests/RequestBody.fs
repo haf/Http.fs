@@ -56,9 +56,7 @@ let bodyFormatting =
                 Impl.formatBody clientState (None, utf8, BodyForm form)
                 |> fun (newCt, body) -> newCt, body |> utf8.GetString
 
-            let expected = [ "Content-Type: multipart/form-data; boundary=mACKqCcIID-J''_PL:hfbFiOLC/cew"
-                             ""
-                             "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
+            let expected = [ "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
                              "Content-Disposition: form-data; name=\"submit-name\""
                              ""
                              "Larry"
@@ -72,8 +70,8 @@ let bodyFormatting =
 
             Assert.Equal("should have correct body", expected, subject)
             Assert.Equal("should have new ct",
-                         ContentType.Parse "multipart/form-data",
-                         newCt)
+                         ContentType.Create("multipart", "form-data", boundary="mACKqCcIID-J''_PL:hfbFiOLC/cew"),
+                         newCt |> Option.get)
 
         testCase "can format multipart/formdata with multipart/mixed for multi-file upload" <| fun _ ->
             /// can't lift outside, because test cases may run in parallel
@@ -98,9 +96,7 @@ let bodyFormatting =
                 |> fun (newCt, body) -> newCt, body |> utf8.GetString
 
             let expected =
-                [ "Content-Type: multipart/form-data; boundary=mACKqCcIID-J''_PL:hfbFiOLC/cew"
-                  ""
-                  "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
+                [ "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
                   "Content-Disposition: form-data; name=\"submit-name\""
                   ""
                   "Larry"

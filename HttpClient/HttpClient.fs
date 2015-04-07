@@ -34,28 +34,42 @@ type ContentRange = {
 }
 
 type ContentType = {
-    typ     : string
-    subtype : string
-    charset : Encoding option
+    typ      : string
+    subtype  : string
+    charset  : Encoding option
+    boundary : string option
 }
 with
     member x.Equals(typ : string, subtype : string) =
         x.typ = typ && x.subtype = subtype
 
     override x.ToString() =
-        match x.charset with
-        | None ->
-            String.Concat [ x.typ; "/"; x.subtype ]
-        | Some enc ->
-            String.Concat [ x.typ; "/"; x.subtype; ";"; " charset="; enc.ToString() ]
+        String.Concat [
+            yield x.typ
+            yield "/"
+            yield x.subtype
+            match x.charset with
+            | None -> ()
+            | Some enc -> yield! [ ";"; " charset="; enc.ToString() ]
+            match x.boundary with
+            | None -> ()
+            | Some b -> yield! [ ";"; " boundary="; b ]
+        ]
+
+    static member Create(typ : string, subtype : string, ?charset : Encoding, ?boundary : string) =
+        { typ = typ
+          subtype = subtype
+          charset = charset
+          boundary = boundary
+        }
 
     // TODO, use: https://github.com/freya-fs/freya/blob/master/src/Freya.Types.Http/Types.fs#L420-L426
     static member Parse (str : string) =
         match str.Split [| '/' |], str.IndexOf(';') with
         | [| typ; subtype |], -1 ->
-            Some { typ = typ; subtype = subtype; charset = None }
+            Some { typ = typ; subtype = subtype; charset = None; boundary = None }
         | [| typ; rest |], index ->
-            Some { typ = typ; subtype = rest.Substring(0, index); charset = None }
+            Some { typ = typ; subtype = rest.Substring(0, index); charset = None; boundary = None }
         | x -> None
 
 type ResponseHeader =
@@ -399,13 +413,8 @@ module internal Impl =
         // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
         |> ISOLatin1.GetBytes
 
-    let private formatBodyFormData clientState encoding formData =
-        let boundary = generateBoundary clientState
-        seq {
-            yield "Content-Type: multipart/form-data; boundary=" + boundary
-            yield ""
-            yield! generateFormData clientState encoding boundary formData
-        }
+    let private formatBodyFormData clientState encoding formData boundary =
+        generateFormData clientState encoding boundary formData
         |> String.concat CRLF
         |> encoding.GetBytes
 
@@ -430,8 +439,9 @@ module internal Impl =
                 ContentType.Parse "application/x-www-form-urlencoded",
                 formatBodyUrlencoded encoding formData
             else
-                ContentType.Parse "multipart/form-data",
-                formatBodyFormData clientState encoding formData
+                let boundary = generateBoundary clientState
+                ContentType.Create("multipart", "form-data", boundary=boundary) |> Some,
+                formatBodyFormData clientState encoding formData boundary
 
 open Impl
 

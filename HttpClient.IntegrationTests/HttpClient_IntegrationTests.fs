@@ -150,7 +150,7 @@ type ``Integration tests`` ()=
         |> withHeader (Authorization  "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
         |> withHeader (Connection "conn1" )
         |> withHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
-        |> withHeader (ContentType { typ = "application"; subtype = "json"; charset = None})
+        |> withHeader (ContentType (ContentType.Create("application", "json")))
         |> withHeader (Date (new DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
         |> withHeader (From "user@example.com" )
         |> withHeader (IfMatch "737060cd8c284d8af7ad3082f209582d" )
