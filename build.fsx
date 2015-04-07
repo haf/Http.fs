@@ -53,8 +53,8 @@ Target "Update Assembly Version" (fun _ ->
          Attribute.Description "An HTTP client for F#"
          Attribute.Guid "4ead3524-8220-4f0b-b77d-edd088597fcf"
          Attribute.Product "Http.fs"
-         Attribute.Version (getBuildParam "nuget-version")
-         Attribute.FileVersion (getBuildParam "nuget-version")
+         Attribute.Version (getBuildParamOrDefault "nuget-version" "2.0.0")
+         Attribute.FileVersion (getBuildParamOrDefault "nuget-version" "2.0.0")
     ]
 )
 
@@ -131,7 +131,7 @@ Target "All" (fun _ ->
 
 // Dependencies
 "Clean" 
-    =?> ("Update Assembly Version", hasBuildParam "nuget-version")
+    ==> "Update Assembly Version"
     ==> "BuildClient"
     ==> "BuildUnitTests" <=> "BuildIntegrationTests" <=> "BuildSampleApplication"
     ==> "Run Unit Tests" <=> "Run Integration Tests"
