@@ -443,10 +443,8 @@ type ``Integration tests`` ()=
 
                                 // example from http://www.w3.org/TR/html401/interact/forms.html
                 ([   NameValue { name = "submit-name"; value = "Larry" }
-                     MultiFile ("files",
-                                [ "file1.txt", firstCt, Plain "Hello World"
-                                  "file2.gif", secondCt, Plain "...contents of file2.gif..."
-                                ])
+                     FormFile ("files", ("file1.txt", firstCt, Plain "Hello World"))
+                     FormFile ("files", ("file2.gif", secondCt, Plain "...contents of file2.gif..."))
                 ]
                 |> BodyForm)
 

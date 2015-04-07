@@ -61,7 +61,7 @@ type ``Suave Integration Tests`` ()=
         let req =
             createRequest Post "http://localhost:8083/filenames"
             |> withBody
-                ([ SingleFile ("file", ("file1.txt", firstCt, Plain "Hello World")) ]|> BodyForm)
+                ([ FormFile ("file", ("file1.txt", firstCt, Plain "Hello World")) ]|> BodyForm)
             (*(
                 // example from http://www.w3.org/TR/html401/interact/forms.html
                 [   NameValue { name = "submit-name"; value = "Larry" }
