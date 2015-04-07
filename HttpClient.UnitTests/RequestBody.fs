@@ -29,6 +29,12 @@ let apiUsage =
     ]
 
 [<Tests>]
+let contentType =
+    testCase "can convert to string" <| fun _ ->
+        let subject = ContentType.Create("application", "multipart", charset=Encoding.UTF8, boundary="---apa")
+        Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=---apa")
+
+[<Tests>]
 let bodyFormatting =
     let testSeed = 1234567765
 

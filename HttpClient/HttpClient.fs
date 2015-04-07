@@ -50,7 +50,7 @@ with
             yield x.subtype
             match x.charset with
             | None -> ()
-            | Some enc -> yield! [ ";"; " charset="; enc.ToString() ]
+            | Some enc -> yield! [ ";"; " charset="; enc.WebName ]
             match x.boundary with
             | None -> ()
             | Some b -> yield! [ ";"; " boundary="; b ]
