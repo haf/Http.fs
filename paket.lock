@@ -10,6 +10,7 @@ NUGET
     Nancy (0.22.2)
     Nancy.Hosting.Self (0.22.2)
       Nancy (>= 0.22.2)
+    NuGet.CommandLine (2.8.5)
     NUnit (2.6.3)
     NUnit.Runners (2.6.4)
     OpenCover (4.5.3723)

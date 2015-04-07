@@ -13,7 +13,6 @@ let sampleApplicationDir = "./HttpClient.SampleApplication/"
 
 let releaseDir = "Release/"
 let nuGetDir = releaseDir + "NuGet/"
-let nuSpecFile = nuGetDir + "HttpClient.dll.nuspec"
 let nuGetProjectDll = nuGetDir + "lib/net40/HttpClient.dll"
 let nUnitToolPath = "packages/NUnit.Runners/tools/"
 
@@ -110,18 +109,45 @@ Target "Upload to NuGet" (fun _ ->
     trace <| "buildParam nuget-version: " + getBuildParam "nuget-version"
     trace <| "buildParam nuget-api-key: " + getBuildParam "nuget-api-key"
 
+    let version = getBuildParam "nuget-version"
+    File.WriteAllText(Path.Combine(nuGetDir, sprintf "Http.fs.%s.nuspec" version),
+                      """<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <id>@project@</id>
+    <version>@build.number@</version>
+    <authors>@authors@</authors>
+    <owners>@authors@</owners>
+    <summary>@summary@</summary>
+    <licenseUrl>https://raw.githubusercontent.com/relentless/Http.fs/master/Licence/License.md</licenseUrl>
+    <projectUrl>https://github.com/relentless/Http.fs</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/relentless/http.fs/master/docs/files/img/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>@description@</description>
+    <releaseNotes>@releaseNotes@</releaseNotes>
+    <copyright>Copyright G Crofton 2014</copyright>
+    <tags>http client fsharp f# request response</tags>
+    @dependencies@
+    @references@
+  </metadata>
+  @files@
+</package>""")
+
     // Create and upload package
     NuGet (fun n ->
         {n with
+            Authors = ["Grant Crofton"]
+            Summary = "A gloriously functional HTTP client library for F#!"
             OutputPath = nuGetDir
             WorkingDir = nuGetDir
             Project = "Http.fs"
-            Version = getBuildParam "nuget-version"
+            Version = version
             AccessKey = getBuildParam "nuget-api-key"
             ReleaseNotes = getBuildParam "nuget-release-notes"
             PublishTrials = 3
-            Publish = bool.Parse(getBuildParamOrDefault "nuget-publish" "true") })
-        nuSpecFile
+            Publish = bool.Parse(getBuildParamOrDefault "nuget-publish" "true")
+            ToolPath = "./packages/NuGet.CommandLine/tools/NuGet.exe" })
+        (Path.Combine(nuGetDir, "Http.fs.nuspec"))
 )
 
 Target "All" (fun _ ->
