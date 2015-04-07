@@ -187,10 +187,10 @@ type File = FileName * ContentType * FileData
 type FormData =
     /// Use when you post a single file
     /// Will use: multipart/form-data
-    | SingleFile of name:FormEntryName * File
+    | FormFile of name:FormEntryName * File
     /// Use when you post multiple files as a multi-file-browse control
     /// Will use: multipart/mixed inside a multipart/form-data.
-    | MultiFile of name:FormEntryName * files:File list
+    | MultipartMixed of name:FormEntryName * files:File list
     /// Use when you simply post form data
     | NameValue of NameValue
 
@@ -230,6 +230,16 @@ type Response = {
     /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebresponse.responseuri%28v=vs.110%29.aspx"/>.
     ResponseUri : System.Uri
 }
+with
+    override x.ToString() =
+        seq {
+            yield x.StatusCode.ToString()
+            for h in x.Headers do
+                yield h.ToString()
+            yield ""
+            if x.EntityBody |> Option.isSome then
+                 yield x.EntityBody |> Option.get
+        } |> String.concat Environment.NewLine
 
 type HttpClientState = {
     random      : Random
@@ -377,7 +387,7 @@ module internal Impl =
             | h :: rest ->
                 yield "--" + boundary
                 match h with
-                | SingleFile (name, (fileName, contentType, contents)) ->
+                | FormFile (name, (fileName, contentType, contents)) ->
                     let dispos = if isMultiFile then "file" else "form-data"
                     yield generateContentDispos dispos [
                         if not isMultiFile then yield "name", name
@@ -386,7 +396,7 @@ module internal Impl =
                     yield sprintf "Content-Type: %O" contentType
                     yield! generateFileData encoding contentType contents
 
-                | MultiFile (name, files) ->
+                | MultipartMixed (name, files) ->
                     let boundary' = generateBoundary state
                     yield "Content-Type: multipart/mixed; boundary=" + boundary'
                     yield generateContentDispos "form-data" [
@@ -394,7 +404,7 @@ module internal Impl =
                     ]
                     yield ""
                     // remap the multi-files to single files and recursively call myself
-                    let files' = files |> List.map (fun f -> SingleFile (name, f))
+                    let files' = files |> List.map (fun f -> FormFile (name, f))
                     yield! generateFormDataInner boundary' files' true
 
                 | NameValue { name = name; value = value } ->

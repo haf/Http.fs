@@ -45,7 +45,7 @@ let bodyFormatting =
             Assert.Equal("body should be verbatim", [|1uy; 2uy; 3uy|], body)
             Assert.Equal("no new content type for byte body", None, newCt)
 
-        testCase "can format multipart/formdata single file" <| fun _ ->
+        testCase "ordinary multipart/form-data" <| fun _ ->
             /// can't lift outside, because test cases may run in parallel
             let clientState = { DefaultHttpClientState with random = Random testSeed }
 
@@ -56,7 +56,7 @@ let bodyFormatting =
             let form =
                 // example from http://www.w3.org/TR/html401/interact/forms.html
                 [   NameValue { name = "submit-name"; value = "Larry" }
-                    SingleFile ("files", ("file1.txt", fileCt, Plain fileContents)) ]
+                    FormFile ("files", ("file1.txt", fileCt, Plain fileContents)) ]
 
             let newCt, subject =
                 Impl.formatBody clientState (None, utf8, BodyForm form)
@@ -79,7 +79,7 @@ let bodyFormatting =
                          ContentType.Create("multipart", "form-data", boundary="mACKqCcIID-J''_PL:hfbFiOLC/cew"),
                          newCt |> Option.get)
 
-        testCase "can format multipart/formdata with multipart/mixed for multi-file upload" <| fun _ ->
+        testCase "multipart/form-data with multipart/mixed" <| fun _ ->
             /// can't lift outside, because test cases may run in parallel
             let clientState = { DefaultHttpClientState with random = Random testSeed }
 
@@ -91,7 +91,7 @@ let bodyFormatting =
             let form =
                 // example from http://www.w3.org/TR/html401/interact/forms.html
                 [   NameValue { name = "submit-name"; value = "Larry" }
-                    MultiFile ("files",
+                    MultipartMixed ("files",
                                [ "file1.txt", firstCt, Plain fileContents
                                  "file2.gif", secondCt, Plain "...contents of file2.gif..."
                                ])
