@@ -120,7 +120,7 @@ Target "Upload to NuGet" (fun _ ->
             AccessKey = getBuildParam "nuget-api-key"
             ReleaseNotes = getBuildParam "nuget-release-notes"
             PublishTrials = 3
-            Publish = true }) 
+            Publish = bool.Parse(getBuildParamOrDefault "nuget-publish" "true") })
         nuSpecFile
 )
 
