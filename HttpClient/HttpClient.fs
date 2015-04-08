@@ -773,7 +773,7 @@ module internal DotNetWrapper =
             match encoding with
             | None ->
                 match response.CharacterSet with
-                | null -> ISOLatin1
+                | null | "" -> ISOLatin1
                 | responseCharset -> Encoding.GetEncoding(responseCharset |> mapEncoding)
             | Some enc -> enc
         use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)
