@@ -69,9 +69,8 @@ Target "Run Unit Tests" (fun _ ->
     let unitTestOutputFolder = unitTestsDir |> outputFolder
 
     ProcessHelper.directExec (fun procInfo ->
-        procInfo.FileName <- Path.Combine(unitTestsDir, "bin/Release", "HttpClient.UnitTests.exe")
+        procInfo.FileName <- Path.Combine(unitTestsDir |> outputFolder, "HttpClient.UnitTests.exe")
     ) |> ignore
-
 )
 
 // If these fail, it might be because the test server URL isn't registered - see RegisterURL.bat

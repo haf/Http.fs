@@ -72,6 +72,7 @@ let bodyFormatting =
                              ""
                              "Hello World"
                              "--mACKqCcIID-J''_PL:hfbFiOLC/cew--"
+                             ""
                              "" ]
                            |> String.concat "\r\n"
 
@@ -122,7 +123,9 @@ let bodyFormatting =
                   ""
                   "...contents of file2.gif..."
                   "--iDnsCZhfTqMSYsj:LhBTftNfVog:eA--"
-                  "--mACKqCcIID-J''_PL:hfbFiOLC/cew--" ]
+                  "--mACKqCcIID-J''_PL:hfbFiOLC/cew--"
+                  ""
+                  "" ]
                 |> String.concat "\r\n"
             Assert.Equal("should have correct body", expected, subject)
 
