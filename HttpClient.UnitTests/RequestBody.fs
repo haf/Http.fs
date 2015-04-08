@@ -46,6 +46,7 @@ let bodyFormatting =
             Assert.Equal("no new content type for byte body", None, newCt)
 
         testCase "ordinary multipart/form-data" <| fun _ ->
+            if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
             let clientState = { DefaultHttpClientState with random = Random testSeed }
 
@@ -82,6 +83,7 @@ let bodyFormatting =
                          newCt |> Option.get)
 
         testCase "multipart/form-data with multipart/mixed" <| fun _ ->
+            if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
             let clientState = { DefaultHttpClientState with random = Random testSeed }
 
