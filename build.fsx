@@ -66,11 +66,14 @@ BuildTarget "BuildIntegrationTests" integrationTestsDir
 BuildTarget "BuildSampleApplication" sampleApplicationDir
 
 Target "Run Unit Tests" (fun _ ->
-    let unitTestOutputFolder = unitTestsDir |> outputFolder
+    let result =
+        ExecProcess (fun info ->
+            info.FileName <- (unitTestsDir |> outputFolder) @@ "HttpClient.UnitTests.exe"
+        ) (System.TimeSpan.FromSeconds(30.))
 
-    ProcessHelper.directExec (fun procInfo ->
-        procInfo.FileName <- Path.Combine(unitTestsDir |> outputFolder, "HttpClient.UnitTests.exe")
-    ) |> ignore
+    match result with
+    | 0 -> ()
+    | _ -> failwith "Unit-tests failed."
 )
 
 // If these fail, it might be because the test server URL isn't registered - see RegisterURL.bat
