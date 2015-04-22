@@ -138,6 +138,36 @@ type RequestHeader =
     | Warning of string
     | Custom of NameValue
 
+    member x.KeyValue : string * string =
+      match x with
+      | Accept x -> "Accept", x
+      | AcceptCharset x -> "Accept-Charset", x
+      | AcceptDatetime x -> "Accept-Datetime", x
+      | AcceptLanguage x -> "Accept-Language", x
+      | Authorization x -> "Authorization", x
+      | Connection x -> "Connection", x
+      | ContentMD5 x -> "Content-MD5", x
+      | ContentType x -> "Content-Type", x.ToString()
+      | Date dt -> "Date", dt.ToString("R")
+      | Expect i -> "Expect", i.ToString()
+      | From x -> "From", x
+      | IfMatch x -> "If-Match", x
+      | IfModifiedSince dt -> "If-Modified-Since", dt.ToString("R")
+      | IfNoneMatch x -> "If-None-Match", x
+      | IfRange x -> "If-Range", x
+      | MaxForwards i -> "Max-Forwards", string i
+      | Origin x -> "Origin", x
+      | Pragma x -> "Pragma", x
+      | ProxyAuthorization x -> "Proxy-Authorization", x
+      | Range { start = s; finish = f } when f <= 0L -> "Range", "bytes=" + string s
+      | Range { start = s; finish = f } -> "Range", sprintf "bytes=%d-%d" s f
+      | Referer x -> "Referer", x
+      | Upgrade x -> "Upgrade", x
+      | UserAgent x -> "User-Agent", x
+      | Via x -> "Via", x
+      | Warning x -> "Warning", x
+      | Custom { name = n; value = v } -> n, v
+
 type UserDetails = {
     username : string
     password : string
