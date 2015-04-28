@@ -250,9 +250,13 @@ type Request = {
     Timeout: int<ms>
 }
 
+type ResponseBody =
+  | ResponseString of string
+  | ResponseBytes of byte []
+
 type Response = {
     StatusCode: int
-    EntityBody: string option
+    EntityBody: ResponseBody option
     ContentLength: int64
     Cookies: Map<string, string>
     Headers: Map<ResponseHeader, string>
@@ -267,8 +271,8 @@ with
             for h in x.Headers do
                 yield h.ToString()
             yield ""
-            if x.EntityBody |> Option.isSome then
-                 yield x.EntityBody |> Option.get
+            //if x.EntityBody |> Option.isSome then
+            //     yield x.EntityBody |> Option.get
         } |> String.concat Environment.NewLine
 
 type HttpClientState = {
@@ -505,11 +509,11 @@ let createRequest httpMethod url = {
     QueryStringItems          = []
     Cookies                   = []
     ResponseCharacterEncoding = None
-    Proxy = None
-    KeepAlive = true
+    Proxy                     = None
+    KeepAlive                 = true
     /// The default value is 100,000 milliseconds (100 seconds).
     /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
-    Timeout = 100000<ms>
+    Timeout                   = 100000<ms>
 }
 
 /// Disables cookies, which are enabled by default
@@ -838,20 +842,40 @@ let getResponseBodyAsync request = async {
     return body
 }
 
+let private getResponseRecord response (body : ResponseBody) =
+  let cookies = response |> getCookiesAsMap
+  let headers = response |> getHeadersAsMap
+  {
+      StatusCode = response.StatusCode |> int
+      EntityBody = Some body
+      ContentLength = response.ContentLength
+      Cookies = cookies
+      Headers = headers
+      ResponseUri = response.ResponseUri
+  }
+
 /// Sends the HTTP request and returns the response body as raw bytes, asynchronously.
 ///
 /// Gives an empty array if there's no response body.
 let getResponseBytesAsync request = async {
     use! response = request |> toHttpWebRequest DefaultHttpClientState |> getResponseNoException
     let! raw = response |> readAsRaw
-    return raw
+    return getResponseRecord response (ResponseBytes raw)
 }
 
 /// Sends the HTTP request and returns the response body as raw bytes.
 ///
 /// Gives an empty array if there's no response body.
-let getResponseBytes request = 
-    getResponseBytesAsync request |> Async.RunSynchronously
+let getResponseBytes request =
+  async {
+    let! resp = getResponseBytesAsync request
+    return
+      match resp.EntityBody with
+      | Some (ResponseString s) -> Encoding.UTF8.GetBytes s
+      | Some (ResponseBytes bs) -> bs
+      | None -> [||]
+  }
+  |> Async.RunSynchronously
 
 /// Sends the HTTP request and returns the response body as a string.
 ///
@@ -863,25 +887,8 @@ let getResponseBody request =
 let getResponseAsync request = async {
     use! response = request |> toHttpWebRequest DefaultHttpClientState |> getResponseNoException
 
-    let code = response.StatusCode |> int
     let! body = response |> readBody request.ResponseCharacterEncoding
-
-    let cookies = response |> getCookiesAsMap
-    let headers = response |> getHeadersAsMap
-
-    let entityBody = 
-        match body.Length > 0 with
-        | true -> Some(body)
-        | false -> None
-
-    return {
-        StatusCode = code
-        EntityBody = entityBody
-        ContentLength = response.ContentLength
-        Cookies = cookies
-        Headers = headers
-        ResponseUri = response.ResponseUri
-    }
+    return getResponseRecord response (ResponseString body)
 }
 
 /// Sends the HTTP request and returns the full response as a Response record.
