@@ -73,40 +73,77 @@ with
         | x -> None
 
 type ResponseHeader =
-    | AccessControlAllowOrigin 
-    | AcceptRanges 
-    | Age 
-    | Allow 
-    | CacheControl 
-    | Connection 
-    | ContentEncoding 
-    | ContentLanguage 
+    | AccessControlAllowOrigin
+    | AcceptRanges
+    | Age
+    | Allow
+    | CacheControl
+    | Connection
+    | ContentEncoding
+    | ContentLanguage
     | ContentLength
-    | ContentLocation 
-    | ContentMD5Response 
-    | ContentDisposition 
-    | ContentRange 
-    | ContentTypeResponse 
-    | DateResponse 
-    | ETag 
-    | Expires 
-    | LastModified 
-    | Link 
-    | Location 
-    | P3P 
-    | PragmaResponse 
-    | ProxyAuthenticate 
-    | Refresh 
-    | RetryAfter 
-    | Server 
-    | StrictTransportSecurity 
-    | Trailer 
-    | TransferEncoding 
-    | Vary 
-    | ViaResponse 
-    | WarningResponse 
-    | WWWAuthenticate 
+    | ContentLocation
+    | ContentMD5Response
+    | ContentDisposition
+    | ContentRange
+    | ContentTypeResponse
+    | DateResponse
+    | ETag
+    | Expires
+    | LastModified
+    | Link
+    | Location
+    | P3P
+    | PragmaResponse
+    | ProxyAuthenticate
+    | Refresh
+    | RetryAfter
+    | Server
+    | StrictTransportSecurity
+    | Trailer
+    | TransferEncoding
+    | Vary
+    | ViaResponse
+    | WarningResponse
+    | WWWAuthenticate
     | NonStandard of string
+with
+  override x.ToString() =
+    match x with
+    | AccessControlAllowOrigin -> "Access-Control-Allow-Origin"
+    | AcceptRanges -> "Accept-Ranges"
+    | Age -> "Age"
+    | Allow -> "Allow"
+    | CacheControl -> "Cache-Control"
+    | Connection -> "Connection"
+    | ContentEncoding -> "Content-Encoding"
+    | ContentLanguage -> "Content-Language"
+    | ContentLength -> "Content-Length"
+    | ContentLocation -> "Content-Location"
+    | ContentMD5Response -> "Content-MD5-Response"
+    | ContentDisposition -> "Content-Disposition"
+    | ContentRange -> "Content-Range"
+    | ContentTypeResponse -> "Content-Type-Response"
+    | DateResponse -> "Date-Response"
+    | ETag -> "ETag"
+    | Expires -> "Expires"
+    | LastModified -> "Last-Modified"
+    | Link -> "Link"
+    | Location -> "Location"
+    | P3P -> "P3P"
+    | PragmaResponse -> "Pragma-Response"
+    | ProxyAuthenticate -> "Proxy-Authenticate"
+    | Refresh -> "Refresh"
+    | RetryAfter -> "Retry-After"
+    | Server -> "Server"
+    | StrictTransportSecurity -> "Strict-Transport-Security"
+    | Trailer -> "Trailer"
+    | TransferEncoding -> "Transfer-Encoding"
+    | Vary -> "Vary"
+    | ViaResponse -> "Via-Response"
+    | WarningResponse -> "Warning-Response"
+    | WWWAuthenticate -> "WWW-Authenticate"
+    | NonStandard str -> str
 
 // some headers can't be set with HttpWebRequest, or are set automatically, so are not included.
 // others, such as transfer-encoding, just haven't been implemented.
