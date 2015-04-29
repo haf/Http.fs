@@ -1,6 +1,7 @@
 ﻿module HttpClient_SuaveIntegrationTests
 
 open NUnit.Framework
+open System
 open System.Threading
 
 open Suave
@@ -59,7 +60,7 @@ type ``Suave Integration Tests`` ()=
             ContentType.Parse "text/plain" |> Option.get
 
         let req =
-            createRequest Post "http://localhost:8083/filenames"
+            createRequest Post (Uri "http://localhost:8083/filenames")
             |> withBody
                 ([ FormFile ("file", ("file1.txt", firstCt, Plain "Hello World")) ]|> BodyForm)
             (*(

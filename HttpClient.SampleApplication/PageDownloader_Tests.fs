@@ -13,5 +13,5 @@ let ``countWordInstances counts the number of times a word is repeated at a give
         "hi world hi hi hello hi ciao hi"
 
     let downloader = new PageDownloader( fakeGetResponseBodyFunction )
-    downloader.countWordInstances "hi" "some url"
+    downloader.countWordInstances "hi" (Uri "some url")
     |> should equal 5

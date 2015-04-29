@@ -14,7 +14,7 @@ let countWords () =
     printfn "What word would you like to count on bbc.co.uk/news?"
     let word = Console.ReadLine();
 
-    let count = downloader.countWordInstances word "http://www.bbc.co.uk/news/"
+    let count = downloader.countWordInstances word (Uri "http://www.bbc.co.uk/news/")
     printfn "'%s' was found %d times on bbc.co.uk/news" word count
 
 // Download some sites sequentially, using the synchronous version of getResponseCode
@@ -43,7 +43,7 @@ let returnToContinue message =
 // (this should get a 302)
 let complexRequest() =
     let request =
-        createRequest Get "http://www.google.com/search"
+        createRequest Get (Uri "http://www.google.com/search")
         |> withQueryStringItem {name="q"; value="gibbons"}
         |> withAutoDecompression DecompressionScheme.GZip
         |> withAutoFollowRedirectsDisabled
@@ -61,7 +61,7 @@ let complexRequest() =
     printfn "%A" response
 
 let downloadImage() =
-    let response = createRequest Get "http://fsharp.org/img/logo.png" |> getResponseBytes
+    let response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponseBytes
 
     printfn "Please enter path to save the image to, e.g. c:/temp (file will be testImage.png)"
     let filename = Console.ReadLine() + "/testImage.png"
@@ -99,7 +99,7 @@ let downloadLargeFile() =
         use destStream = new FileStream(filename, FileMode.Create)
         sourceStream.CopyTo(destStream)
 
-    createRequest Get "http://fsharp.org/img/logo.png" |> getResponseStream saveToFile
+    createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponseStream saveToFile
 
     printfn "'%s' downloaded" filename
 
@@ -111,11 +111,12 @@ let Main(_) =
 
     printfn "\n** Downloading sites: Sequential vs Parallel **"
 
-    let sites = [
-        "http://news.bbc.co.uk"
+    let sites =
+      [ "http://news.bbc.co.uk"
         "http://www.facebook.com"
         "http://www.wikipedia.com"
-        "http://www.stackoverflow.com"]
+        "http://www.stackoverflow.com"
+      ] |> List.map (fun u -> Uri u)
 
     sites |> downloadSequentially
     sites |> downloadInParallel
@@ -128,11 +129,12 @@ let Main(_) =
 
     printfn "\n** Downloading images: Sequential vs Parallel **"
 
-    let images = [
-        "http://fsharp.org/img/sup/quantalea.png"
+    let images =
+      [ "http://fsharp.org/img/sup/quantalea.png"
         "http://fsharp.org/img/sup/mbrace.png"
         "http://fsharp.org/img/sup/statfactory.jpg"
-        "http://fsharp.org/img/sup/tsunami.png"]
+        "http://fsharp.org/img/sup/tsunami.png"
+      ] |> List.map (fun u -> Uri u)
 
     images |> downloadImagesSequentially
     images |> downloadImagesInParallel

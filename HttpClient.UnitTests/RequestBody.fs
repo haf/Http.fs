@@ -6,7 +6,7 @@ open System.Text
 open Fuchu
 open HttpClient
 
-let VALID_URL = "http://www"
+let VALID_URL = Uri "http://www"
 let createValidRequest = createRequest Get VALID_URL
 let utf8 = Encoding.UTF8
 

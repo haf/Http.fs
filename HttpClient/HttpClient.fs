@@ -497,8 +497,8 @@ open Impl
 /// <param name="httpMethod">The type of request to be made (Get, Post, etc.)</param>
 /// <param name="url">The URL of the resource including protocol, e.g. 'http://www.relentlessdevelopment.net'</param>
 /// <returns>The Request record</returns>
-let createRequest httpMethod url = {
-    Url                       = url
+let createRequest httpMethod (url : Uri) = {
+    Url                       = url.ToString()
     Method                    = httpMethod
     CookiesEnabled            = true
     AutoFollowRedirects       = true
