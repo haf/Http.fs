@@ -877,7 +877,10 @@ let getResponse request = async {
   let webRequest, exec = toHttpWebRequest DefaultHttpFsState request
   do! exec
   let! resp = getResponseNoException webRequest
-  return Response.FromHttpResponse resp
+  let wrapped =
+    { Response.FromHttpResponse resp with
+        ExpectedEncoding = request.ResponseCharacterEncoding }
+  return wrapped 
 }
 
 [<Obsolete "Use 'getResponse' instead, everything is async by default">]

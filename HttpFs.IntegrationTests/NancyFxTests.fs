@@ -121,7 +121,7 @@ type ``Integration tests`` ()=
     let request = createRequest Get (uriFor "/NoCookies")
     use response = request |> getResponse |> Async.RunSynchronously
     response.StatusCode |> should equal 200
-    response.Body.Length |> should equal 0
+    response.Body.Length |> should equal 4
     response.Cookies.IsEmpty |> should equal true
 
   [<Test>]
@@ -136,12 +136,6 @@ type ``Integration tests`` ()=
   member x.``when called on a non-existant page, returns 404`` () =
     use response = createRequest Get (uriFor "/NoPage") |> getResponse |> Async.RunSynchronously
     response.StatusCode |> should equal 404
-
-  [<Test>] 
-  member x.``posts to Nancy without a body don't work`` ()=
-    // Not sure if this is just a Nancy thing, but the handler doesn't get called if there isn't a body
-    createRequest Post (uriFor "/RecordRequest") |> runIgnore
-    HttpServer.recordedRequest.Value |> should equal null
 
   [<Test>] 
   member x.``all of the manually-set request headers get sent to the server`` ()=
@@ -294,7 +288,7 @@ type ``Integration tests`` ()=
     responseBodyString|> should equal "яЏ§§їДЙ"
 
   [<Test>]
-  member x.``if a response character encoding is NOT specified, and character encoding is NOT specified in the response's content-type header, the body is read using ISO Latin 1 character encoding`` () =
+  member x.``response charset IS NOT SPECIFIED, NO Content-Type header, body read by default as Latin 1`` () =
     let expected = "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
 
     let response = createRequest Get (uriFor "/MoonLanguageTextPlainNoEncoding") |> Request.responseAsString |> Async.RunSynchronously
@@ -305,8 +299,14 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``throws ArgumentException for invalid Content-Type charset when reading string`` () =
-    (fun() -> createRequest Get (uriFor "/MoonLanguageInvalidEncoding") |> Request.responseAsString |> Async.RunSynchronously)
-    |> should throw typeof<ArgumentException>
+    try
+      createRequest Get (uriFor "/MoonLanguageInvalidEncoding")
+      |> Request.responseAsString
+      |> Async.RunSynchronously
+      |> ignore
+      Assert.Fail "should throw ArgumentException"
+    with :? ArgumentException as e ->
+      ()
 
   // .Net encoder doesn't like utf8, seems to need utf-8
   [<Test>]
