@@ -13,6 +13,7 @@ type PageDownloader(getResponseBodyFunction) =
         else
             0
 
-    member this.countWordInstances word url =
-        let (body:string) = createRequest Get url |> getResponseBodyFunction 
-        body |> countWord word
+    member this.countWordInstances word url = async {
+        let! (body:string) = createRequest Get url |> getResponseBodyFunction
+        return body |> countWord word
+      }

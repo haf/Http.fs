@@ -287,30 +287,36 @@ type Request = {
     Timeout: int<ms>
 }
 
-type ResponseBody =
-  | ResponseString of string
-  | ResponseBytes of byte []
+type CharacterSet = string
 
 type Response = {
-    StatusCode: int
-    EntityBody: ResponseBody option
-    ContentLength: int64
-    Cookies: Map<string, string>
-    Headers: Map<ResponseHeader, string>
+    StatusCode       : int
+    ContentLength    : int64
+    CharacterSet     : CharacterSet
+    Cookies          : Map<string, string>
+    Headers          : Map<ResponseHeader, string>
     /// A Uri that contains the URI of the Internet resource that responded to the request.
     /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebresponse.responseuri%28v=vs.110%29.aspx"/>.
-    ResponseUri : System.Uri
+    ExpectedEncoding : Encoding option
+    ResponseUri      : System.Uri
+    Body             : Stream
+    Luggage          : IDisposable option
 }
 with
-    override x.ToString() =
-        seq {
-            yield x.StatusCode.ToString()
-            for h in x.Headers do
-                yield h.ToString()
-            yield ""
-            //if x.EntityBody |> Option.isSome then
-            //     yield x.EntityBody |> Option.get
-        } |> String.concat Environment.NewLine
+  interface IDisposable with
+    member x.Dispose() =
+      x.Body.Dispose()
+      x.Luggage |> Option.iter (fun x -> x.Dispose())
+
+  override x.ToString() =
+    seq {
+      yield x.StatusCode.ToString()
+      for h in x.Headers do
+        yield h.ToString()
+      yield ""
+      //if x.EntityBody |> Option.isSome then
+      //     yield x.EntityBody |> Option.get
+    } |> String.concat Environment.NewLine
 
 type HttpClientState = {
     random      : Random
@@ -323,6 +329,54 @@ let DefaultHttpClientState = {
     random      = Random()
     cryptRandom = RandomNumberGenerator.Create()
 }
+
+[<AutoOpen>]
+module internal AsyncExt =
+
+  open System
+  open System.IO
+  open System.Threading.Tasks
+  open System.Threading
+
+  type Microsoft.FSharp.Control.Async with
+    /// Raise an exception on the async computation/workflow.
+    static member AsyncRaise (e : exn) =
+      Async.FromContinuations(fun (_,econt,_) -> econt e)
+
+    /// Await a task asynchronously
+    static member AwaitTask (t : Task) =
+      let flattenExns (e : AggregateException) = e.Flatten().InnerExceptions.[0]
+      let rewrapAsyncExn (it : Async<unit>) =
+        async { try do! it with :? AggregateException as ae -> do! Async.AsyncRaise (flattenExns ae) }
+      let tcs = new TaskCompletionSource<unit>(TaskCreationOptions.None)
+      t.ContinueWith((fun t' ->
+        if t.IsFaulted then tcs.SetException(t.Exception |> flattenExns)
+        elif t.IsCanceled then tcs.SetCanceled ()
+        else tcs.SetResult(())), TaskContinuationOptions.ExecuteSynchronously)
+      |> ignore
+      tcs.Task |> Async.AwaitTask |> rewrapAsyncExn
+
+    static member map f value =
+      async {
+        let! v = value
+        return f v
+      }
+
+    static member bind f value =
+      async {
+        let! v = value
+        return! f v
+      }
+
+  type Microsoft.FSharp.Control.AsyncBuilder with
+
+    /// An extension method that overloads the standard 'Bind' of the 'async' builder. The new overload awaits on
+    /// a standard .NET task
+    member x.Bind(t : Task<'T>, f:'T -> Async<'R>) : Async<'R> = async.Bind(Async.AwaitTask t, f)
+
+    /// An extension method that overloads the standard 'Bind' of the 'async' builder. The new overload awaits on
+    /// a standard .NET task which does not commpute a value
+    member x.Bind(t : Task, f : unit -> Async<'R>) : Async<'R> = async.Bind(Async.AwaitTask t, f)
 
 module internal String =
     let toLowerInvariant (s : string) =
@@ -428,93 +482,99 @@ module internal Impl =
         // https://github.com/rack/rack/issues/323#issuecomment-3609743
         s.Replace("\"", "\\\"")
 
+    module StreamPicklers =
+      let writeBytes bs (stream : Stream) =
+        Async.AwaitTask (stream.WriteAsync(bs, 0, bs.Length))
+
+      let writeStringRow string : Stream -> Async<unit> =
+        (sprintf "%s%s" string CRLF) |> Encoding.UTF8.GetBytes |> writeBytes
+
+    open StreamPicklers
+
     let generateFileData (encoding : Encoding) contentType contents = seq {
         match contentType, contents with
         | { typ = "text"; subtype = "plain" }, Plain text ->
-            yield ""
-            yield text
+            yield writeStringRow ""
+            yield writeStringRow text
         | _, Plain text ->
-            yield "Content-Transfer-Encoding: base64"
-            yield ""
-            yield text |> encoding.GetBytes |> Convert.ToBase64String
+            yield writeStringRow "Content-Transfer-Encoding: base64"
+            yield writeStringRow ""
+            yield writeStringRow (text |> encoding.GetBytes |> Convert.ToBase64String)
         | _, Binary bytes ->
-            yield "Content-Transfer-Encoding: base64"
-            yield ""
-            yield bytes |> Convert.ToBase64String
+            yield writeStringRow "Content-Transfer-Encoding: binary"
+            yield writeStringRow ""
+            yield writeBytes bytes
     }
 
     let generateContentDispos value (kvs : (string * string) list) =
         let formatKv = function
-            | (k, v) -> k + "=" + "\"" + escapeQuotes v + "\""
-        String.concat "; " [ yield "Content-Disposition: " + value
-                             yield! (kvs |> List.map formatKv)
-                           ]
+            | (k, v) -> ( sprintf "%s=\"%s\"" k (escapeQuotes v) )
+        String.concat "; " [ yield sprintf "Content-Disposition: %s" value
+                             yield! (kvs |> List.map formatKv) ]
 
     let generateFormData state (encoding : Encoding) boundary formData =
         let rec generateFormDataInner boundary values isMultiFile = seq {
             match values with
             | [] ->
-                yield "--" + boundary + "--"
-                if not isMultiFile then yield CRLF
+                yield writeStringRow (sprintf "--%s--" boundary)
+                if not isMultiFile then yield writeStringRow ""
             | h :: rest ->
-                yield "--" + boundary
+                yield writeStringRow (sprintf "--%s" boundary)
                 match h with
                 | FormFile (name, (fileName, contentType, contents)) ->
                     let dispos = if isMultiFile then "file" else "form-data"
-                    yield generateContentDispos dispos [
-                        if not isMultiFile then yield "name", name
-                        yield "filename", fileName
-                    ]
-                    yield sprintf "Content-Type: %O" contentType
+                    yield writeStringRow ( generateContentDispos dispos
+                                            [ if not isMultiFile then yield "name", name
+                                              yield "filename", fileName ])
+                    yield writeStringRow (sprintf "Content-Type: %O" contentType)
                     yield! generateFileData encoding contentType contents
 
                 | MultipartMixed (name, files) ->
                     let boundary' = generateBoundary state
-                    yield "Content-Type: multipart/mixed; boundary=" + boundary'
-                    yield generateContentDispos "form-data" [
-                        "name", name
-                    ]
-                    yield ""
+                    yield writeStringRow ( sprintf "Content-Type: multipart/mixed; boundary=%s" boundary' )
+                    yield writeStringRow ( generateContentDispos "form-data" [ "name", name ] )
+                    yield writeStringRow ""
                     // remap the multi-files to single files and recursively call myself
                     let files' = files |> List.map (fun f -> FormFile (name, f))
                     yield! generateFormDataInner boundary' files' true
 
                 | NameValue { name = name; value = value } ->
-                    yield "Content-Disposition: form-data; name=\"" + escapeQuotes name + "\""
-                    yield ""
-                    yield value
+                    yield writeStringRow (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
+                    yield writeStringRow ""
+                    yield writeStringRow value
                 yield! generateFormDataInner boundary rest isMultiFile
         }
         generateFormDataInner boundary formData false
 
     let private formatBodyUrlencoded bodyEncoding formData =
-        formData
-        |> List.map (function
-            | NameValue kv -> kv
-            | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
-        |> uriEncode bodyEncoding
-        // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
-        // and none-the-less; they will map 1-1 with the UTF8 set if the server
-        // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
-        |> ISOLatin1.GetBytes
+        [ formData
+          |> List.map (function
+              | NameValue kv -> kv
+              | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
+          |> uriEncode bodyEncoding
+          // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
+          // and none-the-less; they will map 1-1 with the UTF8 set if the server
+          // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
+          |> ISOLatin1.GetBytes
+          |> writeBytes ] |> Seq.ofList
 
-    let private formatBodyFormData clientState encoding formData boundary =
-        generateFormData clientState encoding boundary formData
-        |> String.concat CRLF
-        |> encoding.GetBytes
+//    let private formatBodyFormData clientState encoding formData boundary =
+//        generateFormData clientState encoding boundary formData
+//        |> String.concat CRLF
+//        |> encoding.GetBytes
 
-    let formatBody (clientState : HttpClientState)
+    let formatBody (clientState : HttpClientState) =
                    // we may actually change the content type if it's wrong
-                   : ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
+                   //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
         function
         | userCt, _, BodyRaw raw ->
-            userCt, raw
+            userCt, [ writeBytes raw ] |> Seq.ofList
 
-        | userCt, encoding, BodyString str ->
-            userCt, encoding.GetBytes str
+        | userCt, _, BodyString str ->
+            userCt, [ writeStringRow str ] |> Seq.ofList
 
         | userCt, _, BodyForm [] ->
-            userCt, [||]
+            userCt, [ writeBytes [||] ] |> Seq.ofList
 
         | userCt, encoding, BodyForm formData ->
             let onlyNameValues =
@@ -526,7 +586,7 @@ module internal Impl =
             else
                 let boundary = generateBoundary clientState
                 ContentType.Create("multipart", "form-data", boundary=boundary) |> Some,
-                formatBodyFormData clientState encoding formData boundary
+                generateFormData clientState encoding boundary formData
 
 open Impl
 
@@ -578,13 +638,13 @@ let withAutoDecompression decompressionSchemes request =
     { request with AutoDecompression = decompressionSchemes}
 
 /// Lets you set your own body - use the RequestBody type to build it up.
-let withBody body request =
+let withBody body (request : Request) =
     { request with Body = body }
 
 /// Sets the the request body, using UTF-8 character encoding.
 ///
 /// Only certain request types should have a body, e.g. Posts.
-let withBodyString body request =
+let withBodyString body (request : Request) =
     { request with Body = BodyString body }
 
 /// Sets the request body, using the provided character encoding.
@@ -634,309 +694,263 @@ let withTimeout timeout request =
     { request with Timeout = timeout }
 
 module internal DotNetWrapper =
-    /// Sets headers on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    let setHeaders (headers : RequestHeader list) (webRequest : HttpWebRequest) =
-        headers
-        |> List.iter (fun header ->
-            match header with
-            | Accept(value) -> webRequest.Accept <- value
-            | AcceptCharset(value) -> webRequest.Headers.Add("Accept-Charset", value)
-            | AcceptDatetime(value) -> webRequest.Headers.Add("Accept-Datetime", value)
-            | AcceptLanguage(value) -> webRequest.Headers.Add("Accept-Language", value)
-            | Authorization(value) -> webRequest.Headers.Add("Authorization", value)
-            | RequestHeader.Connection(value) -> webRequest.Connection <- value
-            | RequestHeader.ContentMD5(value) -> webRequest.Headers.Add("Content-MD5", value)
-            | RequestHeader.ContentType(value) -> webRequest.ContentType <- value.ToString()
-            | RequestHeader.Date(value) -> webRequest.Date <- value
-            | Expect(value) -> webRequest.Expect <- value.ToString()
-            | From(value) -> webRequest.Headers.Add("From", value)
-            | IfMatch(value) -> webRequest.Headers.Add("If-Match", value)
-            | IfModifiedSince(value) -> webRequest.IfModifiedSince <- value
-            | IfNoneMatch(value) -> webRequest.Headers.Add("If-None-Match", value)
-            | IfRange(value) -> webRequest.Headers.Add("If-Range", value)
-            | MaxForwards(value) -> webRequest.Headers.Add("Max-Forwards", value.ToString())
-            | Origin(value) -> webRequest.Headers.Add("Origin", value)
-            | RequestHeader.Pragma(value) -> webRequest.Headers.Add("Pragma", value)
-            | ProxyAuthorization(value) -> webRequest.Headers.Add("Proxy-Authorization", value)
-            | Range(value) -> webRequest.AddRange(value.start, value.finish)
-            | Referer(value) -> webRequest.Referer <- value
-            | Upgrade(value) -> webRequest.Headers.Add("Upgrade", value)
-            | UserAgent(value) -> webRequest.UserAgent <- value
-            | RequestHeader.Via(value) -> webRequest.Headers.Add("Via", value)
-            | RequestHeader.Warning(value) -> webRequest.Headers.Add("Warning", value)
-            | Custom( {name=customName; value=customValue}) -> webRequest.Headers.Add(customName, customValue))
+  /// Sets headers on HttpWebRequest.
+  /// Mutates HttpWebRequest.
+  let setHeaders (headers : RequestHeader list) (webRequest : HttpWebRequest) =
+      headers
+      |> List.iter (fun header ->
+          match header with
+          | Accept(value) -> webRequest.Accept <- value
+          | AcceptCharset(value) -> webRequest.Headers.Add("Accept-Charset", value)
+          | AcceptDatetime(value) -> webRequest.Headers.Add("Accept-Datetime", value)
+          | AcceptLanguage(value) -> webRequest.Headers.Add("Accept-Language", value)
+          | Authorization(value) -> webRequest.Headers.Add("Authorization", value)
+          | RequestHeader.Connection(value) -> webRequest.Connection <- value
+          | RequestHeader.ContentMD5(value) -> webRequest.Headers.Add("Content-MD5", value)
+          | RequestHeader.ContentType(value) -> webRequest.ContentType <- value.ToString()
+          | RequestHeader.Date(value) -> webRequest.Date <- value
+          | Expect(value) -> webRequest.Expect <- value.ToString()
+          | From(value) -> webRequest.Headers.Add("From", value)
+          | IfMatch(value) -> webRequest.Headers.Add("If-Match", value)
+          | IfModifiedSince(value) -> webRequest.IfModifiedSince <- value
+          | IfNoneMatch(value) -> webRequest.Headers.Add("If-None-Match", value)
+          | IfRange(value) -> webRequest.Headers.Add("If-Range", value)
+          | MaxForwards(value) -> webRequest.Headers.Add("Max-Forwards", value.ToString())
+          | Origin(value) -> webRequest.Headers.Add("Origin", value)
+          | RequestHeader.Pragma(value) -> webRequest.Headers.Add("Pragma", value)
+          | ProxyAuthorization(value) -> webRequest.Headers.Add("Proxy-Authorization", value)
+          | Range(value) -> webRequest.AddRange(value.start, value.finish)
+          | Referer(value) -> webRequest.Referer <- value
+          | Upgrade(value) -> webRequest.Headers.Add("Upgrade", value)
+          | UserAgent(value) -> webRequest.UserAgent <- value
+          | RequestHeader.Via(value) -> webRequest.Headers.Add("Via", value)
+          | RequestHeader.Warning(value) -> webRequest.Headers.Add("Warning", value)
+          | Custom( {name=customName; value=customValue}) -> webRequest.Headers.Add(customName, customValue))
 
-    /// Sets cookies on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    let setCookies (cookies:NameValue list) url (webRequest:HttpWebRequest) =
-        let domain = Uri(url).Host
-        cookies
-        |> List.iter (fun cookie ->
-            webRequest.CookieContainer.Add(new System.Net.Cookie(cookie.name, cookie.value, Path="/", Domain=domain)))
+  /// Sets cookies on HttpWebRequest.
+  /// Mutates HttpWebRequest.
+  let setCookies (cookies:NameValue list) url (webRequest:HttpWebRequest) =
+      let domain = Uri(url).Host
+      cookies
+      |> List.iter (fun cookie ->
+          webRequest.CookieContainer.Add(new System.Net.Cookie(cookie.name, cookie.value, Path="/", Domain=domain)))
 
-    /// Sets proxy on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    let setProxy proxy (webRequest : HttpWebRequest) =
-        proxy |> Option.iter (fun proxy ->
-            let webProxy = WebProxy(proxy.Address, proxy.Port)
+  /// Sets proxy on HttpWebRequest.
+  /// Mutates HttpWebRequest.
+  let setProxy proxy (webRequest : HttpWebRequest) =
+      proxy |> Option.iter (fun proxy ->
+          let webProxy = WebProxy(proxy.Address, proxy.Port)
 
-            match proxy.Credentials with
-            | ProxyCredentials.Custom { username = name; password = pwd} -> 
-                webProxy.Credentials <- NetworkCredential(name, pwd)
-            | ProxyCredentials.Default -> webProxy.UseDefaultCredentials <- true
-            | ProxyCredentials.None -> webProxy.Credentials <- null
+          match proxy.Credentials with
+          | ProxyCredentials.Custom { username = name; password = pwd} ->
+              webProxy.Credentials <- NetworkCredential(name, pwd)
+          | ProxyCredentials.Default -> webProxy.UseDefaultCredentials <- true
+          | ProxyCredentials.None -> webProxy.Credentials <- null
 
-            webRequest.Proxy <- webProxy)
+          webRequest.Proxy <- webProxy)
 
-    /// Sets body on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    let setBody state body (webRequest : HttpWebRequest) =
-        match body with
-        | [||] ->
-            ()
-        | bodyBytes ->
-            // Getting the request stream seems to be actually connecting to the internet in some way
-            use requestStream = webRequest.GetRequestStream()
-            // TODO: expose async body
-            requestStream.AsyncWrite(bodyBytes, 0, bodyBytes.Length) |> Async.RunSynchronously
-
-    let matchCtHeader = function
-        | RequestHeader.ContentType _ -> true
-        | _ -> false
-
-    /// The nasty business of turning a Request into an HttpWebRequest
-    let toHttpWebRequest state (request : Request) =
-        let contentType =
-            request.Headers
-            |> List.tryFind matchCtHeader
-            |> function | Some (ContentType value) -> Some value | _ -> None
-
-        let contentEncoding =
-            // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
-            contentType
-            |> function
-            | Some { charset = Some enc } -> Some enc
-            | _ -> None
-            |> Option.fold (fun s t -> t) request.BodyCharacterEncoding
-
-        let url =
-            request.Url + (request |> getQueryString contentEncoding)
-
-        let webRequest =
-            HttpWebRequest.Create(url) :?> HttpWebRequest
-
-        let newContentType, body =
-            formatBody state (contentType, contentEncoding, request.Body)
-
-        let request =
-            // if we have a new content type, from using BodyForm, then this
-            // updates the request value with that header
-            newContentType
-            |> Option.fold (fun (req : Request) newCt ->
-                let header = RequestHeader.ContentType newCt
-                { req with Headers = req.Headers |> putHeader matchCtHeader header })
-                request
-
-        webRequest.Method <- (request |> getMethodAsString)
-        webRequest.ProtocolVersion <- HttpVersion.Version11
-
-        if request.CookiesEnabled then
-            webRequest.CookieContainer <- CookieContainer()
-
-        webRequest.AllowAutoRedirect <- request.AutoFollowRedirects
-
-        // this relies on the DecompressionScheme enum values being the same as those in System.Net.DecompressionMethods
-        webRequest.AutomaticDecompression <- enum<DecompressionMethods> <| int request.AutoDecompression
-
-        webRequest |> setHeaders request.Headers
-        webRequest |> setCookies request.Cookies request.Url
-        webRequest |> setProxy request.Proxy
-
-        webRequest |> setBody state body
-
-        webRequest.KeepAlive <- request.KeepAlive
-        webRequest.Timeout <- (int)request.Timeout
-
-        webRequest
-
-    /// Uses the HttpWebRequest to get the response.
-    /// HttpWebRequest throws an exception on anything but a 200-level response,
-    /// so we handle such exceptions and return the response.
-    let getResponseNoException (request:HttpWebRequest) = async {
-        try
-            let! response = request.AsyncGetResponse() 
-            return response :?> HttpWebResponse
-        with
-            | :? WebException as wex -> 
-                if wex.Response <> null then 
-                    return wex.Response :?> HttpWebResponse 
-                else 
-                    return raise wex
+  /// Sets body on HttpWebRequest.
+  /// Mutates HttpWebRequest.
+  let writeBody (writers : seq<Stream -> Async<unit>>) (webRequest : HttpWebRequest) = async {
+    // Getting the request stream seems to be actually connecting to the internet in some way
+    use reqStream = webRequest.GetRequestStream()
+    for writer in writers do
+      do! writer reqStream
     }
 
-    let getCookiesAsMap (response:HttpWebResponse) = 
-        let cookieArray = Array.zeroCreate response.Cookies.Count
-        response.Cookies.CopyTo(cookieArray, 0)
-        cookieArray |> Array.fold (fun map cookie -> map |> Map.add cookie.Name cookie.Value) Map.empty
+  let matchCtHeader = function
+      | RequestHeader.ContentType _ -> true
+      | _ -> false
 
-    /// Get the header as a ResponseHeader option.  Is an option because there are some headers we don't want to set.
-    let getResponseHeader headerName =
-        match headerName with
-        | null -> None
-        | "Access-Control-Allow-Origin" -> Some(AccessControlAllowOrigin)
-        | "Accept-Ranges" -> Some(AcceptRanges)
-        | "Age" -> Some(Age)
-        | "Allow" -> Some(Allow)
-        | "Cache-Control" -> Some(CacheControl)
-        | "Connection" -> Some(ResponseHeader.Connection)
-        | "Content-Encoding" -> Some(ContentEncoding)
-        | "Content-Language" -> Some(ContentLanguage)
-        | "Content-Length" -> None
-        | "Content-Location" -> Some(ContentLocation)
-        | "Content-MD5" -> Some(ResponseHeader.ContentMD5Response)
-        | "Content-Disposition" -> Some(ContentDisposition)
-        | "Content-Range" -> Some(ContentRange)
-        | "Content-Type" -> Some(ResponseHeader.ContentTypeResponse)
-        | "Date" -> Some(ResponseHeader.DateResponse)
-        | "ETag" -> Some(ETag)
-        | "Expires" -> Some(Expires)
-        | "Last-Modified" -> Some(LastModified)
-        | "Link" -> Some(Link)
-        | "Location" -> Some(Location)
-        | "P3P" -> Some(P3P)
-        | "Pragma" -> Some(ResponseHeader.PragmaResponse)
-        | "Proxy-Authenticate" -> Some(ProxyAuthenticate)
-        | "Refresh" -> Some(Refresh)
-        | "Retry-After" -> Some(RetryAfter)
-        | "Server" -> Some(Server)
-        | "Set-Cookie" -> None
-        | "Strict-Transport-Security" -> Some(StrictTransportSecurity)
-        | "Trailer" -> Some(Trailer)
-        | "Transfer-Encoding" -> Some(TransferEncoding)
-        | "Vary" -> Some(Vary)
-        | "Via" -> Some(ResponseHeader.ViaResponse)
-        | "Warning" -> Some(ResponseHeader.WarningResponse)
-        | "WWW-Authenticate" -> Some(WWWAuthenticate)
-        | _ -> Some(NonStandard headerName)
+  /// The nasty business of turning a Request into an HttpWebRequest
+  let toHttpWebRequest state (request : Request) =
+      let contentType =
+          request.Headers
+          |> List.tryFind matchCtHeader
+          |> function | Some (ContentType value) -> Some value | _ -> None
 
-    /// Gets the headers from the passed response as a map of ResponseHeader and string.
-    let getHeadersAsMap (response:HttpWebResponse) =
-        // TODO: Find a better way of dong this
-        let headerArray = Array.zeroCreate response.Headers.Count
-        for index = 0 to response.Headers.Count-1 do
-            headerArray.[index] <- 
-                match getResponseHeader response.Headers.Keys.[index] with
-                | Some(headerKey) -> Some((headerKey, response.Headers.Item(response.Headers.Keys.[index])))
-                | None -> None
-        headerArray
-        |> Array.filter (fun item -> item <> None)
-        |> Array.map Option.get
-        |> Map.ofArray
+      let contentEncoding =
+          // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
+          contentType
+          |> function
+          | Some { charset = Some enc } -> Some enc
+          | _ -> None
+          |> Option.fold (fun s t -> t) request.BodyCharacterEncoding
 
-    let mapEncoding = String.toLowerInvariant >> function
-        | "utf8" -> "utf-8"
-        | "utf16" -> "utf-16"
-        | other -> other
+      let url =
+          request.Url + (request |> getQueryString contentEncoding)
 
-    let readBody encoding (response:HttpWebResponse) = async {
-        let charset = 
-            match encoding with
-            | None ->
-                match response.CharacterSet with
-                | null | "" -> ISOLatin1
-                | responseCharset -> Encoding.GetEncoding(responseCharset |> mapEncoding)
-            | Some enc -> enc
-        use responseStream = new AsyncStreamReader(response.GetResponseStream(),charset)
-        let! body = responseStream.ReadToEnd()
-        return body
-    }
+      let webRequest =
+          HttpWebRequest.Create(url) :?> HttpWebRequest
 
-    let readAsRaw (response:HttpWebResponse) = async {
-        use ms = new MemoryStream()
-        do! response.GetResponseStream().CopyToAsync(ms) |> Async.AwaitIAsyncResult |> Async.Ignore
-        return ms.ToArray()
-    }
+      let newContentType, body =
+          formatBody state (contentType, contentEncoding, request.Body)
+
+      let request =
+          // if we have a new content type, from using BodyForm, then this
+          // updates the request value with that header
+          newContentType
+          |> Option.fold (fun (req : Request) newCt ->
+              let header = RequestHeader.ContentType newCt
+              { req with Headers = req.Headers |> putHeader matchCtHeader header })
+              request
+
+      webRequest.Method <- (request |> getMethodAsString)
+      webRequest.ProtocolVersion <- HttpVersion.Version11
+
+      if request.CookiesEnabled then
+          webRequest.CookieContainer <- CookieContainer()
+
+      webRequest.AllowAutoRedirect <- request.AutoFollowRedirects
+
+      // this relies on the DecompressionScheme enum values being the same as those in System.Net.DecompressionMethods
+      webRequest.AutomaticDecompression <- enum<DecompressionMethods> <| int request.AutoDecompression
+
+      webRequest |> setHeaders request.Headers
+      webRequest |> setCookies request.Cookies request.Url
+      webRequest |> setProxy request.Proxy
+
+      webRequest.KeepAlive <- request.KeepAlive
+      webRequest.Timeout <- (int)request.Timeout
+
+      webRequest, webRequest |> writeBody body
+
+  /// Uses the HttpWebRequest to get the response.
+  /// HttpWebRequest throws an exception on anything but a 200-level response,
+  /// so we handle such exceptions and return the response.
+  let getResponseNoException (request:HttpWebRequest) = async {
+      try
+          let! response = request.AsyncGetResponse()
+          return response :?> HttpWebResponse
+      with
+          | :? WebException as wex ->
+              if wex.Response <> null then
+                  return wex.Response :?> HttpWebResponse
+              else
+                  return raise wex
+  }
+
+  let getCookiesAsMap (response:HttpWebResponse) =
+      let cookieArray = Array.zeroCreate response.Cookies.Count
+      response.Cookies.CopyTo(cookieArray, 0)
+      cookieArray |> Array.fold (fun map cookie -> map |> Map.add cookie.Name cookie.Value) Map.empty
+
+  /// Get the header as a ResponseHeader option.  Is an option because there are some headers we don't want to set.
+  let getResponseHeader headerName =
+    match headerName with
+    | null -> None
+    | "Access-Control-Allow-Origin" -> Some(AccessControlAllowOrigin)
+    | "Accept-Ranges" -> Some(AcceptRanges)
+    | "Age" -> Some(Age)
+    | "Allow" -> Some(Allow)
+    | "Cache-Control" -> Some(CacheControl)
+    | "Connection" -> Some(ResponseHeader.Connection)
+    | "Content-Encoding" -> Some(ContentEncoding)
+    | "Content-Language" -> Some(ContentLanguage)
+    | "Content-Length" -> None
+    | "Content-Location" -> Some(ContentLocation)
+    | "Content-MD5" -> Some(ResponseHeader.ContentMD5Response)
+    | "Content-Disposition" -> Some(ContentDisposition)
+    | "Content-Range" -> Some(ContentRange)
+    | "Content-Type" -> Some(ResponseHeader.ContentTypeResponse)
+    | "Date" -> Some(ResponseHeader.DateResponse)
+    | "ETag" -> Some(ETag)
+    | "Expires" -> Some(Expires)
+    | "Last-Modified" -> Some(LastModified)
+    | "Link" -> Some(Link)
+    | "Location" -> Some(Location)
+    | "P3P" -> Some(P3P)
+    | "Pragma" -> Some(ResponseHeader.PragmaResponse)
+    | "Proxy-Authenticate" -> Some(ProxyAuthenticate)
+    | "Refresh" -> Some(Refresh)
+    | "Retry-After" -> Some(RetryAfter)
+    | "Server" -> Some(Server)
+    | "Set-Cookie" -> None
+    | "Strict-Transport-Security" -> Some(StrictTransportSecurity)
+    | "Trailer" -> Some(Trailer)
+    | "Transfer-Encoding" -> Some(TransferEncoding)
+    | "Vary" -> Some(Vary)
+    | "Via" -> Some(ResponseHeader.ViaResponse)
+    | "Warning" -> Some(ResponseHeader.WarningResponse)
+    | "WWW-Authenticate" -> Some(WWWAuthenticate)
+    | _ -> Some(NonStandard headerName)
+
+  /// Gets the headers from the passed response as a map of ResponseHeader and string.
+  let getHeadersAsMap (response:HttpWebResponse) =
+    // TODO: Find a better way of dong this
+    let headerArray = Array.zeroCreate response.Headers.Count
+    for index = 0 to response.Headers.Count-1 do
+      headerArray.[index] <-
+        match getResponseHeader response.Headers.Keys.[index] with
+        | Some(headerKey) -> Some((headerKey, response.Headers.Item(response.Headers.Keys.[index])))
+        | None -> None
+    headerArray
+    |> Array.filter (fun item -> item <> None)
+    |> Array.map Option.get
+    |> Map.ofArray
+
+  let mapEncoding = String.toLowerInvariant >> function
+    | "utf8" -> "utf-8"
+    | "utf16" -> "utf-16"
+    | other -> other
 
 open DotNetWrapper
 
-/// Sends the HTTP request and returns the response code as an integer, asynchronously.
-let getResponseCodeAsync request = async {
-    use! response = request |> toHttpWebRequest DefaultHttpClientState |> getResponseNoException
-    return response.StatusCode |> int
-}
-
-/// Sends the HTTP request and returns the response code as an integer.
-let getResponseCode request =
-    getResponseCodeAsync request |> Async.RunSynchronously
-
-/// Sends the HTTP request and returns the response body as a string, asynchronously.
-///
-/// Gives an empty string if there's no response body.
-let getResponseBodyAsync request = async {
-    use! response = request |> toHttpWebRequest DefaultHttpClientState |> getResponseNoException
-    let! body = response |> readBody request.ResponseCharacterEncoding
-    return body
-}
-
-let private getResponseRecord response (body : ResponseBody) =
-  let cookies = response |> getCookiesAsMap
-  let headers = response |> getHeadersAsMap
-  {
-      StatusCode = response.StatusCode |> int
-      EntityBody = Some body
-      ContentLength = response.ContentLength
-      Cookies = cookies
-      Headers = headers
-      ResponseUri = response.ResponseUri
-  }
-
-/// Sends the HTTP request and returns the response body as raw bytes, asynchronously.
-///
-/// Gives an empty array if there's no response body.
-let getResponseBytesAsync request = async {
-    use! response = request |> toHttpWebRequest DefaultHttpClientState |> getResponseNoException
-    let! raw = response |> readAsRaw
-    return getResponseRecord response (ResponseBytes raw)
-}
-
-/// Sends the HTTP request and returns the response body as raw bytes.
-///
-/// Gives an empty array if there's no response body.
-let getResponseBytes request =
-  async {
-    let! resp = getResponseBytesAsync request
-    return
-      match resp.EntityBody with
-      | Some (ResponseString s) -> Encoding.UTF8.GetBytes s
-      | Some (ResponseBytes bs) -> bs
-      | None -> [||]
-  }
-  |> Async.RunSynchronously
-
-/// Sends the HTTP request and returns the response body as a string.
-///
-/// Gives an empty string if there's no response body.
-let getResponseBody request =
-    getResponseBodyAsync request |> Async.RunSynchronously
+type Response with
+  static member internal FromHttpResponse (response : HttpWebResponse) =
+    let cookies = response |> getCookiesAsMap
+    let headers = response |> getHeadersAsMap
+    {
+      StatusCode       = int (response.StatusCode)
+      CharacterSet     = response.CharacterSet
+      ContentLength    = response.ContentLength
+      Cookies          = cookies
+      Headers          = headers
+      ResponseUri      = response.ResponseUri
+      ExpectedEncoding = None
+      Body             = response.GetResponseStream()
+      Luggage          = Some (upcast response)
+    }
 
 /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
-let getResponseAsync request = async {
-    use! response = request |> toHttpWebRequest DefaultHttpClientState |> getResponseNoException
-
-    let! body = response |> readBody request.ResponseCharacterEncoding
-    return getResponseRecord response (ResponseString body)
+let getResponse request = async {
+  let webRequest, exec = toHttpWebRequest DefaultHttpClientState request
+  do! exec
+  let! resp = getResponseNoException webRequest
+  return Response.FromHttpResponse resp
 }
 
-/// Sends the HTTP request and returns the full response as a Response record.
-let getResponse request =
-    getResponseAsync request |> Async.RunSynchronously
+[<Obsolete "Use 'getResponse' instead, everything is async by default">]
+let getResponseAsync = getResponse
 
-/// Passes the response stream to the passed consumer function.
-/// Useful if accessing a large file, as won't copy to memory.
-///
-/// The response stream will be closed automatically, do not access it outside the function scope.
-let getResponseStream streamConsumer request =
-    use response = request |> toHttpWebRequest DefaultHttpClientState |> getResponseNoException |> Async.RunSynchronously
-    use responseStream = response.GetResponseStream()
-    streamConsumer responseStream
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Response =
+  let readBodyAsString (response : Response) : Async<string> =
+    async {
+      let charset =
+        match response.ExpectedEncoding with
+        | None ->
+          match response.CharacterSet with
+          | null | "" -> ISOLatin1
+          | responseCharset -> Encoding.GetEncoding(mapEncoding responseCharset)
+        | Some enc -> enc
+      use rdr = new AsyncStreamReader(response.Body, charset, true, 0x2000, false)
+      return! rdr.ReadToEnd()
+    }
+
+  let readBodyAsBytes (response : Response) : Async<byte []> =
+    async {
+      use ms = new MemoryStream()
+      do! response.Body.CopyToAsync ms
+      return ms.ToArray()
+    }
+
+/// For those of you who can't be bothered to use getResponse |> Response.readBodyAsString.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Request =
+
+  let responseAsString =
+    getResponse >> Async.bind Response.readBodyAsString
+
+  let responseAsBytes =
+    getResponse >> Async.bind Response.readBodyAsBytes

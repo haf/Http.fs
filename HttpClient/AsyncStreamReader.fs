@@ -12,10 +12,10 @@ open System.Text
 /// a byte stream in a particular encoding.
 /// </summary>
 [<Sealed>]
-type AsyncStreamReader(stream:Stream, encoding:Encoding, detectEncodingFromByteOrderMarks:bool, bufferSize:int) =
-    static let defaultBufferSize = 1024;  // Byte buffer size
-    static let defaultFileStreamBufferSize = 4096;
-    static let minBufferSize = 128; 
+type AsyncStreamReader(stream:Stream, encoding:Encoding, detectEncodingFromByteOrderMarks:bool, bufferSize:int, owns:bool) =
+    static let defaultBufferSize = 0x2000 // Byte buffer size
+    static let defaultFileStreamBufferSize = 4096
+    static let minBufferSize = 128
 
     // Creates a new StreamReader for the given stream.  The 
     // character encoding is set by encoding and the buffer size,
@@ -211,24 +211,25 @@ type AsyncStreamReader(stream:Stream, encoding:Encoding, detectEncodingFromByteO
 
 
     let cleanup() = 
+      if not owns then ()
+      else
             // Dispose of our resources if this StreamReader is closable.
             // Note that Console.In should not be closable. 
             try 
                 // Note that Stream.Close() can potentially throw here. So we need to
                 // ensure cleaning up internal resources, inside the finally block.
                 if (stream <> null) then
-                    stream.Close();
-            
+                    stream.Close()
+
             finally 
                 if (stream <> null) then
-                    stream <- null; 
-                    encoding <- null;
-                    decoder <- null;
-                    byteBuffer <- null;
-                    charBuffer <- null; 
-                    charPos <- 0;
-                    charLen <- 0; 
-                    //REMOVED: base.Dispose(disposing); 
+                    stream <- null
+                    encoding <- null
+                    decoder <- null
+                    byteBuffer <- null
+                    charBuffer <- null
+                    charPos <- 0
+                    charLen <- 0
 
     // StreamReader by default will ignore illegal UTF8 characters. We don't want to 
     // throw here because we want to be able to read ill-formed data without choking.
@@ -237,36 +238,11 @@ type AsyncStreamReader(stream:Stream, encoding:Encoding, detectEncodingFromByteO
 
     new (stream) = new AsyncStreamReader(stream, true) 
 
-    new (stream, detectEncodingFromByteOrderMarks:bool) = new AsyncStreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks, defaultBufferSize)
+    new (stream, detectEncodingFromByteOrderMarks:bool) = new AsyncStreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks, defaultBufferSize, true)
 
-    new (stream, encoding:Encoding) = new AsyncStreamReader(stream, encoding, true, defaultBufferSize) 
+    new (stream, encoding:Encoding) = new AsyncStreamReader(stream, encoding, true, defaultBufferSize, true)
 
-    new (stream, encoding, detectEncodingFromByteOrderMarks) = new AsyncStreamReader(stream, encoding, detectEncodingFromByteOrderMarks, defaultBufferSize) 
-
-(*
-    new (path:string) = new AsyncStreamReader(path, true)
-
-    new (path: string, detectEncodingFromByteOrderMarks: bool) = new AsyncStreamReader (path, Encoding.UTF8, detectEncodingFromByteOrderMarks, defaultBufferSize) 
-
-    new (path:string, encoding:Encoding) = new AsyncStreamReader(path, encoding, true, defaultBufferSize) 
-
-    new (path: string, encoding:Encoding, detectEncodingFromByteOrderMarks: bool)  = new AsyncStreamReader(path, encoding, detectEncodingFromByteOrderMarks, defaultBufferSize) 
-
-    new (path: string, encoding: Encoding, detectEncodingFromByteOrderMarks: bool, bufferSize: int)  =
-        // Don't open a Stream before checking for invalid arguments, 
-        // or we'll create a FileStream on disk and we won't close it until 
-        // the finalizer runs, causing problems for applications.
-        if (path=null || encoding=null) then
-            raise <| new ArgumentNullException((path=null ? "path" : "encoding"));
-        if (path.Length=0) then
-            raise <| new ArgumentException((* Environment.GetResourceString *)("Argument_EmptyPath"));
-        if (bufferSize <= 0)  then
-            raise <| new ArgumentOutOfRangeException("bufferSize", (* Environment.GetResourceString *)("ArgumentOutOfRange_NeedPosNum"));
-
-        Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, defaultFileStreamBufferSize, FileOptions.SequentialScan); 
-        Init(stream, encoding, detectEncodingFromByteOrderMarks, bufferSize);
-
-*)
+    new (stream, encoding, detectEncodingFromByteOrderMarks) = new AsyncStreamReader(stream, encoding, detectEncodingFromByteOrderMarks, defaultBufferSize, true)
 
     member x.Close() = cleanup()
 

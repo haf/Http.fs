@@ -6,34 +6,54 @@ open HttpClient.SampleApplication
 open System.IO
 open System
 
+module Async =
+  let map f value =
+    async {
+      let! v = value
+      return f v
+    }
+  let bind f value =
+    async {
+      let! v = value
+      return! f v
+    }
+
+
+let download = createRequest Get >> Request.responseAsBytes
+
 // Use our PageDownloader to count the instances of a word on the bbc news site
 // We pass the getResponseBody function in as a dependency to PageDownloader so
 // it can be unit tested
 let countWords () =
-    let downloader = new PageDownloader( HttpClient.getResponseBody )
+  async {
+    let downloader = new PageDownloader(Request.responseAsString)
     printfn "What word would you like to count on bbc.co.uk/news?"
-    let word = Console.ReadLine();
+    let word = Console.ReadLine()
 
-    let count = downloader.countWordInstances word (Uri "http://www.bbc.co.uk/news/")
+    let! count = downloader.countWordInstances word (Uri "http://www.bbc.co.uk/news/")
     printfn "'%s' was found %d times on bbc.co.uk/news" word count
+    return count
+  }
 
-// Download some sites sequentially, using the synchronous version of getResponseCode
+let private withTimer f =
+  let timer = System.Diagnostics.Stopwatch.StartNew()
+  let res = f ()
+  timer.Stop()
+  res, timer
+
+/// Download some sites sequentially
 let downloadSequentially sites =
-    let timer = System.Diagnostics.Stopwatch.StartNew()
-    sites
-    |> List.map (fun url -> createRequest Get url |> getResponseCode)
-    |> ignore
-    printfn "Pages downloaded sequentially in %d ms" timer.ElapsedMilliseconds
+  let res, timer = withTimer <| fun _ ->
+    sites |> Async.map download |> Async.RunSynchronously
+  printfn "Pages downloaded sequentially in %d ms" timer.ElapsedMilliseconds
+  res
 
-// Download some sites in parallel, using the asynchronous version of getResponseCode
-let downloadInParallel sites =
-    let timer = System.Diagnostics.Stopwatch.StartNew()
-    sites
-    |> List.map (fun url -> createRequest Get url |> getResponseCodeAsync)
-    |> Async.Parallel
-    |> Async.RunSynchronously
-    |> ignore
-    printfn "Pages downloaded in parallel in %d ms" timer.ElapsedMilliseconds
+/// Download some sites in parallel
+let downloadInParallel (sites : Uri list) =
+  let res, timer = withTimer <| fun _ ->
+    sites |> List.map download |> Async.Parallel |> Async.RunSynchronously |> List.ofArray
+  printfn "Pages downloaded in parallel in %d ms" timer.ElapsedMilliseconds
+  res
 
 let returnToContinue message =
     printfn "\n%s" message
@@ -41,106 +61,104 @@ let returnToContinue message =
 
 // create a more coplex request, and see the request & response
 // (this should get a 302)
-let complexRequest() =
+let complexRequest() = async {
     let request =
-        createRequest Get (Uri "http://www.google.com/search")
-        |> withQueryStringItem {name="q"; value="gibbons"}
-        |> withAutoDecompression DecompressionScheme.GZip
-        |> withAutoFollowRedirectsDisabled
-        |> withCookie {name="ignoreMe"; value="hi mum"}
-        |> withHeader (Accept "text/html")
-        |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")
+      createRequest Get (Uri "http://www.google.com/search")
+      |> withQueryStringItem {name="q"; value="gibbons"}
+      |> withAutoDecompression DecompressionScheme.GZip
+      |> withAutoFollowRedirectsDisabled
+      |> withCookie {name="ignoreMe"; value="hi mum"}
+      |> withHeader (Accept "text/html")
+      |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")
 
     returnToContinue "Press Return to see the request"
     printfn "%A" request
 
     printfn "\nRetrieving response..."
-    let response = request |> getResponse
+    let! response = request |> getResponse
 
     returnToContinue "Press Return to see the response"
     printfn "%A" response
+    return response
+  }
 
-let downloadImage() =
-    let response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponseBytes
+let downloadImage() = async {
+    let! response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
+    use ms = new IO.MemoryStream()
+    response.Body.CopyTo(ms)
+    let bytes = ms.ToArray()
 
     printfn "Please enter path to save the image to, e.g. c:/temp (file will be testImage.png)"
     let filename = Console.ReadLine() + "/testImage.png"
 
     use file = File.Create(filename)
-    file.Write(response, 0, response.Length)
+    file.Write(bytes, 0, bytes.Length)
 
     printfn "'%s' written to disk" filename
+  }
 
-// Download some sites sequentially, using the synchronous version of getResponseCode
-let downloadImagesSequentially images =
-    let timer = System.Diagnostics.Stopwatch.StartNew()
-    images
-    |> List.map (fun url -> createRequest Get url |> getResponseBytes)
-    |> ignore
-    printfn "Images downloaded sequentially in %d ms" timer.ElapsedMilliseconds
-
-// Download some sites in parallel, using the asynchronous version of getResponseCode
 let downloadImagesInParallel images =
-    let timer = System.Diagnostics.Stopwatch.StartNew()
+  let res, timer = withTimer <| fun _ ->
     images
-    |> List.map (fun url -> createRequest Get url |> getResponseBytesAsync)
+    |> List.map (createRequest Get >> getResponse)
+    |> List.map (Async.map Response.readBodyAsBytes)
     |> Async.Parallel
     |> Async.RunSynchronously
     |> ignore
-    printfn "Images downloaded in parallel in %d ms" timer.ElapsedMilliseconds
+  printfn "Images downloaded in parallel in %d ms" timer.ElapsedMilliseconds
 
 // access the response stream and save it to a file directly
 let downloadLargeFile() =
-
+  async {
     printfn "Please enter path to save the 'large' file to, e.g. c:/temp (file will be large.bin)"
     let filename = Console.ReadLine() + "/large.bin"
 
     let saveToFile (sourceStream:Stream) =
-        use destStream = new FileStream(filename, FileMode.Create)
-        sourceStream.CopyTo(destStream)
+      use destStream = new FileStream(filename, FileMode.Create)
+      do sourceStream.CopyTo(destStream)
 
-    createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponseStream saveToFile
+    use! response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
+    saveToFile response.Body
 
     printfn "'%s' downloaded" filename
+  }
 
 [<EntryPoint>]
-let Main(_) = 
-
+let Main(_) =
+  async {
+    let! count = countWords ()
     printfn "** Word Count **"
-    countWords()
+    return count }
+  |> Async.RunSynchronously |> printfn "%d"
 
-    printfn "\n** Downloading sites: Sequential vs Parallel **"
+  printfn "\n** Downloading sites: Sequential vs Parallel **"
+  [ "http://news.bbc.co.uk"
+    "http://www.facebook.com"
+    "http://www.wikipedia.com"
+    "http://www.stackoverflow.com" ]
+  |> List.map (fun u -> Uri u)
+  |> downloadInParallel
+  |> ignore
 
-    let sites =
-      [ "http://news.bbc.co.uk"
-        "http://www.facebook.com"
-        "http://www.wikipedia.com"
-        "http://www.stackoverflow.com"
-      ] |> List.map (fun u -> Uri u)
+  printfn "\n** Creating a complex request **"
+  complexRequest () |> Async.RunSynchronously |> printfn "%A"
 
-    sites |> downloadSequentially
-    sites |> downloadInParallel
+  printfn "\n** Downloading image **"
+  downloadImage () |> ignore
 
-    printfn "\n** Creating a complex request **"
-    complexRequest()
+  printfn "\n** Downloading images: Sequential vs Parallel **"
 
-    printfn "\n** Downloading image **"
-    downloadImage()
+  let images =
+    [ "http://fsharp.org/img/sup/quantalea.png"
+      "http://fsharp.org/img/sup/mbrace.png"
+      "http://fsharp.org/img/sup/statfactory.jpg"
+      "http://fsharp.org/img/sup/tsunami.png"
+    ] |> List.map (fun u -> Uri u)
 
-    printfn "\n** Downloading images: Sequential vs Parallel **"
+  //downloadImagesInParallel images
 
-    let images =
-      [ "http://fsharp.org/img/sup/quantalea.png"
-        "http://fsharp.org/img/sup/mbrace.png"
-        "http://fsharp.org/img/sup/statfactory.jpg"
-        "http://fsharp.org/img/sup/tsunami.png"
-      ] |> List.map (fun u -> Uri u)
+  printfn "\n** Downloading a 'large' file directly from the response stream **"
+  //downloadLargeFile()
 
-    images |> downloadImagesSequentially
-    images |> downloadImagesInParallel
-
-    printfn "\n** Downloading a 'large' file directly from the response stream **"
-    downloadLargeFile()
-
-    returnToContinue "Press Return to exit"
-    0
+  returnToContinue "Press Return to exit"
+  0
