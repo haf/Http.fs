@@ -29,24 +29,24 @@ type FakeServer() as self =
         self.Post.["RecordRequest"] <- 
             fun _ -> 
                 recordedRequest := self.Request
-                200 :> obj
+                box 200
 
         self.Get.["RecordRequest"] <- 
             fun _ -> 
                 recordedRequest := self.Request
-                200 :> obj
+                box 200
 
         self.Get.["GoodStatusCode"] <- 
             fun _ -> 
-                200 :> obj
+                box 200
 
         self.Get.["BadStatusCode"] <- 
             fun _ -> 
-                401 :> obj
+                box 401
 
         self.Get.["GotBody"] <- 
             fun _ -> 
-                "Check out my sexy body" :> obj
+                box "Check out my sexy body"
 
         self.Get.["AllTheThings"] <- 
             fun _ -> 
@@ -56,13 +56,13 @@ type FakeServer() as self =
                 response.WithCookie("cookie2", "smarties") |> ignore
                 response.Headers.Add("Content-Encoding", "gzip")
                 response.Headers.Add("X-New-Fangled-Header", "some value")
-                response :> obj
+                box response
 
         self.Get.["MoonLanguageCorrectEncoding"] <- 
             fun _ -> 
                 let response = new EncodedResponse("яЏ§§їДЙ", "windows-1251")
                 response.ContentType <- "text/plain; charset=windows-1251"
-                response :> obj
+                box response
 
         self.Get.["MoonLanguageTextPlainNoEncoding"] <- 
             fun _ -> 

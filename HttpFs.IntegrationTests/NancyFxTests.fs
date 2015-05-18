@@ -117,8 +117,8 @@ type ``Integration tests`` ()=
     response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
   [<Test>]
-  member x.``getResponseAsync should have nothing if the things don't exist`` () =
-    let request = createRequest Get (uriFor "/AllTheThings")
+  member x.``simplest possible response`` () =
+    let request = createRequest Get (uriFor "/NoCookies")
     use response = request |> getResponse |> Async.RunSynchronously
     response.StatusCode |> should equal 200
     response.Body.Length |> should equal 0
@@ -275,17 +275,22 @@ type ``Integration tests`` ()=
     bodyStream.ReadToEnd() |> should equal "¥§±Æ"
 
   [<Test>]
-  member x.``if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies`` () =
+  member x.``response charset SPECIFIED, is used regardless of Content-Type header`` () =
     let responseBodyString =
       createRequest Get (uriFor "/MoonLanguageCorrectEncoding")
       |> withResponseCharacterEncoding (Encoding.GetEncoding "utf-16")
       |> Request.responseAsString
       |> Async.RunSynchronously
+
     responseBodyString |> should equal "迿ꞧ쒿" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with utf-16
 
   [<Test>]
-  member x.``if a response character encoding is NOT specified, the body is read using the character encoding specified in the response's content-type header`` () =
-    let responseBodyString = createRequest Get (uriFor "/MoonLanguageCorrectEncoding") |> Request.responseAsString
+  member x.``response charset IS NOT SPECIFIED, Content-Type header is used`` () =
+    let responseBodyString =
+      createRequest Get (uriFor "/MoonLanguageCorrectEncoding")
+      |> Request.responseAsString
+      |> Async.RunSynchronously
+
     responseBodyString|> should equal "яЏ§§їДЙ"
 
   [<Test>]
@@ -299,8 +304,8 @@ type ``Integration tests`` ()=
     response |> should equal expected
 
   [<Test>]
-  member x.``if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown`` () =
-    (fun() -> createRequest Get (uriFor "/MoonLanguageInvalidEncoding") |> runIgnore)
+  member x.``throws ArgumentException for invalid Content-Type charset when reading string`` () =
+    (fun() -> createRequest Get (uriFor "/MoonLanguageInvalidEncoding") |> Request.responseAsString |> Async.RunSynchronously)
     |> should throw typeof<ArgumentException>
 
   // .Net encoder doesn't like utf8, seems to need utf-8

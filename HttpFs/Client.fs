@@ -276,20 +276,20 @@ type RequestBody =
     //| BodySocket of SocketTask // for all the nitty-gritty details, see #64
 
 type Request =
-  { Url                      : Uri
-    Method                   : HttpMethod
-    CookiesEnabled           : bool
-    AutoFollowRedirects      : bool
-    AutoDecompression        : DecompressionScheme
-    Headers                  : RequestHeader list
-    Body                     : RequestBody
-    BodyCharacterEncoding    : Encoding
-    QueryStringItems         : NameValue list
-    Cookies                  : NameValue list
-    ResponseCharacterEncoding: Encoding option
-    Proxy                    : Proxy option
-    KeepAlive                : bool
-    Timeout                  : int<ms> }
+  { Url                       : Uri
+    Method                    : HttpMethod
+    CookiesEnabled            : bool
+    AutoFollowRedirects       : bool
+    AutoDecompression         : DecompressionScheme
+    Headers                   : RequestHeader list
+    Body                      : RequestBody
+    BodyCharacterEncoding     : Encoding
+    QueryStringItems          : NameValue list
+    Cookies                   : NameValue list
+    ResponseCharacterEncoding : Encoding option
+    Proxy                     : Proxy option
+    KeepAlive                 : bool
+    Timeout                   : int<ms> }
 
 type CharacterSet = string
 
@@ -432,27 +432,38 @@ module internal Impl =
       // https://github.com/rack/rack/issues/323#issuecomment-3609743
       s.Replace("\"", "\\\"")
 
-  module StreamPicklers =
+  module StreamWriters =
     let writeBytes bs (stream : Stream) =
       Async.AwaitTask (stream.WriteAsync(bs, 0, bs.Length))
 
-    let writeStringRow string : Stream -> Async<unit> =
-      (sprintf "%s%s" string CRLF) |> Encoding.UTF8.GetBytes |> writeBytes
+    /// Writes a string as UTF-8
+    let writeLineAscii string : Stream -> Async<unit> =
+      String.Concat [ string; CRLF ] |> ASCII.bytes |> writeBytes
 
-  open StreamPicklers
+    /// Writes a string as UTF-8
+    let writeAscii : string -> Stream -> Async<unit> =
+      ASCII.bytes >> writeBytes
+
+    let writeLineUtf8 string =
+      String.Concat [ string; CRLF ] |> ASCII.bytes |> writeBytes
+
+    let writeUtf8 : string -> Stream -> Async<unit> =
+      UTF8.bytes >> writeBytes
+    
+  open StreamWriters
 
   let generateFileData (encoding : Encoding) contentType contents = seq {
     match contentType, contents with
     | { typ = "text"; subtype = "plain" }, Plain text ->
-      yield writeStringRow ""
-      yield writeStringRow text
+      yield writeLineUtf8 ""
+      yield writeLineUtf8 text
     | _, Plain text ->
-      yield writeStringRow "Content-Transfer-Encoding: base64"
-      yield writeStringRow ""
-      yield writeStringRow (text |> encoding.GetBytes |> Convert.ToBase64String)
+      yield writeLineUtf8 "Content-Transfer-Encoding: base64"
+      yield writeLineUtf8 ""
+      yield writeLineUtf8 (text |> encoding.GetBytes |> Convert.ToBase64String)
     | _, Binary bytes ->
-      yield writeStringRow "Content-Transfer-Encoding: binary"
-      yield writeStringRow ""
+      yield writeLineUtf8 "Content-Transfer-Encoding: binary"
+      yield writeLineUtf8 ""
       yield writeBytes bytes
   }
 
@@ -466,32 +477,32 @@ module internal Impl =
     let rec generateFormDataInner boundary values isMultiFile = [
       match values with
       | [] ->
-        yield writeStringRow (sprintf "--%s--" boundary)
-        if not isMultiFile then yield writeStringRow ""
+        yield writeLineUtf8 (sprintf "--%s--" boundary)
+        if not isMultiFile then yield writeLineUtf8 ""
       | h :: rest ->
-        yield writeStringRow (sprintf "--%s" boundary)
+        yield writeLineUtf8 (sprintf "--%s" boundary)
         match h with
         | FormFile (name, (fileName, contentType, contents)) ->
           let dispos = if isMultiFile then "file" else "form-data"
-          yield writeStringRow ( generateContentDispos dispos
+          yield writeLineUtf8 ( generateContentDispos dispos
                                   [ if not isMultiFile then yield "name", name
                                     yield "filename", fileName ])
-          yield writeStringRow (sprintf "Content-Type: %O" contentType)
+          yield writeLineUtf8 (sprintf "Content-Type: %O" contentType)
           yield! generateFileData encoding contentType contents
 
         | MultipartMixed (name, files) ->
           let boundary' = generateBoundary state
-          yield writeStringRow ( sprintf "Content-Type: multipart/mixed; boundary=%s" boundary' )
-          yield writeStringRow ( generateContentDispos "form-data" [ "name", name ] )
-          yield writeStringRow ""
+          yield writeLineUtf8 ( sprintf "Content-Type: multipart/mixed; boundary=%s" boundary' )
+          yield writeLineUtf8 ( generateContentDispos "form-data" [ "name", name ] )
+          yield writeLineUtf8 ""
           // remap the multi-files to single files and recursively call myself
           let files' = files |> List.map (fun f -> FormFile (name, f))
           yield! generateFormDataInner boundary' files' true
 
         | NameValue { name = name; value = value } ->
-          yield writeStringRow (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
-          yield writeStringRow ""
-          yield writeStringRow value
+          yield writeLineUtf8 (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
+          yield writeLineUtf8 ""
+          yield writeLineUtf8 value
         yield! generateFormDataInner boundary rest isMultiFile
     ]
     generateFormDataInner boundary formData false
@@ -517,7 +528,7 @@ module internal Impl =
       userCt, [ writeBytes raw ]
 
     | userCt, _, BodyString str ->
-      userCt, [ writeStringRow str ]
+      userCt, [ writeUtf8 str ]
 
     | userCt, _, BodyForm [] ->
       userCt, [ writeBytes [||] ]
@@ -880,9 +891,14 @@ module Response =
         match response.ExpectedEncoding with
         | None ->
           match response.CharacterSet with
-          | null | "" -> ISOLatin1
-          | responseCharset -> Encoding.GetEncoding(mapEncoding responseCharset)
-        | Some enc -> enc
+          | null | "" ->
+            ISOLatin1 // TODO: change to UTF-8
+          | responseCharset ->
+            Encoding.GetEncoding(mapEncoding responseCharset)
+
+        | Some enc ->
+          enc
+
       use rdr = new AsyncStreamReader(response.Body, charset, true, 0x2000, false)
       return! rdr.ReadToEnd()
     }

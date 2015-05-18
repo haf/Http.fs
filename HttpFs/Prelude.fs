@@ -52,3 +52,17 @@ module String =
 
   let toLower (s : string) =
     s.ToLower()
+
+
+module ASCII =
+  open System.Text
+
+  let bytes (s : string) =
+    Encoding.ASCII.GetBytes s
+
+module UTF8 =
+  open System
+  open System.Text
+
+  let bytes (s : string) =
+    Encoding.UTF8.GetBytes s
