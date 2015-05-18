@@ -1,9 +1,9 @@
-﻿module HttpClient.Tests.Api
+﻿module HttpFs.Tests.Api
 
 open System
 open System.Text
 open Fuchu
-open HttpClient
+open HttpFs.Client
 
 let VALID_URL = Uri "http://www"
 
@@ -15,7 +15,7 @@ let api =
         // an example of creating a DSL that still gives nice output when a test fails!
         // doable because we're using values and not 'programming language'
         given "a default request with Method and Url" (createRequest Get (Uri "http://www.google.com")) [
-            "has same url", fun r -> Assert.Equal(r.Url, "http://www.google.com/")
+            "has same url", fun r -> Assert.Equal(r.Url.ToString(), "http://www.google.com/")
             "has get method", fun r -> Assert.Equal(r.Method, Get)
             "has no decompression scheme", fun r -> Assert.Equal(r.AutoDecompression, DecompressionScheme.None)
             "should follow redirects", fun r -> Assert.IsTrue r.AutoFollowRedirects

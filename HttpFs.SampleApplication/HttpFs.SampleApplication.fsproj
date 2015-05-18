@@ -4,12 +4,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DC478A22-3190-46CB-A085-88014CC36957}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>HttpClient</RootNamespace>
-    <AssemblyName>HttpClient</AssemblyName>
+    <ProjectGuid>{8907FEE4-9689-4988-881C-D768AC5D5A24}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>HttpFs.SampleApplication</RootNamespace>
+    <AssemblyName>HttpFs.SampleApplication</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <Name>HttpClient</Name>
+    <Name>HttpFs.SampleApplication</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -18,12 +18,10 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors>
     </WarningsAsErrors>
-    <DocumentationFile>bin\Debug\HttpClient.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\HttpFs.SampleApplication.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,21 +30,32 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\HttpClient.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\HttpFs.SampleApplication.xml</DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FsUnit.NUnit">
+      <HintPath>..\packages\FsUnit.1.3.0.1\Lib\Net40\FsUnit.NUnit.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
+    <Reference Include="nunit.framework">
+      <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InternalsVisibleTo.fs" />
-    <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="AsyncStreamReader.fs" />
-    <Compile Include="HttpClient.fs" />
+    <Compile Include="PageDownloader.fs" />
+    <Compile Include="PageDownloaderTests.fs" />
+    <Compile Include="Program.fs" />
+    <None Include="app.config" />
     <None Include="paket.references" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HttpFs\HttpFs.fsproj">
+      <Project>{DC478A22-3190-46CB-A085-88014CC36957}</Project>
+      <Name>HttpFs</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

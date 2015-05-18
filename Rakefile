@@ -49,7 +49,7 @@ directory 'build/pkg'
 desc 'package nugets - finds all projects and package them'
 nugets_pack :create_nugets => ['build/pkg', :versioning, :compile] do |p|
   p.configuration = Configuration
-  p.files   = FileList['HttpClient/HttpClient.fsproj'].
+  p.files   = FileList['HttpFs/HttpFs.fsproj'].
     exclude(/Tests/)
   p.out     = 'build/pkg'
   p.exe     = 'packages/NuGet.CommandLine/tools/NuGet.exe'
@@ -66,17 +66,17 @@ end
 namespace :tests do
   task :integration do
     system 'packages/NUnit.Runners/tools/nunit-console.exe', %W|
-           "HttpClient.IntegrationTests/bin/#{Configuration}/HttpClient.IntegrationTests.dll"|,
+           HttpFs.IntegrationTests/bin/#{Configuration}/HttpFs.IntegrationTests.dll|,
            clr_command: true
   end
   task :unit do
-    system "HttpClient.UnitTests/bin/#{Configuration}/HttpClient.UnitTests.exe", clr_command: true
+    system "HttpFs.UnitTests/bin/#{Configuration}/HttpFs.UnitTests.exe", clr_command: true
   end
 end
 
-task :tests => [:'tests:unit', :'tests:integration']
+task :tests => [:compile, :'tests:unit', :'tests:integration']
 
-task :default => :create_nugets #, :tests ]
+task :default => [:tests, :create_nugets]
 
 task :ensure_nuget_key do
   raise 'missing env NUGET_KEY value' unless ENV['NUGET_KEY']

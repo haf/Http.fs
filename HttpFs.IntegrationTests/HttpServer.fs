@@ -1,4 +1,4 @@
-﻿module HttpServer
+﻿module HttpFs.IntegrationTests.HttpServer
 
 open Nancy
 open Nancy.Extensions

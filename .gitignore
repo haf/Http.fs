@@ -47,3 +47,4 @@ AssemblyInfo.fs
 !/Tools/ReportGenerator_1.9.1.0/bin/*
 build/
 AssemblyVersionInfo.fs
+TestResult.xml

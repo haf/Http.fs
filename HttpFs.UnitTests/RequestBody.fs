@@ -1,10 +1,10 @@
-﻿module HttpClient.Tests.RequestBody
+﻿module HttpFs.Tests.RequestBody
 
 open System
 open System.Text
 
 open Fuchu
-open HttpClient
+open HttpFs.Client
 
 let VALID_URL = Uri "http://www"
 let createValidRequest = createRequest Get VALID_URL
@@ -52,7 +52,7 @@ let bodyFormatting =
 
     testList "formatting different sorts of body" [
         testCase "can format raw" <| fun _ ->
-            let clientState = { DefaultHttpClientState with random = Random testSeed }
+            let clientState = { DefaultHttpFsState with random = Random testSeed }
             let newCt, body = Impl.formatBody clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
             let bytes = bodyToBytes body
             Assert.Equal("body should be sequence of stream writers", [|1uy; 2uy; 3uy|], bytes)
@@ -61,7 +61,7 @@ let bodyFormatting =
         testCase "ordinary multipart/form-data" <| fun _ ->
             if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
-            let clientState = { DefaultHttpClientState with random = Random testSeed }
+            let clientState = { DefaultHttpFsState with random = Random testSeed }
 
             let fileCt, fileContents =
                 ContentType.Parse "text/plain" |> Option.get,
@@ -102,7 +102,7 @@ let bodyFormatting =
         testCase "multipart/form-data with multipart/mixed" <| fun _ ->
             if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
-            let clientState = { DefaultHttpClientState with random = Random testSeed }
+            let clientState = { DefaultHttpFsState with random = Random testSeed }
 
             let firstCt, secondCt, fileContents =
                 ContentType.Parse "text/plain" |> Option.get,
@@ -168,7 +168,7 @@ let bodyFormatting =
                          ])
 
         testCase "can format urlencoded form" <| fun _ ->
-            let clientState = { DefaultHttpClientState with random = Random testSeed }
+            let clientState = { DefaultHttpFsState with random = Random testSeed }
             // example from http://www.w3.org/TR/html401/interact/forms.html
             [   NameValue { name = "submit"; value = "Join Now!" }
                 NameValue { name = "user_name"; value = "Åsa den Röde" }

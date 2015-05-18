@@ -8,13 +8,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{6DFFC7
 		paket.dependencies = paket.dependencies
 	EndProjectSection
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpClient.UnitTests", "HttpClient.UnitTests\HttpClient.UnitTests.fsproj", "{CCBDC979-337B-4D2F-9E64-9253083C33F8}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpFs.UnitTests", "HttpFs.UnitTests\HttpFs.UnitTests.fsproj", "{CCBDC979-337B-4D2F-9E64-9253083C33F8}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpClient", "HttpClient\HttpClient.fsproj", "{DC478A22-3190-46CB-A085-88014CC36957}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpFs", "HttpFs\HttpFs.fsproj", "{DC478A22-3190-46CB-A085-88014CC36957}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpClient.IntegrationTests", "HttpClient.IntegrationTests\HttpClient.IntegrationTests.fsproj", "{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpFs.IntegrationTests", "HttpFs.IntegrationTests\HttpFs.IntegrationTests.fsproj", "{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpClient.SampleApplication", "HttpClient.SampleApplication\HttpClient.SampleApplication.fsproj", "{8907FEE4-9689-4988-881C-D768AC5D5A24}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpFs.SampleApplication", "HttpFs.SampleApplication\HttpFs.SampleApplication.fsproj", "{8907FEE4-9689-4988-881C-D768AC5D5A24}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DB5E6062-BB68-4ACD-987F-FCDCA7F6403E}"
 	ProjectSection(SolutionItems) = preProject

@@ -1,8 +1,8 @@
 ﻿// Some examples of the HttpClient module in action
-module Program
+module HttpFs.SampleApplication.Program
 
-open HttpClient
-open HttpClient.SampleApplication
+open HttpFs.Client
+open HttpFs.SampleApplication
 open System.IO
 open System
 

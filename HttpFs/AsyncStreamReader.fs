@@ -1,6 +1,6 @@
 ﻿// Taken from the F# Power Pack on 9/10/2013
 // http://fsharppowerpack.codeplex.com/SourceControl/latest#libs/head/src/FSharp.PowerPack/AsyncStreamReader.fs
-namespace Microsoft.FSharp.Control
+namespace HttpFs
 
 open System
 open System.Diagnostics
