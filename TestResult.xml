@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--This file represents the results of running a test suite-->
+<test-results name="/Users/mikko/Projects/Logibit/Http.fs/HttpClient.IntegrationTests/bin/Release/HttpClient.IntegrationTests.dll" total="32" errors="16" failures="7" not-run="5" inconclusive="0" ignored="2" skipped="0" invalid="3" date="2015-05-18" time="11:52:07">
+  <environment nunit-version="2.6.4.14350" clr-version="4.0.30319.17020" os-version="Unix 13.4.0.0" platform="Unix" cwd="/Users/mikko/Projects/Logibit/Http.fs" machine-name="Mikkos-MacBook-Pro.local" user="mikko" user-domain="Mikkos-MacBook-Pro.local" />
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="Assembly" name="/Users/mikko/Projects/Logibit/Http.fs/HttpClient.IntegrationTests/bin/Release/HttpClient.IntegrationTests.dll" executed="True" result="Failure" success="False" time="2.553" asserts="0">
+    <results>
+      <test-suite type="TestFixture" name="HttpClient_IntegrationTests+Integration tests" executed="True" result="Failure" success="False" time="2.544" asserts="0">
+        <results>
+          <test-case name="HttpClient_IntegrationTests+Integration tests._if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones" executed="True" result="Error" success="False" time="0.034" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.accept-encoding header is set automatically when decompression scheme is set" executed="True" result="Failure" success="False" time="0.005" asserts="1">
+            <failure>
+              <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+              <stack-trace><![CDATA[at FsUnit.TopLevelOperators.should[EqualConstraint,NotConstraint] (Microsoft.FSharp.Core.FSharpFunc`2 f, NUnit.Framework.Constraints.EqualConstraint x, System.Object y) [0x00000] in <filename unknown>:0
+at HttpClient_IntegrationTests+Integration tests.accept-encoding header is set automatically when decompression scheme is set () [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.all details of the response should be available after a call to getResponse" executed="True" result="Error" success="False" time="0.001" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.all of the manually-set request headers get sent to the server" executed="True" result="Failure" success="False" time="0.013" asserts="1">
+            <failure>
+              <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+              <stack-trace><![CDATA[at FsUnit.TopLevelOperators.should[EqualConstraint,NotConstraint] (Microsoft.FSharp.Core.FSharpFunc`2 f, NUnit.Framework.Constraints.EqualConstraint x, System.Object y) [0x00000] in <filename unknown>:0
+at HttpClient_IntegrationTests+Integration tests.all of the manually-set request headers get sent to the server () [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.all of the response headers are available after a call to getResponse" executed="True" result="Error" success="False" time="0.002" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Closing the response body stream retrieved from getResponseAsync does not cause an exception" executed="True" result="Error" success="False" time="0.000" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Content-Length header is set automatically for Posts with a body" executed="True" result="Failure" success="False" time="0.001" asserts="1">
+            <failure>
+              <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+              <stack-trace><![CDATA[at FsUnit.TopLevelOperators.should[EqualConstraint,NotConstraint] (Microsoft.FSharp.Core.FSharpFunc`2 f, NUnit.Framework.Constraints.EqualConstraint x, System.Object y) [0x00000] in <filename unknown>:0
+at HttpClient_IntegrationTests+Integration tests.Content-Length header is set automatically for Posts with a body () [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.cookies are not kept during an automatic redirect" executed="True" result="Error" success="False" time="0.001" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.createRequest should set everything correctly in the HTTP request" executed="True" result="Failure" success="False" time="0.002" asserts="1">
+            <failure>
+              <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+              <stack-trace><![CDATA[at FsUnit.TopLevelOperators.should[EqualConstraint,NotConstraint] (Microsoft.FSharp.Core.FSharpFunc`2 f, NUnit.Framework.Constraints.EqualConstraint x, System.Object y) [0x00000] in <filename unknown>:0
+at HttpClient_IntegrationTests+Integration tests.createRequest should set everything correctly in the HTTP request () [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Delete method works" executed="True" result="Success" success="True" time="0.531" asserts="1" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Get method works" executed="True" result="Error" success="False" time="0.000" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.getResponse.ResponseUri should contain URI that responded to the request" executed="True" result="Success" success="True" time="0.030" asserts="2" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseAsync should have nothing if the things don't exist" executed="True" result="Error" success="False" time="0.001" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.getResponseAsync, given a request with an invalid url, throws an exception" executed="True" result="Success" success="True" time="0.003" asserts="1" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Head method works" executed="True" result="Error" success="False" time="0.000" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: HEAD]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, and character encoding is NOT specified in the response's content-type header, the body is read using ISO Latin 1 character encoding" executed="False" result="NotRunnable">
+            <reason>
+              <message><![CDATA[Test method has non-void return type, but no result is expected]]></message>
+            </reason>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown" executed="True" result="Failure" success="False" time="0.001" asserts="1">
+            <failure>
+              <message><![CDATA[  Expected: <System.ArgumentException>
+  But was:  <System.Net.ProtocolViolationException>
+]]></message>
+              <stack-trace><![CDATA[at FsUnit.TopLevelOperators.should[Type,ExactTypeConstraint] (Microsoft.FSharp.Core.FSharpFunc`2 f, System.Type x, System.Object y) [0x00000] in <filename unknown>:0
+at HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown () [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is NOT specified, the body is read using the character encoding specified in the response's content-type header" executed="False" result="NotRunnable">
+            <reason>
+              <message><![CDATA[Test method has non-void return type, but no result is expected]]></message>
+            </reason>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies" executed="True" result="Error" success="False" time="0.001" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if body character encoding is specified, encodes the request body with it" executed="True" result="Failure" success="False" time="0.010" asserts="1">
+            <failure>
+              <message><![CDATA[  Expected string length 4 but was 6. Strings differ at index 4.
+  Expected: "¥§±Æ"
+  But was:  "¥§±Æ\r\n"
+  ---------------^
+]]></message>
+              <stack-trace><![CDATA[at FsUnit.TopLevelOperators.should[String,EqualConstraint] (Microsoft.FSharp.Core.FSharpFunc`2 f, System.String x, System.Object y) [0x00000] in <filename unknown>:0
+at HttpClient_IntegrationTests+Integration tests.if body character encoding is specified, encodes the request body with it () [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if KeepAlive is false, Connection set to 'Close' on every request" executed="True" result="Failure" success="False" time="0.001" asserts="1">
+            <failure>
+              <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+              <stack-trace><![CDATA[at FsUnit.TopLevelOperators.should[EqualConstraint,NotConstraint] (Microsoft.FSharp.Core.FSharpFunc`2 f, NUnit.Framework.Constraints.EqualConstraint x, System.Object y) [0x00000] in <filename unknown>:0
+at HttpClient_IntegrationTests+Integration tests.if KeepAlive is false, Connection set to 'Close' on every request () [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if the resource is not returned within Timeout, throw WebException" executed="False" result="Ignored">
+            <reason>
+              <message><![CDATA[exception not thrown on Mono - investigate]]></message>
+            </reason>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if the response character encoding is specified as 'utf16', uses 'utf-16' instead" executed="True" result="Error" success="False" time="0.000" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.if the response character encoding is specified as 'utf8', uses 'utf-8' instead" executed="True" result="Error" success="False" time="0.001" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Options method works" executed="True" result="Success" success="True" time="0.002" asserts="1" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Patch method works" executed="True" result="Success" success="True" time="0.001" asserts="1" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Post method works" executed="True" result="Success" success="True" time="0.002" asserts="1" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.posts to Nancy without a body don't work" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.Put method works" executed="True" result="Success" success="True" time="0.002" asserts="1" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.reading the body as bytes works properly" executed="True" result="Error" success="False" time="0.001" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.readResponseBodyAsString can read the response body" executed="True" result="Error" success="False" time="0.000" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.readResponseBodyAsString should return an empty string when there is no body" executed="True" result="Error" success="False" time="0.000" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.readResponseBodyAsString should return the entity body as a string" executed="True" result="Error" success="False" time="0.001" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.returns the uploaded file names" executed="True" result="Success" success="True" time="0.049" asserts="2" />
+          <test-case name="HttpClient_IntegrationTests+Integration tests.when called on a non-existant page, returns 404" executed="True" result="Error" success="False" time="0.001" asserts="0">
+            <failure>
+              <message><![CDATA[System.Net.ProtocolViolationException : Cannot send data when method is: GET]]></message>
+              <stack-trace><![CDATA[at System.Net.HttpWebRequest.BeginGetRequestStream (System.AsyncCallback callback, System.Object state) [0x00000] in <filename unknown>:0
+at System.Net.HttpWebRequest.GetRequestStream () [0x00000] in <filename unknown>:0
+at HttpClient+DotNetWrapper+writeBody@751.Invoke (Microsoft.FSharp.Core.Unit unitVar) [0x00000] in <filename unknown>:0
+at Microsoft.FSharp.Control.AsyncBuilderImpl+callA@803[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit].Invoke (Microsoft.FSharp.Control.AsyncParams`1 args) [0x00000] in <filename unknown>:0
+]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case name="HttpClient_IntegrationTests+Integration tests.when there is no body, reading it as bytes gives an empty array" executed="False" result="NotRunnable">
+            <reason>
+              <message><![CDATA[Test method has non-void return type, but no result is expected]]></message>
+            </reason>
+          </test-case>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="HttpClient_SuaveIntegrationTests+Suave Integration Tests" executed="False" result="Ignored">
+        <reason>
+          <message><![CDATA[pending: https://github.com/SuaveIO/suave/issues/228]]></message>
+        </reason>
+        <results>
+          <test-case name="HttpClient_SuaveIntegrationTests+Suave Integration Tests.server receives valid filenames" executed="False" result="Ignored">
+            <reason>
+              <message><![CDATA[pending: https://github.com/SuaveIO/suave/issues/228]]></message>
+            </reason>
+          </test-case>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

@@ -57,15 +57,20 @@ type ``Integration tests`` ()=
     [<Test>]
     // This needs to be run first, as the keep-alive is only set on the first call.  They seem to be run alphabetically.
     member x.``_if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones`` () =
+      let reponse =
+        createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest")
+        |> getResponse
+        |> Async.RunSynchronously
+      HttpServer.recordedRequest.Value |> should not' (equal null)
+      HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "keep-alive"
 
-        createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest") |> ignore
-        HttpServer.recordedRequest.Value |> should not' (equal null)
-        HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "keep-alive"
-
-        HttpServer.recordedRequest := null
-        createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest") |> ignore
-        HttpServer.recordedRequest.Value |> should not' (equal null)
-        HttpServer.recordedRequest.Value.Headers.Connection |> should equal ""
+      HttpServer.recordedRequest := null
+      let response =
+        createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest")
+        |> getResponse
+        |> Async.RunSynchronously
+      HttpServer.recordedRequest.Value |> should not' (equal null)
+      HttpServer.recordedRequest.Value.Headers.Connection |> should equal ""
 
     [<Test>]
     member x.``if KeepAlive is false, Connection set to 'Close' on every request`` () =

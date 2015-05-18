@@ -492,18 +492,18 @@ module internal Impl =
     open StreamPicklers
 
     let generateFileData (encoding : Encoding) contentType contents = seq {
-        match contentType, contents with
-        | { typ = "text"; subtype = "plain" }, Plain text ->
-            yield writeStringRow ""
-            yield writeStringRow text
-        | _, Plain text ->
-            yield writeStringRow "Content-Transfer-Encoding: base64"
-            yield writeStringRow ""
-            yield writeStringRow (text |> encoding.GetBytes |> Convert.ToBase64String)
-        | _, Binary bytes ->
-            yield writeStringRow "Content-Transfer-Encoding: binary"
-            yield writeStringRow ""
-            yield writeBytes bytes
+      match contentType, contents with
+      | { typ = "text"; subtype = "plain" }, Plain text ->
+        yield writeStringRow ""
+        yield writeStringRow text
+      | _, Plain text ->
+        yield writeStringRow "Content-Transfer-Encoding: base64"
+        yield writeStringRow ""
+        yield writeStringRow (text |> encoding.GetBytes |> Convert.ToBase64String)
+      | _, Binary bytes ->
+        yield writeStringRow "Content-Transfer-Encoding: binary"
+        yield writeStringRow ""
+        yield writeBytes bytes
     }
 
     let generateContentDispos value (kvs : (string * string) list) =
@@ -513,80 +513,75 @@ module internal Impl =
                              yield! (kvs |> List.map formatKv) ]
 
     let generateFormData state (encoding : Encoding) boundary formData =
-        let rec generateFormDataInner boundary values isMultiFile = seq {
-            match values with
-            | [] ->
-                yield writeStringRow (sprintf "--%s--" boundary)
-                if not isMultiFile then yield writeStringRow ""
-            | h :: rest ->
-                yield writeStringRow (sprintf "--%s" boundary)
-                match h with
-                | FormFile (name, (fileName, contentType, contents)) ->
-                    let dispos = if isMultiFile then "file" else "form-data"
-                    yield writeStringRow ( generateContentDispos dispos
-                                            [ if not isMultiFile then yield "name", name
-                                              yield "filename", fileName ])
-                    yield writeStringRow (sprintf "Content-Type: %O" contentType)
-                    yield! generateFileData encoding contentType contents
+      let rec generateFormDataInner boundary values isMultiFile = seq {
+        match values with
+        | [] ->
+          yield writeStringRow (sprintf "--%s--" boundary)
+          if not isMultiFile then yield writeStringRow ""
+        | h :: rest ->
+          yield writeStringRow (sprintf "--%s" boundary)
+          match h with
+          | FormFile (name, (fileName, contentType, contents)) ->
+            let dispos = if isMultiFile then "file" else "form-data"
+            yield writeStringRow ( generateContentDispos dispos
+                                    [ if not isMultiFile then yield "name", name
+                                      yield "filename", fileName ])
+            yield writeStringRow (sprintf "Content-Type: %O" contentType)
+            yield! generateFileData encoding contentType contents
 
-                | MultipartMixed (name, files) ->
-                    let boundary' = generateBoundary state
-                    yield writeStringRow ( sprintf "Content-Type: multipart/mixed; boundary=%s" boundary' )
-                    yield writeStringRow ( generateContentDispos "form-data" [ "name", name ] )
-                    yield writeStringRow ""
-                    // remap the multi-files to single files and recursively call myself
-                    let files' = files |> List.map (fun f -> FormFile (name, f))
-                    yield! generateFormDataInner boundary' files' true
+          | MultipartMixed (name, files) ->
+            let boundary' = generateBoundary state
+            yield writeStringRow ( sprintf "Content-Type: multipart/mixed; boundary=%s" boundary' )
+            yield writeStringRow ( generateContentDispos "form-data" [ "name", name ] )
+            yield writeStringRow ""
+            // remap the multi-files to single files and recursively call myself
+            let files' = files |> List.map (fun f -> FormFile (name, f))
+            yield! generateFormDataInner boundary' files' true
 
-                | NameValue { name = name; value = value } ->
-                    yield writeStringRow (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
-                    yield writeStringRow ""
-                    yield writeStringRow value
-                yield! generateFormDataInner boundary rest isMultiFile
-        }
-        generateFormDataInner boundary formData false
+          | NameValue { name = name; value = value } ->
+            yield writeStringRow (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
+            yield writeStringRow ""
+            yield writeStringRow value
+          yield! generateFormDataInner boundary rest isMultiFile
+      }
+      generateFormDataInner boundary formData false
 
     let private formatBodyUrlencoded bodyEncoding formData =
-        [ formData
-          |> List.map (function
-              | NameValue kv -> kv
-              | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
-          |> uriEncode bodyEncoding
-          // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
-          // and none-the-less; they will map 1-1 with the UTF8 set if the server
-          // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
-          |> ISOLatin1.GetBytes
-          |> writeBytes ] |> Seq.ofList
-
-//    let private formatBodyFormData clientState encoding formData boundary =
-//        generateFormData clientState encoding boundary formData
-//        |> String.concat CRLF
-//        |> encoding.GetBytes
+      [ formData
+        |> List.map (function
+            | NameValue kv -> kv
+            | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
+        |> uriEncode bodyEncoding
+        // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
+        // and none-the-less; they will map 1-1 with the UTF8 set if the server
+        // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
+        |> ISOLatin1.GetBytes
+        |> writeBytes ] |> Seq.ofList
 
     let formatBody (clientState : HttpClientState) =
-                   // we may actually change the content type if it's wrong
-                   //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
-        function
-        | userCt, _, BodyRaw raw ->
-            userCt, [ writeBytes raw ] |> Seq.ofList
+                 // we may actually change the content type if it's wrong
+                 //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
+      function
+      | userCt, _, BodyRaw raw ->
+        userCt, [ writeBytes raw ] |> Seq.ofList
 
-        | userCt, _, BodyString str ->
-            userCt, [ writeStringRow str ] |> Seq.ofList
+      | userCt, _, BodyString str ->
+        userCt, [ writeStringRow str ] |> Seq.ofList
 
-        | userCt, _, BodyForm [] ->
-            userCt, [ writeBytes [||] ] |> Seq.ofList
+      | userCt, _, BodyForm [] ->
+        userCt, [ writeBytes [||] ] |> Seq.ofList
 
-        | userCt, encoding, BodyForm formData ->
-            let onlyNameValues =
-                formData |> List.forall (function | NameValue _ -> true | _ -> false)
+      | userCt, encoding, BodyForm formData ->
+        let onlyNameValues =
+          formData |> List.forall (function | NameValue _ -> true | _ -> false)
 
-            if onlyNameValues then
-                ContentType.Parse "application/x-www-form-urlencoded",
-                formatBodyUrlencoded encoding formData
-            else
-                let boundary = generateBoundary clientState
-                ContentType.Create("multipart", "form-data", boundary=boundary) |> Some,
-                generateFormData clientState encoding boundary formData
+        if onlyNameValues then
+          ContentType.Parse "application/x-www-form-urlencoded",
+          formatBodyUrlencoded encoding formData
+        else
+          let boundary = generateBoundary clientState
+          ContentType.Create("multipart", "form-data", boundary=boundary) |> Some,
+          generateFormData clientState encoding boundary formData
 
 open Impl
 
