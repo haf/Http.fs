@@ -28,6 +28,14 @@ let utf8 = Encoding.UTF8
 let uriFor path =
   (Uri ("http://localhost:1234/TestServer" + path))
 
+let bodyToBytes body =
+  use stream = new IO.MemoryStream()
+  for writer in body do
+    do writer stream |> ignore
+  stream.Seek(0L, IO.SeekOrigin.Begin) |> ignore
+  stream.ToArray()
+
+
 [<TestFixture>]
 type ``Integration tests`` ()=
 
@@ -49,31 +57,31 @@ type ``Integration tests`` ()=
     [<Test>]
     // This needs to be run first, as the keep-alive is only set on the first call.  They seem to be run alphabetically.
     member x.``_if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones`` () =
-
+      let reponse =
         createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest")
-        |> getResponseCode |> ignore
-        HttpServer.recordedRequest.Value |> should not' (equal null)
-        HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "keep-alive"
+        |> getResponse
+        |> Async.RunSynchronously
+      HttpServer.recordedRequest.Value |> should not' (equal null)
+      HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "keep-alive"
 
-        HttpServer.recordedRequest := null
+      HttpServer.recordedRequest := null
+      let response =
         createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest")
-        |> getResponseCode |> ignore
-        HttpServer.recordedRequest.Value |> should not' (equal null)
-        HttpServer.recordedRequest.Value.Headers.Connection |> should equal ""
+        |> getResponse
+        |> Async.RunSynchronously
+      HttpServer.recordedRequest.Value |> should not' (equal null)
+      HttpServer.recordedRequest.Value.Headers.Connection |> should equal ""
 
     [<Test>]
     member x.``if KeepAlive is false, Connection set to 'Close' on every request`` () =
-
         createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest")
-        |> withKeepAlive false
-        |> getResponseCode |> ignore
+        |> withKeepAlive false |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
         HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "close"
 
         HttpServer.recordedRequest := null
         createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest")
-        |> withKeepAlive false
-        |> getResponseCode |> ignore
+        |> withKeepAlive false |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
         HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "close"
 
@@ -84,8 +92,7 @@ type ``Integration tests`` ()=
         |> withQueryStringItem {name="qs2"; value="hi mum"}
         |> withHeader (Accept "application/xml")
         |> withCookie {name="SESSIONID"; value="1234"}
-        |> withBodyString "some XML or whatever"
-        |> getResponseCode |> ignore
+        |> withBodyString "some XML or whatever" |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
         HttpServer.recordedRequest.Value.Query?search.ToString() |> should equal "jeebus"
         HttpServer.recordedRequest.Value.Query?qs2.ToString() |> should equal "hi mum"
@@ -95,23 +102,24 @@ type ``Integration tests`` ()=
         bodyStream.ReadToEnd() |> should equal "some XML or whatever"
 
     [<Test>]
-    member x.``getResponseCode should return the http status code for all response types`` () =
-        createRequest Get (Uri "http://localhost:1234/TestServer/GoodStatusCode") |> getResponseCode |> should equal 200
-        createRequest Get (Uri "http://localhost:1234/TestServer/BadStatusCode") |> getResponseCode |> should equal 401
+    member x.``readResponseBodyAsString should return the entity body as a string`` () =
+        createRequest Get (Uri "http://localhost:1234/TestServer/GotBody")
+        |> Request.responseAsString |> Async.RunSynchronously
+        |> should equal "Check out my sexy body"
 
     [<Test>]
-    member x.``getResponseBody should return the entity body as a string`` () =
-        createRequest Get (Uri "http://localhost:1234/TestServer/GotBody") |> getResponseBody |> should equal "Check out my sexy body"
-
-    [<Test>]
-    member x.``getResponseBody should return an empty string when there is no body`` () =
-        createRequest Get (Uri "http://localhost:1234/TestServer/GoodStatusCode") |> getResponseBody |> should equal ""
+    member x.``readResponseBodyAsString should return an empty string when there is no body`` () =
+        createRequest Get (Uri "http://localhost:1234/TestServer/GoodStatusCode")
+        |> Request.responseAsString |> Async.RunSynchronously
+        |> should equal ""
 
     [<Test>]
     member x.``all details of the response should be available after a call to getResponse`` () =
-        let response = createRequest Get (Uri "http://localhost:1234/TestServer/AllTheThings") |> getResponse
+        let request = createRequest Get (Uri "http://localhost:1234/TestServer/AllTheThings")
+        use response = request |> getResponse |> Async.RunSynchronously
         response.StatusCode |> should equal 418
-        response.EntityBody.Value |> should equal "Some JSON or whatever"
+        let body = Response.readBodyAsString response |> Async.RunSynchronously
+        response |> Response.readBodyAsString |> Async.RunSynchronously |> should equal "Some JSON or whatever"
         response.ContentLength |> should equal 21
         response.Cookies.["cookie1"] |> should equal "chocolate+chip" // cookies get encoded
         response.Cookies.["cookie2"] |> should equal "smarties"
@@ -119,29 +127,31 @@ type ``Integration tests`` ()=
         response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
     [<Test>]
-    member x.``getResponse should have nothing if the things don't exist`` () =
-        let response = createRequest Get (Uri "http://localhost:1234/TestServer/GoodStatusCode") |> getResponse
+    member x.``getResponseAsync should have nothing if the things don't exist`` () =
+        let request = createRequest Get (Uri "http://localhost:1234/TestServer/AllTheThings")
+        use response = request |> getResponse |> Async.RunSynchronously
         response.StatusCode |> should equal 200
-        response.EntityBody.IsSome |> should equal false
+        response.Body.Length |> should equal 0
         response.Cookies.IsEmpty |> should equal true
-        // There will always be headers
 
     [<Test>]
-    member x.``getResponse, given a request with an invalid url, throws an exception`` () =
-        (fun() -> createRequest Get (Uri "www.google.com") |> getResponse |> ignore) |> should throw typeof<UriFormatException>
+    member x.``getResponseAsync, given a request with an invalid url, throws an exception`` () =
+        (fun() ->
+          createRequest Get (Uri "www.google.com")
+          |> getResponse
+          |> ignore)
+        |> should throw typeof<UriFormatException>
 
     [<Test>]
-    member x.``getResponseCode, when called on a non-existant page, returns 404`` () =
-        createRequest Get (Uri "http://localhost:1234/TestServer/NoPage") 
-        |> getResponseCode
-        |> should equal 404
+    member x.``when called on a non-existant page, returns 404`` () =
+      use response = createRequest Get (Uri "http://localhost:1234/TestServer/NoPage") |> getResponse |> Async.RunSynchronously
+      response.StatusCode |> should equal 404
 
     [<Test>] 
     member x.``posts to Nancy without a body don't work`` ()=
-        // Not sure if this is just a Nancy thing, but the handler doesn't get called if there isn't a body
-        createRequest Post (Uri "http://localhost:1234/TestServer/RecordRequest")
-        |> getResponseCode |> ignore
-        HttpServer.recordedRequest.Value |> should equal null
+      // Not sure if this is just a Nancy thing, but the handler doesn't get called if there isn't a body
+      createRequest Post (Uri "http://localhost:1234/TestServer/RecordRequest") |> ignore
+      HttpServer.recordedRequest.Value |> should equal null
 
     [<Test>] 
     member x.``all of the manually-set request headers get sent to the server`` ()=
@@ -171,7 +181,7 @@ type ``Integration tests`` ()=
         |> withHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)" )
         |> withHeader (Warning "199 Miscellaneous warning" )
         |> withHeader (Custom {name="X-Greeting"; value="Happy Birthday"})
-        |> getResponseCode |> ignore
+        |> ignore
 
         HttpServer.recordedRequest.Value |> should not' (equal null)
         HttpServer.recordedRequest.Value.Headers.Accept |> should contain ("application/xml", 1m)
@@ -208,16 +218,14 @@ type ``Integration tests`` ()=
     [<Test>]
     member x.``Content-Length header is set automatically for Posts with a body`` () =
         createRequest Post (Uri "http://localhost:1234/TestServer/RecordRequest")
-        |> withBodyString "Hi Mum"
-        |> getResponseCode |> ignore
+        |> withBodyString "Hi Mum" |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
         HttpServer.recordedRequest.Value.Headers.ContentLength |> should equal 6
 
     [<Test>]
     member x.``accept-encoding header is set automatically when decompression scheme is set`` () =
         createRequest Get (Uri "http://localhost:1234/TestServer/RecordRequest")
-        |> withAutoDecompression (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
-        |> getResponseCode |> ignore
+        |> withAutoDecompression (DecompressionScheme.Deflate ||| DecompressionScheme.GZip) |> ignore
         HttpServer.recordedRequest.Value |> should not' (equal null)
         HttpServer.recordedRequest.Value.Headers.AcceptEncoding |> should contain "gzip"
         HttpServer.recordedRequest.Value.Headers.AcceptEncoding |> should contain "deflate"
@@ -229,7 +237,7 @@ type ``Integration tests`` ()=
 
     [<Test>]
     member x.``all of the response headers are available after a call to getResponse`` () =
-        let response = createRequest Get (Uri "http://localhost:1234/TestServer/AllHeaders") |> getResponse
+        let response = createRequest Get (Uri "http://localhost:1234/TestServer/AllHeaders") |> getResponse |> Async.RunSynchronously
         response.Headers.[AccessControlAllowOrigin] |> should equal "*"
         response.Headers.[AcceptRanges] |> should equal "bytes"
         response.Headers.[Age] |> should equal "12"
@@ -267,159 +275,172 @@ type ``Integration tests`` ()=
 
     [<Test>]
     member x.``if body character encoding is specified, encodes the request body with it`` () =
-        let response = 
+        let response =
             createRequest Post (uriFor "/RecordRequest")
             |> withBodyStringEncoded "¥§±Æ" utf8 // random UTF-8 characters
-            |> getResponseCode |> ignore
+            |> Request.responseAsBytes
+            |> Async.RunSynchronously
         use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body,Encoding.GetEncoding("UTF-8"))
         bodyStream.ReadToEnd() |> should equal "¥§±Æ"
 
     [<Test>]
     member x.``if a response character encoding is specified, that encoding is used regardless of what the response content-type specifies`` () =
-        let response = 
-            createRequest Get (uriFor "/MoonLanguageCorrectEncoding")
-            |> withResponseCharacterEncoding (Encoding.GetEncoding "utf-16")
-            |> getResponse
-        response.EntityBody.Value |> should equal "迿ꞧ쒿" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with utf-16
+      let responseBodyString =
+        createRequest Get (uriFor "/MoonLanguageCorrectEncoding")
+        |> withResponseCharacterEncoding (Encoding.GetEncoding "utf-16")
+        |> Request.responseAsString
+        |> Async.RunSynchronously
+      responseBodyString |> should equal "迿ꞧ쒿" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with utf-16
 
     [<Test>]
     member x.``if a response character encoding is NOT specified, the body is read using the character encoding specified in the response's content-type header`` () =
-        let response = createRequest Get (uriFor "/MoonLanguageCorrectEncoding") |> getResponse
-        response.EntityBody.Value |> should equal "яЏ§§їДЙ"
+      async {
+        let responseBodyString = createRequest Get (uriFor "/MoonLanguageCorrectEncoding") |> Request.responseAsString
+        responseBodyString|> should equal "яЏ§§їДЙ"
+      }
 
     [<Test>]
     member x.``if a response character encoding is NOT specified, and character encoding is NOT specified in the response's content-type header, the body is read using ISO Latin 1 character encoding`` () =
+      async {
         let expected = "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
 
-        let response = createRequest Get (uriFor "/MoonLanguageTextPlainNoEncoding") |> getResponse
-        response.EntityBody.Value |> should equal expected
+        let response = createRequest Get (uriFor "/MoonLanguageTextPlainNoEncoding") |> Request.responseAsString |> Async.RunSynchronously
+        response |> should equal expected
 
-        let response = createRequest Get (uriFor "/MoonLanguageApplicationXmlNoEncoding") |> getResponse
-        response.EntityBody.Value |> should equal expected
+        let response = createRequest Get (uriFor "/MoonLanguageApplicationXmlNoEncoding") |> Request.responseAsString |> Async.RunSynchronously
+        response |> should equal expected
+      }
 
     [<Test>]
     member x.``if a response character encoding is NOT specified, and the character encoding specified in the response's content-type header is invalid, an exception is thrown`` () =
-        (fun() -> createRequest Get (uriFor "/MoonLanguageInvalidEncoding") |> getResponse |> ignore) 
+        (fun() -> createRequest Get (uriFor "/MoonLanguageInvalidEncoding") |> getResponse |> Async.RunSynchronously |> ignore)
             |> should throw typeof<ArgumentException>
 
     // .Net encoder doesn't like utf8, seems to need utf-8
     [<Test>]
     member x.``if the response character encoding is specified as 'utf8', uses 'utf-8' instead`` () =
-        let response = createRequest Get (uriFor "/utf8") |> getResponse
-        response.EntityBody.Value |> should equal "'Why do you hate me so much, Windows?!' - utf8"
+      let response = createRequest Get (uriFor "/utf8") |> Request.responseAsString |> Async.RunSynchronously
+      response |> should equal "'Why do you hate me so much, Windows?!' - utf8"
 
     [<Test>]
     member x.``if the response character encoding is specified as 'utf16', uses 'utf-16' instead`` () =
-        let response = createRequest Get (uriFor "/utf16") |> getResponse
-        response.EntityBody.Value |> should equal "'Why are you so picky, Windows?!' - utf16"
+      let response = createRequest Get (uriFor "/utf16") |> Request.responseAsString |> Async.RunSynchronously
+      response |> should equal "'Why are you so picky, Windows?!' - utf16"
 
     [<Test>]
     member x.``cookies are not kept during an automatic redirect`` () =
-        let response =
-            createRequest Get (uriFor "/CookieRedirect")
-            |> getResponse
-        
-        response.StatusCode |> should equal 200
-        response.Cookies.ContainsKey "cookie1" |> should equal false
+      let response =
+          createRequest Get (uriFor "/CookieRedirect")
+          |> getResponse
+          |> Async.RunSynchronously
+
+      response.StatusCode |> should equal 200
+      response.Cookies.ContainsKey "cookie1" |> should equal false
 
     [<Test>]
     member x.``reading the body as bytes works properly`` () =
-        let response = createRequest Get (uriFor "/Raw") |> getResponseBytes
-
-        let bodyBytes = Array.create 4 (new Byte())
-        bodyBytes.[0] <- byte(98)
-        bodyBytes.[1] <- byte(111)
-        bodyBytes.[2] <- byte(100)
-        bodyBytes.[3] <- byte(121)
-
-        response |> should equal bodyBytes
+      use response = createRequest Get (uriFor "/Raw") |> getResponse |> Async.RunSynchronously
+      let expected =
+        [| 98uy
+           111uy
+           100uy
+           121uy |]
+      let actual = Response.readBodyAsBytes response |> Async.RunSynchronously
+      actual |> should equal expected
 
     [<Test>]
-    member x.``when there is no body, reading it as bytes gives an empty array`` () =
-        let response = createRequest Get (uriFor "/GoodStatusCode") |> getResponseBytes
+    member x.``when there is no body, reading it as bytes gives an empty array`` () = async {
+        let! response = createRequest Get (uriFor "/GoodStatusCode") |> getResponse
 
         let noBytes = Array.create 0 (new Byte())
-        response |> should equal noBytes
+        use ms = new MemoryStream()
+        response.Body.CopyTo(ms)
+        ms.ToArray |> should equal noBytes
+      }
 
     [<Test>]
-    member x.``getResponseStream can access the response stream by passing a function`` () =
-
-        let asString (sourceStream:Stream) =
-            use reader = new StreamReader(sourceStream)
-            reader.ReadToEnd()
-
-        let responseFromStream = createRequest Get (uriFor "/Raw") |> getResponseStream asString
-
-        responseFromStream |> should equal "body"
+    member x.``readResponseBodyAsString can read the response body`` () =
+      let responseFromStream = createRequest Get (uriFor "/Raw") |> Request.responseAsString |> Async.RunSynchronously
+      responseFromStream |> should equal "body"
 
     [<Test>]
-    member x.``Closing the response stream retrieved from getResponseStream does not cause an exception`` () =
-
-        let responseStream = createRequest Get (uriFor "/Raw") |> getResponseStream id
-        responseStream.Close |> ignore
-
-    [<Test; Ignore "different behaviour Mono vs Windows">]
-    member x.``Trying to access the response stream after getResponseStream causes an ArgumentException`` () =
-
-        (fun() -> new StreamReader(createRequest Get (uriFor "/Raw") |> getResponseStream id) |> ignore) 
-            |> should throw typeof<ArgumentException>
+    member x.``Closing the response body stream retrieved from getResponseAsync does not cause an exception`` () =
+      use response = createRequest Get (uriFor "/Raw") |> getResponse |> Async.RunSynchronously
+      response.Body.Close ()
 
     [<Test; Ignore "exception not thrown on Mono - investigate">]
     /// Timeout follows .Net behaviour and throws WebException exception when reached.
     /// https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx
     member x.``if the resource is not returned within Timeout, throw WebException`` () =
-        (fun() ->
-            createRequest Post (uriFor "/SlowResponse") 
-            |> withTimeout 1000<ms>
-            |> withBodyString "hi mum"
-            |> getResponseCode |> ignore)
-            |> should throw typeof<WebException>
+      (fun() ->
+        createRequest Post (uriFor "/SlowResponse")
+        |> withTimeout 1000<ms>
+        |> withBodyString "hi mum"
+        |> Request.responseAsString
+        |> Async.RunSynchronously
+        |> ignore)
+      |> should throw typeof<WebException>
 
     [<Test>]
     member x.``Get method works`` () =
-        createRequest Get (uriFor "/Get") |> getResponseCode |> should equal 200
+      createRequest Get (uriFor "/Get")
+      |> getResponse |> Async.RunSynchronously
+      |> fun r -> r.StatusCode
+      |> should equal 200
 
     [<Test>]
     member x.``Options method works`` () =
-        createRequest Options (uriFor "/Options") |> getResponseCode |> should equal 200
+      createRequest Options (uriFor "/Options")
+      |> getResponse |> Async.RunSynchronously
+      |> fun r -> r.StatusCode
+      |> should equal 200
 
     [<Test>]
     member x.``Post method works`` () =
-        createRequest Post (uriFor "/Post") 
-        |> withBodyString "hi mum" // posts need a body in Nancy
-        |> getResponseCode 
-        |> should equal 200
+      createRequest Post (uriFor "/Post") 
+      |> withBodyString "hi mum" // posts need a body in Nancy
+      |> getResponse |> Async.RunSynchronously
+      |> fun r -> r.StatusCode
+      |> should equal 200
 
     [<Test>]
     member x.``Patch method works`` () =
-        createRequest Patch (uriFor "/Patch") |> getResponseCode |> should equal 200
+      createRequest Patch (uriFor "/Patch")
+      |> getResponse |> Async.RunSynchronously
+      |> fun r -> r.StatusCode |> should equal 200
 
     [<Test>]
     member x.``Head method works`` () =
-        createRequest Head (uriFor "/Get") |> getResponseCode |> should equal 200
+      createRequest Head (uriFor "/Get")
+      |> getResponse |> Async.RunSynchronously
+      |> fun r -> r.StatusCode |> should equal 200
         // Head method automatically handled for Get methods in Nancy
 
     [<Test>]
     member x.``Put method works`` () =
-        createRequest Put (uriFor "/Put") 
-        |> withBodyString "hi mum" // puts need a body in Nancy
-        |> getResponseCode 
-        |> should equal 200
+      createRequest Put (uriFor "/Put")
+      |> withBodyString "hi mum" // puts need a body in Nancy
+      |> getResponse |> Async.RunSynchronously
+      |> fun r -> r.StatusCode
+      |> should equal 200
 
     [<Test>]
     member x.``Delete method works`` () =
-        createRequest Delete (uriFor "/Delete") |> getResponseCode |> should equal 200
+      createRequest Delete (uriFor "/Delete")
+      |> getResponse
+      |> Async.RunSynchronously
+      |> fun r -> r.StatusCode  |> should equal 200
 
     [<Test>]
     member x.``getResponse.ResponseUri should contain URI that responded to the request`` () =
-        // Is going to redirect to another route and return GET 200.
-        let request = 
-            createRequest Post (uriFor "/Redirect") 
-            |> withBodyString "hi mum" // posts need a body in Nancy
-        
-        let resp = request |> getResponse 
-        resp.StatusCode |> should equal 200
-        resp.ResponseUri.ToString() |> should equal "http://localhost:1234/TestServer/GoodStatusCode"
+      // Is going to redirect to another route and return GET 200.
+      let request =
+        createRequest Post (uriFor "/Redirect")
+        |> withBodyString "hi mum" // posts need a body in Nancy
+
+      use resp = request |> getResponse |> Async.RunSynchronously
+      resp.StatusCode |> should equal 200
+      resp.ResponseUri.ToString() |> should equal "http://localhost:1234/TestServer/GoodStatusCode"
 
     // Nancy doesn't support Trace or Connect HTTP methods, so we can't test them easily
 
@@ -443,7 +464,6 @@ type ``Integration tests`` ()=
             createRequest Post (uriFor "/filenames")
             |> withBody
                 //([ SingleFile ("file", ("file1.txt", firstCt, Plain "Hello World")) ]|> BodyForm)
-
                                 // example from http://www.w3.org/TR/html401/interact/forms.html
                 ([   NameValue { name = "submit-name"; value = "Larry" }
                      FormFile ("files", ("file1.txt", firstCt, Plain "Hello World"))
@@ -451,8 +471,7 @@ type ``Integration tests`` ()=
                 ]
                 |> BodyForm)
 
-        let response = req |> getResponseBody
+        let response = req |> Request.responseAsString |> Async.RunSynchronously
 
         for fileName in [ "file1.txt"; "file2.gif" ] do
             Assert.That(response, Is.StringContaining(fileName))
-        ()

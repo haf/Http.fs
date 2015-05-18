@@ -74,8 +74,7 @@ type ``Suave Integration Tests`` ()=
                 |> BodyForm)*)
 
         printfn "get response body"
-        let response =
-            req |> getResponseBody
+        let response = Request.responseAsString req |> Async.RunSynchronously
 
         printfn "asserting"
         for fileName in [ "file1.txt"; "file2.gif" ] do

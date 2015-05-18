@@ -14,7 +14,12 @@ let utf8 = Encoding.UTF8
 let apiUsage =
     testList "api usage" [
         testCase "withBody sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyString """Hello mum!%2\/@$""").Body, BodyString """Hello mum!%2\/@$""")
+            Assert.Equal((createValidRequest |> withBodyString """Hello mum!%2\/@$""").Body,
+              BodyString """Hello mum!%2\/@$""")
+
+        testCase "withBody sets the request body binary" <| fun _ ->
+            Assert.Equal((createValidRequest |> withBody (BodyRaw [| 98uy; 111uy; 100uy; 121uy |])).Body,
+              BodyRaw [| 98uy; 111uy; 100uy; 121uy |])
 
         testCase "withBody uses default character encoding of UTF-8" <| fun _ ->
             Assert.Equal((createValidRequest |> withBodyString "whatever").BodyCharacterEncoding, utf8)
@@ -38,11 +43,19 @@ let contentType =
 let bodyFormatting =
     let testSeed = 1234567765
 
+    let bodyToBytes body =
+      use stream = new IO.MemoryStream()
+      for writer in body do
+        do writer stream |> ignore
+      stream.Seek(0L, IO.SeekOrigin.Begin) |> ignore
+      stream.ToArray()
+
     testList "formatting different sorts of body" [
         testCase "can format raw" <| fun _ ->
             let clientState = { DefaultHttpClientState with random = Random testSeed }
             let newCt, body = Impl.formatBody clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
-            Assert.Equal("body should be verbatim", [|1uy; 2uy; 3uy|], body)
+            let bytes = bodyToBytes body
+            Assert.Equal("body should be sequence of stream writers", [|1uy; 2uy; 3uy|], bytes)
             Assert.Equal("no new content type for byte body", None, newCt)
 
         testCase "ordinary multipart/form-data" <| fun _ ->
@@ -61,25 +74,29 @@ let bodyFormatting =
 
             let newCt, subject =
                 Impl.formatBody clientState (None, utf8, BodyForm form)
-                |> fun (newCt, body) -> newCt, body |> utf8.GetString
+                |> fun (newCt, body) ->
+                  let bytes = bodyToBytes body
+                  newCt, bytes |> utf8.GetString
 
-            let expected = [ "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
+            let expectedBoundary = "nLWsTCFurKCiU_PjC/cCmmU-tnJHHa"
+
+            let expected = [ sprintf "--%s" expectedBoundary
                              "Content-Disposition: form-data; name=\"submit-name\""
                              ""
                              "Larry"
-                             "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
+                             sprintf "--%s" expectedBoundary
                              "Content-Disposition: form-data; name=\"files\"; filename=\"file1.txt\""
                              "Content-Type: text/plain"
                              ""
                              "Hello World"
-                             "--mACKqCcIID-J''_PL:hfbFiOLC/cew--"
+                             sprintf "--%s--" expectedBoundary
                              ""
                              "" ]
                            |> String.concat "\r\n"
 
             Assert.Equal("should have correct body", expected, subject)
             Assert.Equal("should have new ct",
-                         ContentType.Create("multipart", "form-data", boundary="mACKqCcIID-J''_PL:hfbFiOLC/cew"),
+                         ContentType.Create("multipart", "form-data", boundary=expectedBoundary),
                          newCt |> Option.get)
 
         testCase "multipart/form-data with multipart/mixed" <| fun _ ->
@@ -103,29 +120,34 @@ let bodyFormatting =
 
             let newCt, subject =
                 Impl.formatBody clientState (None, utf8, BodyForm form)
-                |> fun (newCt, body) -> newCt, body |> utf8.GetString
+                |> fun (newCt, body) ->
+                  let bytes = bodyToBytes body
+                  newCt, bytes |> utf8.GetString
+
+            let expectedBoundary1 = "nLWsTCFurKCiU_PjC/cCmmU-tnJHHa"
+            let expectedBoundary2 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
 
             let expected =
-                [ "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
+                [ sprintf "--%s" expectedBoundary1
                   "Content-Disposition: form-data; name=\"submit-name\""
                   ""
                   "Larry"
-                  "--mACKqCcIID-J''_PL:hfbFiOLC/cew"
-                  "Content-Type: multipart/mixed; boundary=iDnsCZhfTqMSYsj:LhBTftNfVog:eA"
+                  sprintf "--%s" expectedBoundary1
+                  sprintf "Content-Type: multipart/mixed; boundary=%s" expectedBoundary2
                   "Content-Disposition: form-data; name=\"files\""
                   ""
-                  "--iDnsCZhfTqMSYsj:LhBTftNfVog:eA"
+                  sprintf "--%s" expectedBoundary2
                   "Content-Disposition: file; filename=\"file1.txt\""
                   "Content-Type: text/plain"
                   ""
                   "Hello World"
-                  "--iDnsCZhfTqMSYsj:LhBTftNfVog:eA"
+                  sprintf "--%s" expectedBoundary2
                   "Content-Disposition: file; filename=\"file2.gif\""
                   "Content-Type: text/plain"
                   ""
                   "...contents of file2.gif..."
-                  "--iDnsCZhfTqMSYsj:LhBTftNfVog:eA--"
-                  "--mACKqCcIID-J''_PL:hfbFiOLC/cew--"
+                  sprintf "--%s--" expectedBoundary2
+                  sprintf "--%s--" expectedBoundary1
                   ""
                   "" ]
                 |> String.concat "\r\n"
@@ -153,10 +175,10 @@ let bodyFormatting =
                 NameValue { name = "user_pass"; value = "Bović" }
             ]
             |> fun form -> Impl.formatBody clientState (None, utf8, BodyForm form)
-            |> fun (newCt, body) -> newCt, body |> utf8.GetString
             |> fun (newCt, body) ->
-                Assert.Equal(body, "submit=Join+Now!&user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87")
-                Assert.Equal("should have new ct",
-                             ContentType.Parse "application/x-www-form-urlencoded",
-                             newCt)
+              let bodyToString = body |> bodyToBytes |> utf8.GetString
+              Assert.Equal(bodyToString, "submit=Join+Now!&user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87")
+              Assert.Equal("should have new ct",
+                           ContentType.Parse "application/x-www-form-urlencoded",
+                           newCt)
     ]

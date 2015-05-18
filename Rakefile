@@ -64,12 +64,17 @@ nugets_pack :create_nugets => ['build/pkg', :versioning, :compile] do |p|
 end
 
 namespace :tests do
+  task :integration do
+    system 'packages/NUnit.Runners/tools/nunit-console.exe', %W|
+           "HttpClient.IntegrationTests/bin/#{Configuration}/HttpClient.IntegrationTests.dll"|,
+           clr_command: true
+  end
   task :unit do
     system "HttpClient.UnitTests/bin/#{Configuration}/HttpClient.UnitTests.exe", clr_command: true
   end
 end
 
-task :tests => :'tests:unit'
+task :tests => [:'tests:unit', :'tests:integration']
 
 task :default => :create_nugets #, :tests ]
 
