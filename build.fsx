@@ -96,7 +96,7 @@ Target "Copy Release Files" (fun _ ->
         [
             httpClientDir + "Prelude.fs"
             httpClientDir + "AsyncStreamReader.fs"
-            httpClientDir + "HttpFs.fs"
+            httpClientDir + "Client.fs"
             (httpClientDir |> outputFolder) + "HttpFs.dll"
         ]
 )
