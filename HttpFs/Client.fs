@@ -1,7 +1,5 @@
 ﻿module HttpFs.Client
 
-#nowarn "25"
-
 open System
 open System.IO
 open System.Net
@@ -243,14 +241,9 @@ type FormEntryName = string
 type FileName = string
 
 type FileData =
-  /// beware of newline CRLF encoding issues;
-  /// see http://www.w3.org/Protocols/rfc1341/7_2_Multipart.html, starting from
-  /// "NOTE: The CRLF preceding the encapsulation line",
-  /// and file an issue  with samples,
-  /// if it's very important for you to post text/plain as Plain; otherwise
-  /// use Binary and read the file contents, to be sure they are not altered.
   | Plain of string
   | Binary of byte []
+  | StreamData of Stream
 
 /// A file is a file name, a content-type (application/octet-stream if unknown) and the data.
 type File = FileName * ContentType * FileData
@@ -399,6 +392,8 @@ module internal Impl =
         header :: hs
       | h :: hs when not (predicate h) ->
         h :: replaceHeaderInner hs
+      | _ -> failwith "By the above lemma, thee shall not pass!"
+
     replaceHeaderInner headers
 
   // Adds a header to the collection as long as it isn't already in it
@@ -433,43 +428,67 @@ module internal Impl =
       s.Replace("\"", "\\\"")
 
   module StreamWriters =
-    let writeBytes bs (stream : Stream) =
-      Async.AwaitTask (stream.WriteAsync(bs, 0, bs.Length))
+    let writeBytes bs (output : Stream) =
+      Async.AwaitTask (output.WriteAsync(bs, 0, bs.Length))
 
-    /// Writes a string as UTF-8
+    let writeBytesLine bs (output : Stream) =
+      async {
+        do! writeBytes bs output
+        do! output.WriteAsync (ASCII.bytes CRLF, 0, 2)
+      }
+
+    /// Writes a string and CRLF as ASCII
     let writeLineAscii string : Stream -> Async<unit> =
       String.Concat [ string; CRLF ] |> ASCII.bytes |> writeBytes
 
-    /// Writes a string as UTF-8
+    /// Writes a string as ASCII
     let writeAscii : string -> Stream -> Async<unit> =
       ASCII.bytes >> writeBytes
 
+    /// Writes a string and CRLF as UTF8
     let writeLineUtf8 string =
       String.Concat [ string; CRLF ] |> ASCII.bytes |> writeBytes
 
+    /// Writes a string as UTF8
     let writeUtf8 : string -> Stream -> Async<unit> =
       UTF8.bytes >> writeBytes
     
+    let writeStream (input : Stream) (output : Stream) =
+      Async.AwaitTask (input.CopyToAsync output)
+
+    let writeStreamLine input output =
+      async {
+        do! writeStream input output
+        do! output.WriteAsync (ASCII.bytes CRLF, 0, 2)
+      }
+
   open StreamWriters
 
   let generateFileData (encoding : Encoding) contentType contents = seq {
     match contentType, contents with
     | { typ = "text"; subtype = "plain" }, Plain text ->
-      yield writeLineUtf8 ""
+      yield writeLineAscii ""
       yield writeLineUtf8 text
+
     | _, Plain text ->
-      yield writeLineUtf8 "Content-Transfer-Encoding: base64"
-      yield writeLineUtf8 ""
-      yield writeLineUtf8 (text |> encoding.GetBytes |> Convert.ToBase64String)
+      yield writeLineAscii "Content-Transfer-Encoding: base64"
+      yield writeLineAscii ""
+      yield writeLineAscii (text |> encoding.GetBytes |> Convert.ToBase64String)
+
     | _, Binary bytes ->
-      yield writeLineUtf8 "Content-Transfer-Encoding: binary"
-      yield writeLineUtf8 ""
-      yield writeBytes bytes
+      yield writeLineAscii "Content-Transfer-Encoding: binary"
+      yield writeLineAscii ""
+      yield writeBytesLine bytes
+
+    | _, StreamData stream ->
+      yield writeLineAscii "Content-Transfer-Encoding: binary"
+      yield writeLineAscii ""
+      yield writeStreamLine stream
   }
 
   let generateContentDispos value (kvs : (string * string) list) =
       let formatKv = function
-          | (k, v) -> ( sprintf "%s=\"%s\"" k (escapeQuotes v) )
+          | k, v -> (sprintf "%s=\"%s\"" k (escapeQuotes v))
       String.concat "; " [ yield sprintf "Content-Disposition: %s" value
                            yield! (kvs |> List.map formatKv) ]
 
@@ -477,31 +496,31 @@ module internal Impl =
     let rec generateFormDataInner boundary values isMultiFile = [
       match values with
       | [] ->
-        yield writeLineUtf8 (sprintf "--%s--" boundary)
-        if not isMultiFile then yield writeLineUtf8 ""
+        yield writeLineAscii (sprintf "--%s--" boundary)
+        if not isMultiFile then yield writeLineAscii ""
       | h :: rest ->
-        yield writeLineUtf8 (sprintf "--%s" boundary)
+        yield writeLineAscii (sprintf "--%s" boundary)
         match h with
         | FormFile (name, (fileName, contentType, contents)) ->
           let dispos = if isMultiFile then "file" else "form-data"
-          yield writeLineUtf8 ( generateContentDispos dispos
-                                  [ if not isMultiFile then yield "name", name
-                                    yield "filename", fileName ])
+          yield writeLineUtf8 (generateContentDispos dispos
+                                [ if not isMultiFile then yield "name", name
+                                  yield "filename", fileName ])
           yield writeLineUtf8 (sprintf "Content-Type: %O" contentType)
           yield! generateFileData encoding contentType contents
 
         | MultipartMixed (name, files) ->
           let boundary' = generateBoundary state
-          yield writeLineUtf8 ( sprintf "Content-Type: multipart/mixed; boundary=%s" boundary' )
-          yield writeLineUtf8 ( generateContentDispos "form-data" [ "name", name ] )
+          yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=%s" boundary')
+          yield writeLineUtf8 (generateContentDispos "form-data" [ "name", name ])
           yield writeLineUtf8 ""
           // remap the multi-files to single files and recursively call myself
           let files' = files |> List.map (fun f -> FormFile (name, f))
           yield! generateFormDataInner boundary' files' true
 
         | NameValue { name = name; value = value } ->
-          yield writeLineUtf8 (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
-          yield writeLineUtf8 ""
+          yield writeLineAscii (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
+          yield writeLineAscii ""
           yield writeLineUtf8 value
         yield! generateFormDataInner boundary rest isMultiFile
     ]
