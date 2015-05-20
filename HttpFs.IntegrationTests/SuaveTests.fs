@@ -75,7 +75,7 @@ type ``Suave Integration Tests`` () =
     let config =
       { defaultConfig with
           cancellationToken = cts.Token
-          logger = Logging.Loggers.ConsoleWindowLogger(Logging.Warn) }
+          logger = Logging.Loggers.ConsoleWindowLogger(Logging.Verbose) }
     let listening, server = startWebServerAsync config app
     Async.Start(server, cts.Token) |> ignore
     ()
