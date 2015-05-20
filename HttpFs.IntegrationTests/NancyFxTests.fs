@@ -121,7 +121,9 @@ type ``Integration tests`` ()=
     let request = createRequest Get (uriFor "/NoCookies")
     use response = request |> getResponse |> Async.RunSynchronously
     response.StatusCode |> should equal 200
-    response.Body.Length |> should equal 4
+    use ms = new MemoryStream()
+    response.Body.CopyTo ms // Windows workaround "this stream does not support seek"
+    ms.Length |> should equal 4
     response.Cookies.IsEmpty |> should equal true
 
   [<Test>]
