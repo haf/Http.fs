@@ -345,7 +345,9 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``when there is no body, reading it as bytes gives an empty array`` () =
     use response = createRequest Get (uriFor "/GoodStatusCode") |> getResponse |> Async.RunSynchronously
-    Assert.That(response.Body.Length, Is.EqualTo(0), "Should be zero length")
+    use ms = new MemoryStream()
+    response.Body.CopyTo ms // Windows workaround "this stream does not support seek"
+    Assert.That(ms.Length, Is.EqualTo(0), "Should be zero length")
 
   [<Test>]
   member x.``readResponseBodyAsString can read the response body`` () =
