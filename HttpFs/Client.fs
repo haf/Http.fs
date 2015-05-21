@@ -797,16 +797,16 @@ module internal DotNetWrapper =
   /// Uses the HttpWebRequest to get the response.
   /// HttpWebRequest throws an exception on anything but a 200-level response,
   /// so we handle such exceptions and return the response.
-  let getResponseNoException (request:HttpWebRequest) = async {
-      try
-          let! response = request.AsyncGetResponse()
-          return response :?> HttpWebResponse
-      with
-          | :? WebException as wex ->
-              if wex.Response <> null then
-                  return wex.Response :?> HttpWebResponse
-              else
-                  return raise wex
+  let getResponseNoException (request : HttpWebRequest) = async {
+    try
+      let! response = request.AsyncGetResponse()
+      return response :?> HttpWebResponse
+    with
+    | :? WebException as wex ->
+      if wex.Response <> null then
+        return wex.Response :?> HttpWebResponse
+      else
+        return raise wex
   }
 
   let getCookiesAsMap (response:HttpWebResponse) =
