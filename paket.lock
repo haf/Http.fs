@@ -19,6 +19,6 @@ NUGET
     Suave (0.28.1)
       FSharp.Core (>= 3.1.2.1)
       FsPickler (>= 1.0.7)
-    Suave.Testing (0.28.0)
+    Suave.Testing (0.28.1)
       Fuchu-suave (>= 0.6.1)
-      Suave (>= 0.28.0)
+      Suave (>= 0.28.1)
