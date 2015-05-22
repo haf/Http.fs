@@ -756,7 +756,9 @@ module internal DotNetWrapper =
 
     let url =
       let b = UriBuilder (request.Url)
-      b.Query <- getQueryString contentEncoding request
+      match b.Query with
+      | "" | null -> b.Query <- getQueryString contentEncoding request
+      | _ -> ()
       b.Uri
 
     let webRequest =
