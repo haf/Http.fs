@@ -83,6 +83,10 @@ with
       && x.subtype = ct.subtype
       && (x.charset |> Option.orDefault DefaultBodyEncoding) = (ct.charset |> Option.orDefault DefaultBodyEncoding)
 
+  override x.GetHashCode () =
+    397 * hash x.typ
+    ^^^ hash x.subtype
+
   static member Create(typ : string, subtype : string, ?charset : Encoding, ?boundary : string) =
     { typ      = typ
       subtype  = subtype
