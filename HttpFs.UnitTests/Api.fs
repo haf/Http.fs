@@ -41,31 +41,27 @@ let api =
             Assert.IsFalse((createValidRequest |> withCookiesDisabled).CookiesEnabled)
 
         testCase "withHeader adds header to the request" <| fun _ ->
-            let header =
-                (createValidRequest
-                |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36"))
-                  .Headers
-            Assert.Equal(header, [ UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36" ])
+          let expected = UserAgent "Mozilla/5.0"
+          let header = (createValidRequest |> withHeader expected).Headers |> Map.find expected.Key
+          Assert.Equal(header, expected)
 
         testCase "withHeader Custom adds a custom header to the request" <| fun _ ->
-            let header =
-                (createValidRequest
-                |> withHeader (Custom { name="X-Hello-Mum"; value="Happy Birthday!"}))
-                  .Headers
-            Assert.Equal(header, [ Custom { name="X-Hello-Mum"; value="Happy Birthday!"} ])
-        
+          let expected = Custom ("X-Hello-Mum", "Happy Birthday!")
+          let header = (createValidRequest |> withHeader expected).Headers |> Map.find expected.Key
+          Assert.Equal(header, expected)
+
         given "multiple headers of different types can be added, including custom headers with different names" 
             (createValidRequest
             |> withHeader (UserAgent "ua")
             |> withHeader (Referer "ref")
-            |> withHeader (Custom { name="c1"; value="v1"})
-            |> withHeader (Custom { name="c2"; value="v2"})
+            |> withHeader (Custom ("c1", "v1"))
+            |> withHeader (Custom ("c2", "v2"))
             |> fun x -> x.Headers)
-            [   "has four items", fun hs -> Assert.Equal(hs.Length, 4)
+            [   "has four items", fun hs -> Assert.Equal(hs.Count, 4)
                 "contains 'ua' UserAgent", fun hs -> Assert.Contains (hs, UserAgent "ua")
                 "contains a referrer", fun hs -> Assert.Contains (hs, Referer "ref")
-                "contains custom 1", fun hs -> Assert.Contains (hs, Custom { name = "c1"; value = "v1" })
-                "contains custom 2", fun hs -> Assert.Contains (hs, Custom { name = "c2"; value = "v2"})
+                "contains custom 1", fun hs -> Assert.Contains (hs, Custom ("c1", "v1"))
+                "contains custom 2", fun hs -> Assert.Contains (hs, Custom ("c2", "v2"))
             ]
 
         testCase "withBasicAuthentication sets the Authorization header with the username and password base-64 encoded" <| fun _ ->
@@ -74,53 +70,45 @@ let api =
                 |> withBasicAuthentication "myUsername" "myPassword"
             Assert.Contains(createdRequest.Headers, Authorization "Basic bXlVc2VybmFtZTpteVBhc3N3b3Jk")
 
-        testCase "withBasicAuthentication encodes the username and password with ISO-8859-1 before converting to base-64" <| fun _ ->
+        testCase "withBasicAuthentication encodes the username and password with UTF-8 before converting to base64" <| fun _ ->
             let createdRequest =
                 createValidRequest
-                |> withBasicAuthentication "Ãµ¶" "ÖØ" // ISO-8859-1 characters not present in ASCII
-            Assert.Contains(createdRequest.Headers, Authorization "Basic w7W2OtbY")
+                |> withBasicAuthentication "Ãµ¶" "汉语" // UTF-8 characters not present in ASCII
+            Assert.Contains(createdRequest.Headers, Authorization "Basic w4PCtcK2OuaxieivrQ==")
 
-        testCase "If the same header is added multiple times, throws an exception" <| fun _ ->
-            try
-                createValidRequest
-                |> withHeader (UserAgent "ua1")
-                |> withHeader (UserAgent "ua2")
-                |> ignore
-            with
-            | DuplicateHeader _ -> ()
-            | e -> reraise ()
-          
-        testCase "If a custom header with the same name is added multiple times, an exception is thrown" <| fun _ ->
-            Assert.Raise("header added twice", typeof<DuplicateHeader>, (fun () ->
-                createValidRequest
-                |> withHeader (Custom { name="c1"; value="v1"})
-                |> withHeader (Custom { name="c1"; value="v2"})
-                |> ignore))
+        testCase "uses latest added header when eq name" <| fun _ ->
+          let req =
+            createValidRequest
+            |> withHeader (Custom ("c1", "v1"))
+            |> withHeader (Custom ("c1", "v2"))
+          req.Headers |> Map.find "c1" |> function | (Custom (c1key, c1value)) -> Assert.Equal(c1value, "v2")
+                                                   | _ -> Tests.failtest "errrrrorrrrr"
 
         given "withQueryString adds the query string item to the list"
             (createValidRequest
-            |> withQueryStringItem {name="f1"; value="v1"}
-            |> withQueryStringItem {name="f2"; value="v2"}
+            |> withQueryStringItem "f1" "v1"
+            |> withQueryStringItem "f2" "v2"
             |> fun r -> r.QueryStringItems)
-            [   "has two items", fun qs -> Assert.Equal(2, qs.Length)
-                "contains first item", fun qs -> Assert.Contains(qs, {name="f1"; value="v1"})
-                "contains second item", fun qs -> Assert.Contains(qs, {name="f2"; value="v2"})
+            [   "has two items", fun qs -> Assert.Equal(2, qs.Count)
+                "contains first item", fun qs -> Assert.Contains(qs, "v1")
+                "contains second item", fun qs -> Assert.Contains(qs, "v2")
             ]
 
         testCase "withCookie throws an exception if cookies are disabled" <| fun _ ->
             Assert.Raise("there is no cake", typeof<Exception>, fun() ->
                 createValidRequest 
                 |> withCookiesDisabled 
-                |> withCookie { name = "message"; value = "hi mum" }|> ignore)
+                |> withCookie (Cookie.Create("message", "hi mum"))
+                |> ignore)
 
         given "a request with two cookies"
             (createRequest Get (Uri "http://www.google.com/")
-            |> withCookie { name = "c1"; value = "v1" }
-            |> withCookie { name = "c2"; value = "v2" }
+            |> withCookie (Cookie.Create("c1", "v1"))
+            |> withCookie (Cookie.Create("c2", "v2"))
             |> fun x -> x.Cookies)
-            [   "should have two cookies", fun cs -> Assert.Equal(2, cs.Length)
-                "should have first cookie", fun cs -> Assert.Contains(cs, { name = "c1"; value = "v1" })
-                "should have second cookie", fun cs -> Assert.Contains(cs, { name = "c2"; value = "v2" })
+            [   "should have two cookies", fun cs -> Assert.Equal(2, cs.Count)
+                "should have first cookie", fun cs -> Assert.Contains(cs, Cookie.Create("c1", "v1"))
+                "should have second cookie", fun cs -> Assert.Contains(cs, Cookie.Create("c2", "v2"))
             ]
 
         testCase "withAutoFollowRedirectsDisabled turns auto-follow off" <| fun _ ->

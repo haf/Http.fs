@@ -52,7 +52,7 @@ type ``Suave Integration Tests`` () =
     let config =
       { defaultConfig with
           cancellationToken = cts.Token
-          logger = Logging.Loggers.saneDefaultsFor Logging.Warn }
+          logger = Logging.Loggers.saneDefaultsFor Suave.Logging.Warn }
     let listening, server = startWebServerAsync config app
     Async.Start(server, cts.Token) |> ignore
     ()
@@ -74,7 +74,7 @@ type ``Suave Integration Tests`` () =
       |> withBody
           // example from http://www.w3.org/TR/html401/interact/forms.html
           (BodyForm
-            [  NameValue { name = "submit-name"; value = "Larry" }
+            [  NameValue ("submit-name", "Larry")
                MultipartMixed ("files",
                  [ "file1.txt", firstCt, Plain "Hello World" // => plain
                    "file2.gif", secondCt, Plain "Loopy" // => plain

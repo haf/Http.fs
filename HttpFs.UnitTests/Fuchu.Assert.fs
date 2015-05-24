@@ -27,10 +27,21 @@ type Assert with
     | None -> Tests.failtest "couldn't find %A in list %A" value items
     | Some x -> ()
 
+  static member Contains(map, value) =
+    match Map.tryPick (fun k t -> if t = value then Some t else None) map with
+    | None -> Tests.failtestf "couldn't find value %A in map %A" value map
+    | Some x -> ()
+
   static member Empty (xs : 'a list) =
     match xs with
     | [] -> ()
     | xs -> Tests.failtestf "expected empty list, but got %A" xs
+
+  static member Empty (m : Map<_, _>) =
+    if Map.isEmpty m then
+      ()
+    else
+      Tests.failtest "expected empty map, but got %A" m
 
   static member StreamsEqual(msg, s1 : Stream, s2 : Stream) =
     let buf = Array.zeroCreate<byte> 2

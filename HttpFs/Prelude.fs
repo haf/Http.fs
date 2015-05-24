@@ -6,6 +6,8 @@ open System.IO
 open System.Threading.Tasks
 open System.Threading
 
+let flip f a b = f b a
+
 type Microsoft.FSharp.Control.Async with
   /// Raise an exception on the async computation/workflow.
   static member AsyncRaise (e : exn) =
@@ -53,6 +55,9 @@ module String =
   let toLower (s : string) =
     s.ToLower()
 
+module Option =
+  let orDefault def =
+    Option.fold (fun s t -> t) def
 
 module ASCII =
   open System.Text
@@ -66,3 +71,9 @@ module UTF8 =
 
   let bytes (s : string) =
     Encoding.UTF8.GetBytes s
+
+module Map =
+  let put k v m =
+    match m |> Map.tryFind k with
+    | Some _ -> m |> Map.remove k |> Map.add k v
+    | None   -> m |> Map.add k v

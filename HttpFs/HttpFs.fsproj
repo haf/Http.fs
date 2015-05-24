@@ -44,6 +44,7 @@
     <Compile Include="InternalsVisibleTo.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Prelude.fs" />
+    <Compile Include="Logging.fs" />
     <Compile Include="AsyncStreamReader.fs" />
     <Compile Include="Client.fs" />
     <None Include="paket.references" />

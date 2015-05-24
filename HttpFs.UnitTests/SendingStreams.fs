@@ -52,6 +52,7 @@ let tests =
         use! resp =
           postTo "gifs/echo"
           |> withBody (BodyForm [ FormFile ("img", file) ])
+          |> withHeader (Custom ("Access-Code", "Super-Secret"))
           |> getResponse
 
         do! resp.Body.CopyToAsync ms

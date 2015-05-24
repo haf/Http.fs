@@ -77,10 +77,10 @@ type ``Integration tests`` ()=
   [<Test>] 
   member x.``createRequest should set everything correctly in the HTTP request`` ()=
     createRequest Post (uriFor "/RecordRequest")
-    |> withQueryStringItem {name="search"; value="jeebus"}
-    |> withQueryStringItem {name="qs2"; value="hi mum"}
+    |> withQueryStringItem "search" "jeebus"
+    |> withQueryStringItem "qs2" "hi mum"
     |> withHeader (Accept "application/xml")
-    |> withCookie {name="SESSIONID"; value="1234"}
+    |> withCookie (Cookie.Create("SESSIONID", "1234"))
     |> withBodyString "some XML or whatever"
     |> runIgnore
     HttpServer.recordedRequest.Value |> should not' (equal null)
@@ -166,7 +166,7 @@ type ``Integration tests`` ()=
     |> withHeader (UserAgent "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0" )
     |> withHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)" )
     |> withHeader (Warning "199 Miscellaneous warning" )
-    |> withHeader (Custom {name="X-Greeting"; value="Happy Birthday"})
+    |> withHeader (Custom ("X-Greeting", "Happy Birthday"))
     |> runIgnore
 
     HttpServer.recordedRequest.Value |> should not' (equal null)
@@ -471,7 +471,7 @@ type ``Integration tests`` ()=
       |> withBody
           //([ SingleFile ("file", ("file1.txt", firstCt, Plain "Hello World")) ]|> BodyForm)
                           // example from http://www.w3.org/TR/html401/interact/forms.html
-          ([ NameValue { name = "submit-name"; value = "Larry" }
+          ([ NameValue ("submit-name", "Larry")
              FormFile ("files", ("file1.txt", firstCt, Plain "Hello World"))
              FormFile ("files", ("file2.gif", secondCt, Plain "...contents of file2.gif..."))
           ]

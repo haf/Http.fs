@@ -14,6 +14,8 @@ open HttpFs.Prelude
 
 [<Measure>] type ms
 
+let DefaultBodyEncoding = Encoding.UTF8
+
 type HttpMethod =
   | Options
   | Get
@@ -27,55 +29,74 @@ type HttpMethod =
 
 // Same as System.Net.DecompressionMethods, but I didn't want to expose that
 type DecompressionScheme = 
-    | None = 0
-    | GZip = 1
-    | Deflate = 2
-
-type NameValue =
-  { name:string
-    value:string }
+  | None = 0
+  | GZip = 1
+  | Deflate = 2
 
 type ContentRange =
-  { start : int64
+  { start  : int64
     finish : int64 }
 
+[<CustomComparison; CustomEquality>]
 type ContentType =
   { typ      : string
     subtype  : string
     charset  : Encoding option
     boundary : string option }
 with
-    member x.Equals(typ : string, subtype : string) =
-      x.typ = typ && x.subtype = subtype
+  override x.ToString() =
+    String.Concat [
+      yield x.typ
+      yield "/"
+      yield x.subtype
+      match x.charset with
+      | None -> ()
+      | Some enc -> yield! [ ";"; " charset="; enc.WebName ]
+      match x.boundary with
+      | None -> ()
+      | Some b -> yield! [ ";"; " boundary="; b ]
+    ]
 
-    override x.ToString() =
-      String.Concat [
-        yield x.typ
-        yield "/"
-        yield x.subtype
-        match x.charset with
-        | None -> ()
-        | Some enc -> yield! [ ";"; " charset="; enc.WebName ]
-        match x.boundary with
-        | None -> ()
-        | Some b -> yield! [ ";"; " boundary="; b ]
-      ]
+  interface IComparable with
+    member x.CompareTo other =
+      match other with
+      | :? ContentType as ct -> (x :> IComparable<ContentType>).CompareTo ct
+      | x -> failwith "invalid comparison ContentType to %s" (x.GetType().Name)
 
-    static member Create(typ : string, subtype : string, ?charset : Encoding, ?boundary : string) =
-      { typ      = typ
-        subtype  = subtype
-        charset  = charset
-        boundary = boundary
-      }
+  interface IComparable<ContentType> with
+    member x.CompareTo other =
+      match compare x.typ other.typ with
+      | 0 -> compare x.subtype x.subtype
+      | x -> x
 
-    // TODO, use: https://github.com/freya-fs/freya/blob/master/src/Freya.Types.Http/Types.fs#L420-L426
-    static member Parse (str : string) =
-      match str.Split [| '/' |], str.IndexOf(';') with
-      | [| typ; subtype |], -1 ->
-        Some { typ = typ; subtype = subtype; charset = None; boundary = None }
-      | [| typ; rest |], index ->
-        Some { typ = typ; subtype = rest.Substring(0, index); charset = None; boundary = None }
-      | x -> None
+  member x.Equals(typ : string, subtype : string) =
+    x.typ = typ && x.subtype = subtype
+
+  override x.Equals o =
+    match o with
+    | :? ContentType as ct -> (x :> IEquatable<ContentType>).Equals ct
+    | _ -> false
+
+  interface IEquatable<ContentType> with
+    member x.Equals ct =
+      x.typ = ct.typ
+      && x.subtype = ct.subtype
+      && (x.charset |> Option.orDefault DefaultBodyEncoding) = (ct.charset |> Option.orDefault DefaultBodyEncoding)
+
+  static member Create(typ : string, subtype : string, ?charset : Encoding, ?boundary : string) =
+    { typ      = typ
+      subtype  = subtype
+      charset  = charset
+      boundary = boundary }
+
+  // TODO, use: https://github.com/freya-fs/freya/blob/master/src/Freya.Types.Http/Types.fs#L420-L426
+  static member Parse (str : string) =
+    match str.Split [| '/' |], str.IndexOf(';') with
+    | [| typ; subtype |], -1 ->
+      Some { typ = typ; subtype = subtype; charset = None; boundary = None }
+    | [| typ; rest |], index ->
+      Some { typ = typ; subtype = rest.Substring(0, index); charset = None; boundary = None }
+    | x -> None
 
 type ResponseHeader =
   | AccessControlAllowOrigin
@@ -178,7 +199,7 @@ type RequestHeader =
   | UserAgent of string
   | Via of string
   | Warning of string
-  | Custom of NameValue
+  | Custom of string * string
 
   member x.KeyValue : string * string =
     match x with
@@ -208,7 +229,9 @@ type RequestHeader =
     | UserAgent x -> "User-Agent", x
     | Via x -> "Via", x
     | Warning x -> "Warning", x
-    | Custom { name = n; value = v } -> n, v
+    | Custom (n, v) -> n, v
+
+  member x.Key = x.KeyValue |> fst
 
 type UserDetails =
   { username : string
@@ -225,17 +248,27 @@ type Proxy =
     Port: int
     Credentials: ProxyCredentials }
 
+/// The key you have in &lt;input name="key" ... /&gt;
+/// This string value is not yet encoded.
+type FormEntryName = string
+
+/// The string value is not yet encoded.
+type FormValue = string
+
+/// The key of a query string key-value pair.
+/// The string value is not yet encoded.
+type QueryStringName = string
+
+/// The string value is not yet encoded.
+type QueryStringValue = string
+
 /// http://www.w3.org/Protocols/rfc2616/rfc2616-sec19.html
 /// section 19.5.1 Content-Disposition, BNF.
 type ContentDisposition =
   { typ      : string // "form-data" or "attachment"
     filename : string option
     /// e.g. "name=user_name"
-    exts     : NameValue list
-  }
-
-/// The key you have in &lt;input name="key" ... /&gt;
-type FormEntryName = string
+    exts     : (FormEntryName * FormValue) list }
 
 /// An optional file name
 type FileName = string
@@ -257,7 +290,7 @@ type FormData =
   /// Will use: multipart/mixed inside a multipart/form-data.
   | MultipartMixed of name:FormEntryName * files:File list
   /// Use when you simply post form data
-  | NameValue of NameValue
+  | NameValue of FormEntryName * FormValue
 
 /// You often pass form-data to the server, e.g. curl -X POST <url> -F k=v -F file1=@file.png
 type Form = FormData list
@@ -268,17 +301,48 @@ type RequestBody =
   | BodyRaw of byte []
     //| BodySocket of SocketTask // for all the nitty-gritty details, see #64
 
+/// The name (key) of a cookie.
+/// The string value is unencoded.
+type CookieName = string
+
+type Cookie =
+  { name     : CookieName
+    value    : string
+    expires  : DateTimeOffset option
+    path     : string option
+    domain   : string option
+    secure   : bool
+    httpOnly : bool }
+
+  static member Create(name : CookieName, value : string, ?expires, ?path, ?domain, ?secure, ?httpOnly) =
+    { name     = name
+      value    = value
+      expires  = expires
+      path     = path
+      domain   = domain
+      secure   = defaultArg secure false
+      httpOnly = defaultArg httpOnly false }
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Cookie =
+  let toSystem x =
+    let sc = System.Net.Cookie(x.name, x.value, Option.orDefault "/" x.path, Option.orDefault "" x.domain)
+    x.expires |> Option.iter (fun e -> sc.Expires <- e.DateTime)
+    sc.HttpOnly <- x.httpOnly
+    sc.Secure <- x.secure
+    sc
+
 type Request =
   { Url                       : Uri
     Method                    : HttpMethod
     CookiesEnabled            : bool
     AutoFollowRedirects       : bool
     AutoDecompression         : DecompressionScheme
-    Headers                   : RequestHeader list
+    Headers                   : Map<string, RequestHeader>
     Body                      : RequestBody
     BodyCharacterEncoding     : Encoding
-    QueryStringItems          : NameValue list
-    Cookies                   : NameValue list
+    QueryStringItems          : Map<QueryStringName, QueryStringValue>
+    Cookies                   : Map<CookieName, Cookie>
     ResponseCharacterEncoding : Encoding option
     Proxy                     : Proxy option
     KeepAlive                 : bool
@@ -317,13 +381,15 @@ with
 
 type HttpFsState =
   { random      : Random
-    cryptRandom : RandomNumberGenerator }
+    cryptRandom : RandomNumberGenerator
+    logger      : Logging.Logger }
 
 /// Will re-generate random CLR per-app-domain -- create your own state for
 /// deterministic boundary generation (or anything else needing random).
 let DefaultHttpFsState =
   { random      = Random()
-    cryptRandom = RandomNumberGenerator.Create() }
+    cryptRandom = RandomNumberGenerator.Create()
+    logger      = Logging.NoopLogger }
 
 /// The header you tried to add was already there, see issue #64.
 exception DuplicateHeader of RequestHeader
@@ -353,62 +419,24 @@ module internal Impl =
   /// Pass the byteEncoding -- this is equivalent of the
   /// `accept-charset` attribute on the form-element in HTML. If you don't
   /// know what to do: pass UTF8 and it will 'just work'.
-  let uriEncode byteEncoding =
+  let uriEncode byteEncoding : _ -> string =
     List.map (fun kv ->
       String.Concat [
-        HttpUtility.UrlEncode (kv.name, byteEncoding)
+        HttpUtility.UrlEncode (fst kv, byteEncoding)
         "="
-        HttpUtility.UrlEncode (kv.value, byteEncoding)
+        HttpUtility.UrlEncode (snd kv, byteEncoding)
       ])
     >> String.concat "&"
 
   let getQueryString byteEncoding request =
-    match request.QueryStringItems with
-    | [] -> ""
-    | items -> String.Concat [ "?"; uriEncode byteEncoding items ]
-
-  // Adds an element to a list which may be none
-  let append item = function
-    | [] -> [ item ]
-    | existingList -> existingList @ [ item ]
-
-  /// Checks if a header already exists in a list
-  /// (standard headers just checks type, custom headers also checks 'name' field).
-  let headerExists header =
-      List.exists (fun existingHeader -> 
-        match existingHeader, header with
-        | Custom { name = existingName; value = existingValue },
-          Custom { name = newName; value = newValue } ->
-            existingName = newName
-        | _ ->
-            existingHeader.GetType() = header.GetType())
-
-  let putHeader predicate header headers =
-     // warning is wrong; by lemma excluded middle (predicate h xor not predicate h)
-    let rec replaceHeaderInner = function
-      | [] ->
-        header :: headers
-      | h :: hs when predicate h ->
-        header :: hs
-      | h :: hs when not (predicate h) ->
-        h :: replaceHeaderInner hs
-      | _ -> failwith "By the above lemma, thee shall not pass!"
-
-    replaceHeaderInner headers
-
-  // Adds a header to the collection as long as it isn't already in it
-  let appendHeaderNoRepeat newHeader headerList =
-    match headerList with
-    | [] -> [newHeader]
-    | existingList -> 
-      if existingList |> headerExists newHeader then
-        raise (DuplicateHeader newHeader)
-      existingList @ [newHeader]
+    if Map.isEmpty request.QueryStringItems then ""
+    else
+      let items = Map.toList request.QueryStringItems
+      String.Concat [ "?"; uriEncode byteEncoding items ]
 
   let basicAuthorz username password =
     String.Concat [ username; ":"; password ]
-    // TODO: consider https://github.com/relentless/Http.fs/issues/73
-    |> ISOLatin1.GetBytes
+    |> DefaultBodyEncoding.GetBytes
     |> Convert.ToBase64String
     |> fun base64 -> "Basic " + base64
     |> fun headerValue -> Authorization headerValue
@@ -518,7 +546,7 @@ module internal Impl =
           let files' = files |> List.map (fun f -> FormFile (name, f))
           yield! generateFormDataInner boundary' files' true
 
-        | NameValue { name = name; value = value } ->
+        | NameValue (name, value) ->
           yield writeLineAscii (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
           yield writeLineAscii ""
           yield writeLineUtf8 value
@@ -529,7 +557,7 @@ module internal Impl =
   let private formatBodyUrlencoded bodyEncoding formData =
     [ formData
       |> List.map (function
-          | NameValue kv -> kv
+          | NameValue (k, v) -> k, v
           | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
       |> uriEncode bodyEncoding
       // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
@@ -576,11 +604,11 @@ let createRequest httpMethod (url : Uri) =
     CookiesEnabled            = true
     AutoFollowRedirects       = true
     AutoDecompression         = DecompressionScheme.None
-    Headers                   = []
+    Headers                   = Map.empty
     Body                      = BodyRaw [||]
-    BodyCharacterEncoding     = Encoding.UTF8
-    QueryStringItems          = []
-    Cookies                   = []
+    BodyCharacterEncoding     = DefaultBodyEncoding
+    QueryStringItems          = Map.empty
+    Cookies                   = Map.empty
     ResponseCharacterEncoding = None
     Proxy                     = None
     KeepAlive                 = true
@@ -597,13 +625,14 @@ let withAutoFollowRedirectsDisabled request =
   { request with AutoFollowRedirects = false }
 
 /// Adds a header, defined as a RequestHeader
-let withHeader header (request:Request) =
-  { request with Headers = request.Headers |> appendHeaderNoRepeat header }
+/// The current implementation doesn't allow you to add a single header multiple
+/// times. File an issue if this is a limitation for you.
+let withHeader (header : RequestHeader) (request : Request) =
+  { request with Headers = request.Headers |> Map.put header.Key header }
 
 /// Adds an HTTP Basic Authentication header, which includes the username and password encoded as a base-64 string
-let withBasicAuthentication username password (request:Request) =
-  let header = basicAuthorz username password
-  { request with Headers = request.Headers |> appendHeaderNoRepeat header }
+let withBasicAuthentication username password =
+  withHeader (basicAuthorz username password)
 
 /// Sets the accept-encoding request header to accept the decompression methods selected,
 /// and automatically decompresses the responses.
@@ -627,9 +656,10 @@ let withBodyStringEncoded body characterEncoding request =
   { request with Body = BodyString body; BodyCharacterEncoding = characterEncoding }
 
 /// Adds the provided QueryString record onto the request URL.
-/// Multiple items can be appended.
-let withQueryStringItem item request =
-  { request with QueryStringItems = request.QueryStringItems |> append item}
+/// Multiple items can be appended, but only the last appended key/value with
+/// the same key as a previous key/value will be used.
+let withQueryStringItem (name : QueryStringName) (value : QueryStringValue) request =
+  { request with QueryStringItems = request.QueryStringItems |> Map.put name value }
 
 /// Adds a cookie to the request
 /// The domain will be taken from the URL, and the path set to '/'.
@@ -638,13 +668,13 @@ let withQueryStringItem item request =
 /// which (by default) will be followed automatically, but cookies will not be re-sent.
 let withCookie cookie request =
   if not request.CookiesEnabled then failwithf "Cannot add cookie %A - cookies disabled" cookie.name
-  { request with Cookies = request.Cookies |> append cookie }
+  { request with Cookies = request.Cookies |> Map.put cookie.name cookie }
 
 /// Decodes the response using the specified encoding, regardless of what the response specifies.
 ///
 /// If this is not set, response character encoding will be:
 ///  - taken from the response content-encoding header, if provided, otherwise
-///  - ISO Latin 1
+///  UTF8
 ///
 /// Many web pages define the character encoding in the HTML. This will not be used.
 let withResponseCharacterEncoding encoding request : Request = 
@@ -654,7 +684,7 @@ let withResponseCharacterEncoding encoding request : Request =
 ///
 /// If this is no set, the proxy settings from IE will be used, if available.
 let withProxy proxy request =
-  {request with Proxy = Some proxy}
+  {request with Proxy = Some proxy }
 
 /// Sets the keep-alive header.  Defaults to true.
 ///
@@ -672,42 +702,43 @@ module internal DotNetWrapper =
   /// Sets headers on HttpWebRequest.
   /// Mutates HttpWebRequest.
   let setHeaders (headers : RequestHeader list) (webRequest : HttpWebRequest) =
+    let add (k : string) v = webRequest.Headers.Add (k, v)
     List.iter (function
-        | Accept(value) -> webRequest.Accept <- value
-        | AcceptCharset(value) -> webRequest.Headers.Add("Accept-Charset", value)
-        | AcceptDatetime(value) -> webRequest.Headers.Add("Accept-Datetime", value)
-        | AcceptLanguage(value) -> webRequest.Headers.Add("Accept-Language", value)
-        | Authorization(value) -> webRequest.Headers.Add("Authorization", value)
-        | RequestHeader.Connection(value) -> webRequest.Connection <- value
-        | RequestHeader.ContentMD5(value) -> webRequest.Headers.Add("Content-MD5", value)
-        | RequestHeader.ContentType(value) -> webRequest.ContentType <- value.ToString()
-        | RequestHeader.Date(value) -> webRequest.Date <- value
-        | Expect(value) -> webRequest.Expect <- value.ToString()
-        | From(value) -> webRequest.Headers.Add("From", value)
-        | IfMatch(value) -> webRequest.Headers.Add("If-Match", value)
-        | IfModifiedSince(value) -> webRequest.IfModifiedSince <- value
-        | IfNoneMatch(value) -> webRequest.Headers.Add("If-None-Match", value)
-        | IfRange(value) -> webRequest.Headers.Add("If-Range", value)
-        | MaxForwards(value) -> webRequest.Headers.Add("Max-Forwards", value.ToString())
-        | Origin(value) -> webRequest.Headers.Add("Origin", value)
-        | RequestHeader.Pragma(value) -> webRequest.Headers.Add("Pragma", value)
-        | ProxyAuthorization(value) -> webRequest.Headers.Add("Proxy-Authorization", value)
-        | Range(value) -> webRequest.AddRange(value.start, value.finish)
-        | Referer(value) -> webRequest.Referer <- value
-        | Upgrade(value) -> webRequest.Headers.Add("Upgrade", value)
-        | UserAgent(value) -> webRequest.UserAgent <- value
-        | RequestHeader.Via(value) -> webRequest.Headers.Add("Via", value)
-        | RequestHeader.Warning(value) -> webRequest.Headers.Add("Warning", value)
-        | Custom( {name=customName; value=customValue}) -> webRequest.Headers.Add(customName, customValue))
-      headers
+              | Accept value                     -> webRequest.Accept <- value
+              | AcceptCharset value              -> add "Accept-Charset" value
+              | AcceptDatetime value             -> add "Accept-Datetime" value
+              | AcceptLanguage value             -> add "Accept-Language" value
+              | Authorization value              -> add "Authorization" value
+              | RequestHeader.Connection value   -> webRequest.Connection <- value
+              | RequestHeader.ContentMD5 value   -> add "Content-MD5" value
+              | RequestHeader.ContentType value  -> webRequest.ContentType <- value.ToString()
+              | RequestHeader.Date value         -> webRequest.Date <- value
+              | Expect value                     -> webRequest.Expect <- value.ToString()
+              | From value                       -> add "From" value
+              | IfMatch value                    -> add "If-Match" value
+              | IfModifiedSince value            -> webRequest.IfModifiedSince <- value
+              | IfNoneMatch value                -> add "If-None-Match" value
+              | IfRange value                    -> add "If-Range" value
+              | MaxForwards value                -> add "Max-Forwards" (value.ToString())
+              | Origin value                     -> add "Origin" value
+              | RequestHeader.Pragma value       -> add "Pragma" value
+              | ProxyAuthorization value         -> add "Proxy-Authorization" value
+              | Range value                      -> webRequest.AddRange(value.start, value.finish)
+              | Referer value                    -> webRequest.Referer <- value
+              | Upgrade value                    -> add "Upgrade" value
+              | UserAgent value                  -> webRequest.UserAgent <- value
+              | RequestHeader.Via value          -> add "Via" value
+              | RequestHeader.Warning value      -> add "Warning" value
+              | Custom (customName, customValue) -> add customName customValue)
+              headers
 
   /// Sets cookies on HttpWebRequest.
   /// Mutates HttpWebRequest.
-  let setCookies (cookies:NameValue list) (url : Uri) (webRequest : HttpWebRequest) =
-    let domain = url.Host
+  let setCookies (cookies : Cookie list) (url : Uri) (webRequest : HttpWebRequest) =
+    let mapDomain c = { c with domain = Some url.Host }
     cookies
-    |> List.iter (fun cookie ->
-        webRequest.CookieContainer.Add(new System.Net.Cookie(cookie.name, cookie.value, Path="/", Domain=domain)))
+    |> List.map (mapDomain >> Cookie.toSystem)
+    |> List.iter (webRequest.CookieContainer.Add)
 
   /// Sets proxy on HttpWebRequest.
   /// Mutates HttpWebRequest.
@@ -735,16 +766,19 @@ module internal DotNetWrapper =
       }
     else async.Return ()
 
-  let matchCtHeader = function
-      | RequestHeader.ContentType _ -> true
-      | _ -> false
+  let matchCtHeader k = function
+    | RequestHeader.ContentType ct -> Some ct
+    | _ -> None
+
+  let ensureNo100Continue () =
+    if ServicePointManager.Expect100Continue then
+      ServicePointManager.Expect100Continue <- false
 
   /// The nasty business of turning a Request into an HttpWebRequest
   let toHttpWebRequest state (request : Request) =
-    let contentType =
-      request.Headers
-      |> List.tryFind matchCtHeader
-      |> function | Some (ContentType value) -> Some value | _ -> None
+    ensureNo100Continue ()
+
+    let contentType = request.Headers |> Map.tryPick matchCtHeader
 
     let contentEncoding =
       // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
@@ -771,12 +805,10 @@ module internal DotNetWrapper =
       // if we have a new content type, from using BodyForm, then this
       // updates the request value with that header
       newContentType
-      |> Option.fold (fun (req : Request) newCt ->
-          let header = RequestHeader.ContentType newCt
-          { req with Headers = req.Headers |> putHeader matchCtHeader header })
-          request
+      |> Option.map RequestHeader.ContentType
+      |> Option.fold (flip withHeader) request
 
-    webRequest.Method <- (request |> getMethodAsString)
+    webRequest.Method <- getMethodAsString request
     webRequest.ProtocolVersion <- HttpVersion.Version11
 
     if request.CookiesEnabled then
@@ -787,8 +819,8 @@ module internal DotNetWrapper =
     // this relies on the DecompressionScheme enum values being the same as those in System.Net.DecompressionMethods
     webRequest.AutomaticDecompression <- enum<DecompressionMethods> <| int request.AutoDecompression
 
-    webRequest |> setHeaders request.Headers
-    webRequest |> setCookies request.Cookies request.Url
+    webRequest |> setHeaders (request.Headers |> Map.toList |> List.map snd)
+    webRequest |> setCookies (request.Cookies |> Map.toList |> List.map snd) request.Url
     webRequest |> setProxy request.Proxy
 
     webRequest.KeepAlive <- request.KeepAlive
@@ -816,59 +848,55 @@ module internal DotNetWrapper =
       response.Cookies.CopyTo(cookieArray, 0)
       cookieArray |> Array.fold (fun map cookie -> map |> Map.add cookie.Name cookie.Value) Map.empty
 
-  /// Get the header as a ResponseHeader option.  Is an option because there are some headers we don't want to set.
-  let getResponseHeader headerName =
-    match headerName with
+  /// Get the header as a ResponseHeader option. Is an option because there are some headers we don't want to set.
+  let getResponseHeader = function
     | null -> None
     | "Access-Control-Allow-Origin" -> Some(AccessControlAllowOrigin)
-    | "Accept-Ranges" -> Some(AcceptRanges)
-    | "Age" -> Some(Age)
-    | "Allow" -> Some(Allow)
-    | "Cache-Control" -> Some(CacheControl)
-    | "Connection" -> Some(ResponseHeader.Connection)
-    | "Content-Encoding" -> Some(ContentEncoding)
-    | "Content-Language" -> Some(ContentLanguage)
-    | "Content-Length" -> None
-    | "Content-Location" -> Some(ContentLocation)
-    | "Content-MD5" -> Some(ResponseHeader.ContentMD5Response)
-    | "Content-Disposition" -> Some(ContentDisposition)
-    | "Content-Range" -> Some(ContentRange)
-    | "Content-Type" -> Some(ResponseHeader.ContentTypeResponse)
-    | "Date" -> Some(ResponseHeader.DateResponse)
-    | "ETag" -> Some(ETag)
-    | "Expires" -> Some(Expires)
-    | "Last-Modified" -> Some(LastModified)
-    | "Link" -> Some(Link)
-    | "Location" -> Some(Location)
-    | "P3P" -> Some(P3P)
-    | "Pragma" -> Some(ResponseHeader.PragmaResponse)
-    | "Proxy-Authenticate" -> Some(ProxyAuthenticate)
-    | "Refresh" -> Some(Refresh)
-    | "Retry-After" -> Some(RetryAfter)
-    | "Server" -> Some(Server)
-    | "Set-Cookie" -> None
-    | "Strict-Transport-Security" -> Some(StrictTransportSecurity)
-    | "Trailer" -> Some(Trailer)
-    | "Transfer-Encoding" -> Some(TransferEncoding)
-    | "Vary" -> Some(Vary)
-    | "Via" -> Some(ResponseHeader.ViaResponse)
-    | "Warning" -> Some(ResponseHeader.WarningResponse)
-    | "WWW-Authenticate" -> Some(WWWAuthenticate)
-    | _ -> Some(NonStandard headerName)
+    | "Accept-Ranges"               -> Some(AcceptRanges)
+    | "Age"                         -> Some(Age)
+    | "Allow"                       -> Some(Allow)
+    | "Cache-Control"               -> Some(CacheControl)
+    | "Connection"                  -> Some(ResponseHeader.Connection)
+    | "Content-Encoding"            -> Some(ContentEncoding)
+    | "Content-Language"            -> Some(ContentLanguage)
+    | "Content-Length"              -> None
+    | "Content-Location"            -> Some(ContentLocation)
+    | "Content-MD5"                 -> Some(ResponseHeader.ContentMD5Response)
+    | "Content-Disposition"         -> Some(ContentDisposition)
+    | "Content-Range"               -> Some(ContentRange)
+    | "Content-Type"                -> Some(ResponseHeader.ContentTypeResponse)
+    | "Date"                        -> Some(ResponseHeader.DateResponse)
+    | "ETag"                        -> Some(ETag)
+    | "Expires"                     -> Some(Expires)
+    | "Last-Modified"               -> Some(LastModified)
+    | "Link"                        -> Some(Link)
+    | "Location"                    -> Some(Location)
+    | "P3P"                         -> Some(P3P)
+    | "Pragma"                      -> Some(ResponseHeader.PragmaResponse)
+    | "Proxy-Authenticate"          -> Some(ProxyAuthenticate)
+    | "Refresh"                     -> Some(Refresh)
+    | "Retry-After"                 -> Some(RetryAfter)
+    | "Server"                      -> Some(Server)
+    | "Set-Cookie"                  -> None
+    | "Strict-Transport-Security"   -> Some(StrictTransportSecurity)
+    | "Trailer"                     -> Some(Trailer)
+    | "Transfer-Encoding"           -> Some(TransferEncoding)
+    | "Vary"                        -> Some(Vary)
+    | "Via"                         -> Some(ResponseHeader.ViaResponse)
+    | "Warning"                     -> Some(ResponseHeader.WarningResponse)
+    | "WWW-Authenticate"            -> Some(WWWAuthenticate)
+    | _ as name                     -> Some(NonStandard name)
 
   /// Gets the headers from the passed response as a map of ResponseHeader and string.
   let getHeadersAsMap (response:HttpWebResponse) =
-    // TODO: Find a better way of dong this
-    let headerArray = Array.zeroCreate response.Headers.Count
-    for index = 0 to response.Headers.Count-1 do
-      headerArray.[index] <-
-        match getResponseHeader response.Headers.Keys.[index] with
-        | Some(headerKey) -> Some((headerKey, response.Headers.Item(response.Headers.Keys.[index])))
-        | None -> None
-    headerArray
-    |> Array.filter (fun item -> item <> None)
-    |> Array.map Option.get
-    |> Map.ofArray
+    response.Headers.Keys
+    |> Seq.cast<string>
+    |> List.ofSeq
+    |> List.map (fun wcKey -> wcKey, getResponseHeader wcKey)
+    |> List.map (fun (wcKey, httpfsKey) -> httpfsKey, response.Headers.Item(wcKey))
+    |> List.filter (fst >> Option.isSome)
+    |> List.map (fun (k, v) -> Option.get k, v)
+    |> Map.ofList
 
   let mapEncoding = String.toLowerInvariant >> function
     | "utf8" -> "utf-8"
@@ -879,19 +907,15 @@ open DotNetWrapper
 
 type Response with
   static member internal FromHttpResponse (response : HttpWebResponse) =
-    let cookies = response |> getCookiesAsMap
-    let headers = response |> getHeadersAsMap
-    {
-      StatusCode       = int (response.StatusCode)
+    { StatusCode       = int (response.StatusCode)
       CharacterSet     = response.CharacterSet
       ContentLength    = response.ContentLength
-      Cookies          = cookies
-      Headers          = headers
+      Cookies          = getCookiesAsMap response
+      Headers          = getHeadersAsMap response
       ResponseUri      = response.ResponseUri
       ExpectedEncoding = None
       Body             = response.GetResponseStream()
-      Luggage          = Some (upcast response)
-    }
+      Luggage          = Some (upcast response) }
 
 /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
 let getResponse request = async {

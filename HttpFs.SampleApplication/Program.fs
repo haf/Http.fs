@@ -64,10 +64,10 @@ let returnToContinue message =
 let complexRequest() = async {
     let request =
       createRequest Get (Uri "http://www.google.com/search")
-      |> withQueryStringItem {name="q"; value="gibbons"}
+      |> withQueryStringItem "q" "gibbons"
       |> withAutoDecompression DecompressionScheme.GZip
       |> withAutoFollowRedirectsDisabled
-      |> withCookie {name="ignoreMe"; value="hi mum"}
+      |> withCookie (Cookie.Create("ignoreMe", "hi mum"))
       |> withHeader (Accept "text/html")
       |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")
 

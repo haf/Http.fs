@@ -4,4 +4,4 @@ open Fuchu
 
 [<EntryPoint>]
 let main argv =
-    Tests.defaultMainThisAssembly argv
+  Tests.defaultMainThisAssembly argv

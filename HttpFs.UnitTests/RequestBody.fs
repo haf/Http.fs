@@ -69,7 +69,7 @@ let bodyFormatting =
 
             let form =
                 // example from http://www.w3.org/TR/html401/interact/forms.html
-                [   NameValue { name = "submit-name"; value = "Larry" }
+                [   NameValue ("submit-name", "Larry")
                     FormFile ("files", ("file1.txt", fileCt, Plain fileContents)) ]
 
             let newCt, subject =
@@ -111,7 +111,7 @@ let bodyFormatting =
 
             let form =
                 // example from http://www.w3.org/TR/html401/interact/forms.html
-                [   NameValue { name = "submit-name"; value = "Larry" }
+                [   NameValue ("submit-name", "Larry")
                     MultipartMixed ("files",
                                [ "file1.txt", firstCt, Plain fileContents
                                  "file2.gif", secondCt, Plain "...contents of file2.gif..."
@@ -163,16 +163,16 @@ let bodyFormatting =
             Assert.Equal("Should encode Swedish properly",
                          "user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87",
                          Impl.uriEncode utf8 [
-                            { name = "user_name"; value = "Åsa den Röde" }
-                            { name = "user_pass"; value = "Bović" }
+                            ("user_name", "Åsa den Röde")
+                            ("user_pass", "Bović")
                          ])
 
         testCase "can format urlencoded form" <| fun _ ->
             let clientState = { DefaultHttpFsState with random = Random testSeed }
             // example from http://www.w3.org/TR/html401/interact/forms.html
-            [   NameValue { name = "submit"; value = "Join Now!" }
-                NameValue { name = "user_name"; value = "Åsa den Röde" }
-                NameValue { name = "user_pass"; value = "Bović" }
+            [   NameValue ("submit", "Join Now!")
+                NameValue ("user_name", "Åsa den Röde")
+                NameValue ("user_pass", "Bović")
             ]
             |> fun form -> Impl.formatBody clientState (None, utf8, BodyForm form)
             |> fun (newCt, body) ->
