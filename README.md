@@ -264,7 +264,7 @@ However, for testing a couple of other things are used:
 And for building, there's also:
 
   * [FAKE](http://fsharp.github.io/FAKE/), the F# MAKE tool
-  * [Albacore](https://githubi.com/albacore/albacore)
+  * [Albacore](https://github.com/albacore/albacore)
 
 That's about it.
 Happy requesting!
