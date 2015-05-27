@@ -1,0 +1,184 @@
+﻿module HttpFs.Tests.RequestBody
+
+open System
+open System.Text
+
+open Fuchu
+open HttpFs.Client
+
+let VALID_URL = Uri "http://www"
+let createValidRequest = createRequest Get VALID_URL
+let utf8 = Encoding.UTF8
+
+[<Tests>]
+let apiUsage =
+    testList "api usage" [
+        testCase "withBody sets the request body" <| fun _ ->
+            Assert.Equal((createValidRequest |> withBodyString """Hello mum!%2\/@$""").Body,
+              BodyString """Hello mum!%2\/@$""")
+
+        testCase "withBody sets the request body binary" <| fun _ ->
+            Assert.Equal((createValidRequest |> withBody (BodyRaw [| 98uy; 111uy; 100uy; 121uy |])).Body,
+              BodyRaw [| 98uy; 111uy; 100uy; 121uy |])
+
+        testCase "withBody uses default character encoding of UTF-8" <| fun _ ->
+            Assert.Equal((createValidRequest |> withBodyString "whatever").BodyCharacterEncoding, utf8)
+
+        testCase "withBodyEncoded sets the request body" <| fun _ ->
+            Assert.Equal((createValidRequest |> withBodyStringEncoded """Hello mum!%2\/@$""" utf8).Body,
+                         BodyString """Hello mum!%2\/@$""")
+
+        testCase "withBodyEncoded sets the body encoding" <| fun _ ->
+            Assert.Equal((createValidRequest |> withBodyStringEncoded "Hi Mum" utf8).BodyCharacterEncoding,
+                         utf8)
+    ]
+
+[<Tests>]
+let contentType =
+    testCase "can convert to string" <| fun _ ->
+        let subject = ContentType.Create("application", "multipart", charset=Encoding.UTF8, boundary="---apa")
+        Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=---apa")
+
+[<Tests>]
+let bodyFormatting =
+    let testSeed = 1234567765
+
+    let bodyToBytes body =
+      use stream = new IO.MemoryStream()
+      for writer in body do
+        do writer stream |> ignore
+      stream.Seek(0L, IO.SeekOrigin.Begin) |> ignore
+      stream.ToArray()
+
+    testList "formatting different sorts of body" [
+        testCase "can format raw" <| fun _ ->
+            let clientState = { DefaultHttpFsState with random = Random testSeed }
+            let newCt, body = Impl.formatBody clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
+            let bytes = bodyToBytes body
+            Assert.Equal("body should be sequence of stream writers", [|1uy; 2uy; 3uy|], bytes)
+            Assert.Equal("no new content type for byte body", None, newCt)
+
+        testCase "ordinary multipart/form-data" <| fun _ ->
+            if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
+            /// can't lift outside, because test cases may run in parallel
+            let clientState = { DefaultHttpFsState with random = Random testSeed }
+
+            let fileCt, fileContents =
+                ContentType.Parse "text/plain" |> Option.get,
+                "Hello World"
+
+            let form =
+                // example from http://www.w3.org/TR/html401/interact/forms.html
+                [   NameValue ("submit-name", "Larry")
+                    FormFile ("files", ("file1.txt", fileCt, Plain fileContents)) ]
+
+            let newCt, subject =
+                Impl.formatBody clientState (None, utf8, BodyForm form)
+                |> fun (newCt, body) ->
+                  let bytes = bodyToBytes body
+                  newCt, bytes |> utf8.GetString
+
+            let expectedBoundary = "nLWsTCFurKCiU_PjC/cCmmU-tnJHHa"
+
+            let expected = [ sprintf "--%s" expectedBoundary
+                             "Content-Disposition: form-data; name=\"submit-name\""
+                             ""
+                             "Larry"
+                             sprintf "--%s" expectedBoundary
+                             "Content-Disposition: form-data; name=\"files\"; filename=\"file1.txt\""
+                             "Content-Type: text/plain"
+                             ""
+                             "Hello World"
+                             sprintf "--%s--" expectedBoundary
+                             ""
+                             "" ]
+                           |> String.concat "\r\n"
+
+            Assert.Equal("should have correct body", expected, subject)
+            Assert.Equal("should have new ct",
+                         ContentType.Create("multipart", "form-data", boundary=expectedBoundary),
+                         newCt |> Option.get)
+
+        testCase "multipart/form-data with multipart/mixed" <| fun _ ->
+            if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
+            /// can't lift outside, because test cases may run in parallel
+            let clientState = { DefaultHttpFsState with random = Random testSeed }
+
+            let firstCt, secondCt, fileContents =
+                ContentType.Parse "text/plain" |> Option.get,
+                ContentType.Parse "text/plain" |> Option.get,
+                "Hello World"
+
+            let form =
+                // example from http://www.w3.org/TR/html401/interact/forms.html
+                [   NameValue ("submit-name", "Larry")
+                    MultipartMixed ("files",
+                               [ "file1.txt", firstCt, Plain fileContents
+                                 "file2.gif", secondCt, Plain "...contents of file2.gif..."
+                               ])
+                ]
+
+            let newCt, subject =
+                Impl.formatBody clientState (None, utf8, BodyForm form)
+                |> fun (newCt, body) ->
+                  let bytes = bodyToBytes body
+                  newCt, bytes |> utf8.GetString
+
+            let expectedBoundary1 = "nLWsTCFurKCiU_PjC/cCmmU-tnJHHa"
+            let expectedBoundary2 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
+
+            let expected =
+                [ sprintf "--%s" expectedBoundary1
+                  "Content-Disposition: form-data; name=\"submit-name\""
+                  ""
+                  "Larry"
+                  sprintf "--%s" expectedBoundary1
+                  sprintf "Content-Type: multipart/mixed; boundary=%s" expectedBoundary2
+                  "Content-Disposition: form-data; name=\"files\""
+                  ""
+                  sprintf "--%s" expectedBoundary2
+                  "Content-Disposition: file; filename=\"file1.txt\""
+                  "Content-Type: text/plain"
+                  ""
+                  "Hello World"
+                  sprintf "--%s" expectedBoundary2
+                  "Content-Disposition: file; filename=\"file2.gif\""
+                  "Content-Type: text/plain"
+                  ""
+                  "...contents of file2.gif..."
+                  sprintf "--%s--" expectedBoundary2
+                  sprintf "--%s--" expectedBoundary1
+                  ""
+                  "" ]
+                |> String.concat "\r\n"
+            Assert.Equal("should have correct body", expected, subject)
+
+        testCase "can format urlencoded data" <| fun _ ->
+            // http://www.url-encode-decode.com/
+            // https://unspecified.wordpress.com/2008/07/08/browser-uri-encoding-the-best-we-can-do/
+            // http://stackoverflow.com/questions/912811/what-is-the-proper-way-to-url-encode-unicode-characters
+            // https://www.ietf.org/rfc/rfc1738.txt
+            // http://www.w3.org/TR/html401/interact/forms.html
+            // http://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+            Assert.Equal("Should encode Swedish properly",
+                         "user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87",
+                         Impl.uriEncode utf8 [
+                            ("user_name", "Åsa den Röde")
+                            ("user_pass", "Bović")
+                         ])
+
+        testCase "can format urlencoded form" <| fun _ ->
+            let clientState = { DefaultHttpFsState with random = Random testSeed }
+            // example from http://www.w3.org/TR/html401/interact/forms.html
+            [   NameValue ("submit", "Join Now!")
+                NameValue ("user_name", "Åsa den Röde")
+                NameValue ("user_pass", "Bović")
+            ]
+            |> fun form -> Impl.formatBody clientState (None, utf8, BodyForm form)
+            |> fun (newCt, body) ->
+              let bodyToString = body |> bodyToBytes |> utf8.GetString
+              Assert.Equal(bodyToString, "submit=Join+Now!&user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87")
+              Assert.Equal("should have new ct",
+                           ContentType.Parse "application/x-www-form-urlencoded",
+                           newCt)
+    ]
