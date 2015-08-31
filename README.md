@@ -3,6 +3,9 @@
 
 A gloriously functional HTTP client library for F#!
 
+**NOTE:** These instructions are for the forthcoming version 2.0.  For the current version on NuGet (1.5.1), see:  
+[Readme for Version 1.5.1](https://github.com/relentless/Http.fs/blob/d456af90164586ebd41a1c0601548c8dbf19c9e7/README.md)
+
 .Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)
 Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/relentless/Http.fs.svg?branch=master)](https://travis-ci.org/relentless/Http.fs)
 NuGet package: [![NuGet](http://img.shields.io/badge/NuGet-1.5.1-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
