@@ -31,7 +31,7 @@ open System
 open System.Text
 
 let request =
-    createRequest Post "https://example.com"
+    createRequest Post <| Uri("https://example.com")
     |> withQueryStringItem "search" "jeebus"
     |> withBasicAuthentication "myUsername" "myPassword" // UTF8-encoded
     |> withHeader (UserAgent "Chrome or summat")
