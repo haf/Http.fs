@@ -52,7 +52,7 @@ type ``Suave Integration Tests`` () =
     let config =
       { defaultConfig with
           cancellationToken = cts.Token
-          logger = Logging.Loggers.saneDefaultsFor Suave.Logging.Warn }
+          logger = Logging.Loggers.saneDefaultsFor Suave.Logging.LogLevel.Warn }
     let listening, server = startWebServerAsync config app
     Async.Start(server, cts.Token) |> ignore
     ()
