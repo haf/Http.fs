@@ -1,20 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-VisualStudioVersion = 12.0.30110.0
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{6DFFC726-4A59-42E2-94FA-015175A52265}"
 	ProjectSection(SolutionItems) = preProject
 		paket.dependencies = paket.dependencies
+		paket.lock = paket.lock
 	EndProjectSection
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpFs.UnitTests", "HttpFs.UnitTests\HttpFs.UnitTests.fsproj", "{CCBDC979-337B-4D2F-9E64-9253083C33F8}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HttpFs.UnitTests", "HttpFs.UnitTests\HttpFs.UnitTests.fsproj", "{CCBDC979-337B-4D2F-9E64-9253083C33F8}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpFs", "HttpFs\HttpFs.fsproj", "{DC478A22-3190-46CB-A085-88014CC36957}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HttpFs", "HttpFs\HttpFs.fsproj", "{DC478A22-3190-46CB-A085-88014CC36957}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpFs.IntegrationTests", "HttpFs.IntegrationTests\HttpFs.IntegrationTests.fsproj", "{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HttpFs.IntegrationTests", "HttpFs.IntegrationTests\HttpFs.IntegrationTests.fsproj", "{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "HttpFs.SampleApplication", "HttpFs.SampleApplication\HttpFs.SampleApplication.fsproj", "{8907FEE4-9689-4988-881C-D768AC5D5A24}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HttpFs.SampleApplication", "HttpFs.SampleApplication\HttpFs.SampleApplication.fsproj", "{8907FEE4-9689-4988-881C-D768AC5D5A24}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DB5E6062-BB68-4ACD-987F-FCDCA7F6403E}"
 	ProjectSection(SolutionItems) = preProject
@@ -28,14 +29,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CCBDC979-337B-4D2F-9E64-9253083C33F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CCBDC979-337B-4D2F-9E64-9253083C33F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CCBDC979-337B-4D2F-9E64-9253083C33F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -44,8 +37,14 @@ Global
 		{DC478A22-3190-46CB-A085-88014CC36957}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC478A22-3190-46CB-A085-88014CC36957}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC478A22-3190-46CB-A085-88014CC36957}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
+		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42D72EA7-DC60-4546-9EC3-65B3E6FAC21D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8907FEE4-9689-4988-881C-D768AC5D5A24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

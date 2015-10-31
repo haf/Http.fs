@@ -102,8 +102,8 @@ Target "Copy Release Files" (fun _ ->
 )
 
 // note to self - call like this: 
-// packages/FAKE/tools/fake.exe build.fsx nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="latest release"
-Target "Upload to NuGet" (fun _ ->
+// .\build.bat nuget-version=1.1.0 nuget-api-key=(my api key) nuget-release-notes="latest release"
+Target "NuGetPackage" (fun _ ->
     // Copy the dll into the right place
     CopyFiles 
         (releaseDir + "NuGet/lib/net45")
@@ -137,11 +137,14 @@ Target "Upload to NuGet" (fun _ ->
   @files@
 </package>""")
 
+    let description = "A gloriously functional HTTP client library for F#!"
+    
     // Create and upload package
     NuGet (fun n ->
         {n with
             Authors = ["Grant Crofton"]
-            Summary = "A gloriously functional HTTP client library for F#!"
+            Summary = description
+            Description = description
             OutputPath = nuGetDir
             WorkingDir = nuGetDir
             Project = "Http.fs"
@@ -149,7 +152,7 @@ Target "Upload to NuGet" (fun _ ->
             AccessKey = getBuildParam "nuget-api-key"
             ReleaseNotes = getBuildParam "nuget-release-notes"
             PublishTrials = 3
-            Publish = bool.Parse(getBuildParamOrDefault "nuget-publish" "true")
+            Publish = bool.Parse(getBuildParamOrDefault "nuget-publish" "false")
             ToolPath = FullName "./packages/NuGet.CommandLine/tools/NuGet.exe"
             Files =
                 [ "lib\\net45\\*.dll", Some "lib\\net45", None
@@ -172,10 +175,8 @@ Target "All" (fun _ ->
     ==> "BuildUnitTests" <=> "BuildIntegrationTests" <=> "BuildSampleApplication"
     ==> "Run Unit Tests" <=> "Run Integration Tests"
     ==> "Copy Release Files"
-    =?> ("Upload to NuGet", // run this if all params secified
-        hasBuildParam "nuget-version" && 
-        hasBuildParam "nuget-api-key" && 
-        hasBuildParam "nuget-release-notes")
+    =?> ("NuGetPackage", // run this if all params secified
+        hasBuildParam "nuget-version")
     ==> "All"
 
 // start build
