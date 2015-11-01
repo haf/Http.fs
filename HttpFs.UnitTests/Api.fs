@@ -1,9 +1,11 @@
 ﻿module HttpFs.Tests.Api
 
 open System
+open System.Net
 open System.Text
 open Fuchu
 open HttpFs.Client
+open HttpFs.Logging
 
 let VALID_URL = Uri "http://www"
 
@@ -93,6 +95,22 @@ let api =
                 "contains first item", fun qs -> Assert.Contains(qs, "v1")
                 "contains second item", fun qs -> Assert.Contains(qs, "v2")
             ]
+
+        given "withQueryString only adds one question mark to the query"
+            (createValidRequest
+            |> withQueryStringItem "f1" "v1"
+            |> DotNetWrapper.toHttpWebRequest
+                { random      = Random()
+                  cryptRandom = System.Security.Cryptography.RandomNumberGenerator.Create()
+                  logger      = NoopLogger }
+            |> fun ((webRequest : HttpWebRequest), au) ->
+              webRequest.RequestUri.ToString()
+              |> String.collect (function
+                  | '?' -> "?"
+                  | _ -> "" )
+              |> String.length
+            )
+            [   "has one question mark", fun questionMarks -> Assert.Equal(1, questionMarks) ]
 
         testCase "withCookie throws an exception if cookies are disabled" <| fun _ ->
             Assert.Raise("there is no cake", typeof<Exception>, fun() ->
