@@ -104,11 +104,11 @@ let api =
                   cryptRandom = System.Security.Cryptography.RandomNumberGenerator.Create()
                   logger      = NoopLogger }
             |> fun ((webRequest : HttpWebRequest), au) ->
-              webRequest.RequestUri.ToString()
-              |> String.collect (function
-                  | '?' -> "?"
-                  | _ -> "" )
-              |> String.length
+                webRequest.RequestUri.ToString()
+                |> String.collect (function
+                    | '?' -> "?"
+                    | _ -> "" )
+                |> String.length
             )
             [   "has one question mark", fun questionMarks -> Assert.Equal(1, questionMarks) ]
 

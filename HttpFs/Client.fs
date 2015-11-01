@@ -436,7 +436,7 @@ module internal Impl =
     if Map.isEmpty request.QueryStringItems then ""
     else
       let items = Map.toList request.QueryStringItems
-      String.Concat [ "?"; uriEncode byteEncoding items ]
+      uriEncode byteEncoding items
 
   let basicAuthorz username password =
     String.Concat [ username; ":"; password ]
