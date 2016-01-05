@@ -773,7 +773,7 @@ module internal DotNetWrapper =
       | Credentials.Custom { username = name; password = pwd} ->
           let last n xs = Array.toSeq xs |> Seq.skip (xs.Length - n) |> Seq.toArray
           match (last 2 (name.Split [|'\\'|])) with
-          | [| domain ; user |] -> webRequest.Credentials <- NetworkCredential(name, pwd, domain)
+          | [| domain ; user |] -> webRequest.Credentials <- NetworkCredential(user, pwd, domain)
           | _ -> raise (System.Exception("User name is not in form domain\\user"))
           
       | Credentials.Default -> webRequest.UseDefaultCredentials <- true
