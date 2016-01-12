@@ -1,11 +1,9 @@
 ﻿module HttpFs.Tests.Api
 
 open System
-open System.Net
 open System.Text
 open Fuchu
 open HttpFs.Client
-open HttpFs.Logging
 
 let VALID_URL = Uri "http://www"
 
@@ -96,22 +94,6 @@ let api =
                 "contains second item", fun qs -> Assert.Contains(qs, "v2")
             ]
 
-        given "withQueryString only adds one question mark to the query"
-            (createValidRequest
-            |> withQueryStringItem "f1" "v1"
-            |> DotNetWrapper.toHttpWebRequest
-                { random      = Random()
-                  cryptRandom = System.Security.Cryptography.RandomNumberGenerator.Create()
-                  logger      = NoopLogger }
-            |> fun ((webRequest : HttpWebRequest), au) ->
-                webRequest.RequestUri.ToString()
-                |> String.collect (function
-                    | '?' -> "?"
-                    | _ -> "" )
-                |> String.length
-            )
-            [   "has one question mark", fun questionMarks -> Assert.Equal(1, questionMarks) ]
-
         testCase "withCookie throws an exception if cookies are disabled" <| fun _ ->
             Assert.Raise("there is no cake", typeof<Exception>, fun() ->
                 createValidRequest 
@@ -140,7 +122,7 @@ let api =
 
         given "a request withProxy"
             (createValidRequest 
-            |> withProxy { Address = "proxy.com"; Port = 8080; Credentials = ProxyCredentials.None }
+            |> withProxy { Address = "proxy.com"; Port = 8080; Credentials = Credentials.None }
             |> fun x -> x.Proxy.Value)
             [   "sets address", fun p -> Assert.Equal(p.Address, "proxy.com")
                 "sets port", fun p -> Assert.Equal(p.Port, 8080)
@@ -152,23 +134,23 @@ let api =
                 |> withProxy { 
                     Address = "proxy.com"; 
                     Port = 8080; 
-                    Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
+                    Credentials = Credentials.Custom { username = "Tim"; password = "Password1" } }
             
-            Assert.Equal(request.Proxy.Value.Credentials, (ProxyCredentials.Custom { username = "Tim"; password = "Password1" }))
+            Assert.Equal(request.Proxy.Value.Credentials, (Credentials.Custom { username = "Tim"; password = "Password1" }))
 
         testCase "withProxy can set proxy with default credentials" <| fun _ ->
             let request = 
                 createValidRequest 
-                |> withProxy { Address = ""; Port = 0; Credentials = ProxyCredentials.Default }
+                |> withProxy { Address = ""; Port = 0; Credentials = Credentials.Default }
             
-            Assert.Equal(request.Proxy.Value.Credentials, ProxyCredentials.Default)
+            Assert.Equal(request.Proxy.Value.Credentials, Credentials.Default)
 
         testCase "withProxy can set proxy with no credentials" <| fun _ ->
             let request = 
                 createValidRequest 
-                |> withProxy { Address = ""; Port = 0; Credentials = ProxyCredentials.None }
+                |> withProxy { Address = ""; Port = 0; Credentials = Credentials.None }
             
-            Assert.Equal(request.Proxy.Value.Credentials, ProxyCredentials.None)
+            Assert.Equal(request.Proxy.Value.Credentials, Credentials.None)
 
         testCase "withKeepAlive sets KeepAlive" <| fun _ ->
             Assert.IsFalse((createValidRequest |> withKeepAlive false).KeepAlive)
