@@ -182,3 +182,10 @@ let bodyFormatting =
                            ContentType.Parse "application/x-www-form-urlencoded",
                            newCt)
     ]
+
+[<Tests>]
+let internals =
+    testCase "http web request url" <| fun _ ->
+        let hfsReq = createRequest Get (Uri "http://localhost/") |> withQueryStringItem "a" "1"
+        let netReq, _ = DotNetWrapper.toHttpWebRequest DefaultHttpFsState hfsReq
+        Assert.Equal(string netReq.RequestUri, "http://localhost/?a=1")

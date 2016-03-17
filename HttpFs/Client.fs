@@ -61,7 +61,7 @@ with
     member x.CompareTo other =
       match other with
       | :? ContentType as ct -> (x :> IComparable<ContentType>).CompareTo ct
-      | x -> failwith "invalid comparison ContentType to %s" (x.GetType().Name)
+      | x -> failwithf "invalid comparison ContentType to %s" (x.GetType().Name)
 
   interface IComparable<ContentType> with
     member x.CompareTo other =
@@ -436,7 +436,7 @@ module internal Impl =
     if Map.isEmpty request.QueryStringItems then ""
     else
       let items = Map.toList request.QueryStringItems
-      String.Concat [ "?"; uriEncode byteEncoding items ]
+      String.Concat [ uriEncode byteEncoding items ]
 
   let basicAuthorz username password =
     String.Concat [ username; ":"; password ]
