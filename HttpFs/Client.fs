@@ -242,7 +242,7 @@ type UserDetails =
     password : string }
 
 [<RequireQualifiedAccess>]
-type ProxyCredentials =
+type Credentials =
   | None
   | Default
   | Custom of UserDetails
@@ -250,7 +250,7 @@ type ProxyCredentials =
 type Proxy =
   { Address: string
     Port: int
-    Credentials: ProxyCredentials }
+    Credentials: Credentials }
 
 /// The key you have in &lt;input name="key" ... /&gt;
 /// This string value is not yet encoded.
@@ -350,7 +350,8 @@ type Request =
     ResponseCharacterEncoding : Encoding option
     Proxy                     : Proxy option
     KeepAlive                 : bool
-    Timeout                   : int<ms> }
+    Timeout                   : int<ms> 
+    NetworkCredentials        : Credentials option}
 
 type CharacterSet = string
 
@@ -618,7 +619,8 @@ let createRequest httpMethod (url : Uri) =
     KeepAlive                 = true
     /// The default value is 100,000 milliseconds (100 seconds).
     /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
-    Timeout                   = 100000<ms> }
+    Timeout                   = 100000<ms> 
+    NetworkCredentials        = None }
 
 /// Disables cookies, which are enabled by default
 let withCookiesDisabled request = 
@@ -637,6 +639,10 @@ let withHeader (header : RequestHeader) (request : Request) =
 /// Adds an HTTP Basic Authentication header, which includes the username and password encoded as a base-64 string
 let withBasicAuthentication username password =
   withHeader (basicAuthorz username password)
+
+/// Adds a credential cache to support NTLM authentication
+let withNTLMAuthentication username password (request : Request) =
+  {request with NetworkCredentials = Some (Credentials.Custom { username = username; password = password}) }
 
 /// Sets the accept-encoding request header to accept the decompression methods selected,
 /// and automatically decompresses the responses.
@@ -751,12 +757,27 @@ module internal DotNetWrapper =
       let webProxy = WebProxy(proxy.Address, proxy.Port)
 
       match proxy.Credentials with
-      | ProxyCredentials.Custom { username = name; password = pwd} ->
+      | Credentials.Custom { username = name; password = pwd} ->
           webProxy.Credentials <- NetworkCredential(name, pwd)
-      | ProxyCredentials.Default -> webProxy.UseDefaultCredentials <- true
-      | ProxyCredentials.None -> webProxy.Credentials <- null
+      | Credentials.Default -> webProxy.UseDefaultCredentials <- true
+      | Credentials.None -> webProxy.Credentials <- null
 
       webRequest.Proxy <- webProxy)
+
+  /// Sets NetworkCredentials on HttpWebRequest.
+  /// Mutates HttpWebRequest.
+  let setNetworkCredentials credentials (webRequest : HttpWebRequest) =
+    credentials |> Option.iter (fun credentials ->
+
+      match credentials with
+      | Credentials.Custom { username = name; password = pwd} ->
+          let last n xs = Array.toSeq xs |> Seq.skip (xs.Length - n) |> Seq.toArray
+          match (last 2 (name.Split [|'\\'|])) with
+          | [| domain ; user |] -> webRequest.Credentials <- NetworkCredential(user, pwd, domain)
+          | _ -> raise (System.Exception("User name is not in form domain\\user"))
+          
+      | Credentials.Default -> webRequest.UseDefaultCredentials <- true
+      | Credentials.None -> webRequest.Credentials <- null)
 
   /// Sets body on HttpWebRequest.
   /// Mutates HttpWebRequest.
@@ -826,6 +847,7 @@ module internal DotNetWrapper =
     webRequest |> setHeaders (request.Headers |> Map.toList |> List.map snd)
     webRequest |> setCookies (request.Cookies |> Map.toList |> List.map snd) request.Url
     webRequest |> setProxy request.Proxy
+    webRequest |> setNetworkCredentials request.NetworkCredentials
 
     webRequest.KeepAlive <- request.KeepAlive
     webRequest.Timeout <- (int)request.Timeout
