@@ -13,10 +13,10 @@ desc 'create assembly infos'
 asmver_files :assembly_info do |a|
   a.files = FileList['**/*proj'] # optional, will find all projects recursively by default
 
-  a.attributes assembly_description: 'Temporary NuGet for Http.fs',
+  a.attributes assembly_description: 'A simple, functional HTTP client library for F#',
                assembly_configuration: Configuration,
                assembly_company: 'None',
-               assembly_copyright: '',
+               assembly_copyright: 'Contributors',
                assembly_version: ENV['LONG_VERSION'],
                assembly_file_version: ENV['LONG_VERSION'],
                assembly_informational_version: ENV['BUILD_VERSION']
@@ -54,11 +54,11 @@ nugets_pack :create_nugets => ['build/pkg', :versioning, :compile] do |p|
   p.out     = 'build/pkg'
   p.exe     = 'packages/NuGet.CommandLine/tools/NuGet.exe'
   p.with_metadata do |m|
-    m.id          = 'Http.fs-prerelease'
-    m.title       = 'Http.fs Pre-Release'
-    m.description = 'A temporary nuget until 2.0 is released. Don\'t depend on!'
-    m.authors     = 'Henrik'
-    m.project_url = 'https://github.com/haf/Http.fs'
+    m.id          = 'Http.fs'
+    m.title       = 'Http.fs'
+    m.description = 'A simple, functional HTTP client library for F#'
+    m.authors     = 'Grant Crofton, Henrik Feldt'
+    m.project_url = 'https://github.com/relentless/Http.fs'
     m.version     = ENV['NUGET_VERSION']
   end
 end
