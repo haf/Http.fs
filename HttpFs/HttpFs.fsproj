@@ -21,7 +21,7 @@
     <DocumentationFile>bin\Debug\HttpFs.xml</DocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors></WarningsAsErrors>
-    <DocumentationFile>bin\Debug\HttpFs.xml</DocumentationFile>
+    <OtherFlags>--keyfile:../Tools/HttpFs.snk</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,6 +32,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\HttpFs.xml</DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
+    <OtherFlags>--keyfile:../Tools/HttpFs.snk</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
