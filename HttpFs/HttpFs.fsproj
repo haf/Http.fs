@@ -20,8 +20,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\HttpFs.xml</DocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors>
-    </WarningsAsErrors>
+    <WarningsAsErrors></WarningsAsErrors>
     <DocumentationFile>bin\Debug\HttpFs.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -41,12 +40,9 @@
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InternalsVisibleTo.fs" />
-    <Compile Include="Prelude.fs" />
-    <Compile Include="Logging.fs" />
-    <Compile Include="AsyncStreamReader.fs" />
-    <Compile Include="Client.fs" />
     <None Include="paket.references" />
+    <Compile Include="AssemblyVersionInfo.fs" />
+    <Compile Include="HttpFs.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
