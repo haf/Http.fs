@@ -12,7 +12,6 @@ open Suave.Successful
 open Suave.RequestErrors
 open Suave.Operators
 open Suave.Web
-
 open HttpFs // Async.AwaitTask overload
 open HttpFs.Client // The client itself
 
@@ -54,6 +53,7 @@ type ``Suave Integration Tests`` () =
           logger = Logging.Loggers.saneDefaultsFor Suave.Logging.LogLevel.Warn }
     let listening, server = startWebServerAsync config app
     Async.Start(server, cts.Token) |> ignore
+    Async.RunSynchronously listening |> ignore
     ()
 
   [<TestFixtureTearDown>]
@@ -63,10 +63,10 @@ type ``Suave Integration Tests`` () =
   [<Test>]
   member x.``server receives valid filenames``() =
     let firstCt, secondCt, thirdCt, fourthCt =
-      ContentType.Parse "text/plain" |> Option.get,
-      ContentType.Parse "text/plain" |> Option.get,
-      ContentType.Create("application", "octet-stream"),
-      ContentType.Create("image", "gif")
+      ContentType.parse "text/plain" |> Option.get,
+      ContentType.parse "text/plain" |> Option.get,
+      ContentType.create("application", "octet-stream"),
+      ContentType.create("image", "gif")
 
     let req =
       postTo "filenames"

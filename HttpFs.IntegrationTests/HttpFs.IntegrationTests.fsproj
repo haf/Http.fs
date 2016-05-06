@@ -22,6 +22,7 @@
     <WarningsAsErrors>
     </WarningsAsErrors>
     <DocumentationFile>bin\Debug\HttpFs.IntegrationTests.xml</DocumentationFile>
+    <Externalconsole>true</Externalconsole>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

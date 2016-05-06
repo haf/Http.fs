@@ -152,7 +152,7 @@ type ``Integration tests`` ()=
     |> Request.setHeader (Authorization  "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
     |> Request.setHeader (Connection "conn1" )
     |> Request.setHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
-    |> Request.setHeader (ContentType (ContentType.Create("application", "json")))
+    |> Request.setHeader (ContentType (ContentType.create("application", "json")))
     |> Request.setHeader (Date (new DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
     |> Request.setHeader (From "user@example.com" )
     |> Request.setHeader (IfMatch "737060cd8c284d8af7ad3082f209582d" )
@@ -306,15 +306,14 @@ type ``Integration tests`` ()=
     response |> should equal expected
 
   [<Test>]
-  member x.``throws ArgumentException for invalid Content-Type charset when reading string`` () =
+  member x.``assumes utf8 encoding for invalid Content-Type charset when reading string`` () =
     try
       Request.create Get (uriFor "/MoonLanguageInvalidEncoding")
       |> Request.responseAsString
       |> run
       |> ignore
-      Assert.Fail "should throw ArgumentException"
     with :? ArgumentException as e ->
-      ()
+      Assert.Fail "should default to utf8"
 
   // .Net encoder doesn't like utf8, seems to need utf-8
   [<Test>]
@@ -480,8 +479,8 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``returns the uploaded file names`` () =
     let firstCt, secondCt =
-      ContentType.Parse "text/plain" |> Option.get,
-      ContentType.Parse "text/plain" |> Option.get
+      ContentType.parse "text/plain" |> Option.get,
+      ContentType.parse "text/plain" |> Option.get
 
     let req =
       Request.create Post (uriFor "/filenames")

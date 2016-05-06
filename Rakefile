@@ -39,7 +39,7 @@ task :restore => :paket_bootstrap do
 end
 
 task :yolo do
-  system %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal Fakta.YoLo')" paket-files/haf/YoLo/YoLo.fs} \
+  system %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal HttpFs.YoLo')" paket-files/haf/YoLo/YoLo.fs} \
     unless Albacore.windows?
 end
 

@@ -46,7 +46,7 @@ let tests =
       let ctx = runWithConfig app
       try
         use fs = File.OpenRead (pathOf "pix.gif")
-        let file = "pix.gif", ContentType.Create("image", "gif"), StreamData fs
+        let file = "pix.gif", ContentType.create("image", "gif"), StreamData fs
 
         use ms = new MemoryStream()
         //printfn "--- get response"

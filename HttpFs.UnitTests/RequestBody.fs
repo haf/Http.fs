@@ -35,7 +35,7 @@ let apiUsage =
 [<Tests>]
 let contentType =
   testCase "can convert to string" <| fun _ ->
-    let subject = ContentType.Create("application", "multipart", charset=Encoding.UTF8, boundary="---apa")
+    let subject = ContentType.create("application", "multipart", charset=Encoding.UTF8, boundary="---apa")
     Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=---apa")
 
 [<Tests>]
@@ -63,7 +63,7 @@ let bodyFormatting =
             let clientState = { HttpFsState.empty with random = Random testSeed }
 
             let fileCt, fileContents =
-                ContentType.Parse "text/plain" |> Option.get,
+                ContentType.parse "text/plain" |> Option.get,
                 "Hello World"
 
             let form =
@@ -95,7 +95,7 @@ let bodyFormatting =
 
             Assert.Equal("should have correct body", expected, subject)
             Assert.Equal("should have new ct",
-                         ContentType.Create("multipart", "form-data", boundary=expectedBoundary),
+                         ContentType.create("multipart", "form-data", boundary=expectedBoundary),
                          newCt |> Option.get)
 
         testCase "multipart/form-data with multipart/mixed" <| fun _ ->
@@ -104,8 +104,8 @@ let bodyFormatting =
             let clientState = { HttpFsState.empty with random = Random testSeed }
 
             let firstCt, secondCt, fileContents =
-                ContentType.Parse "text/plain" |> Option.get,
-                ContentType.Parse "text/plain" |> Option.get,
+                ContentType.parse "text/plain" |> Option.get,
+                ContentType.parse "text/plain" |> Option.get,
                 "Hello World"
 
             let form =
@@ -178,7 +178,7 @@ let bodyFormatting =
               let bodyToString = body |> bodyToBytes |> utf8.GetString
               Assert.Equal(bodyToString, "submit=Join+Now!&user_name=%c3%85sa+den+R%c3%b6de&user_pass=Bovi%c4%87")
               Assert.Equal("should have new ct",
-                           ContentType.Parse "application/x-www-form-urlencoded",
+                           ContentType.parse "application/x-www-form-urlencoded",
                            newCt)
     ]
 
