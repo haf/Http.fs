@@ -19,7 +19,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\HttpFs.xml</DocumentationFile>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors></WarningsAsErrors>
     <OtherFlags>--keyfile:../Tools/HttpFs.snk</OtherFlags>
   </PropertyGroup>
