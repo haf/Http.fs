@@ -6,21 +6,22 @@ open Fuchu
 open System
 open System.IO
 open System.Reflection
-
-open Suave.Web
+open Hopac
+open Suave
 open Suave.Logging
-open Suave.Http
-open Suave.Http.Applicatives
-open Suave.Http.RequestErrors
+open Suave.Filters
+open Suave.RequestErrors
 open Suave.Testing
-  
+open Suave.Operators
+
+
 let app =
   choose
     [ POST
-      >>= choose [
+      >=> choose [
           path "/gifs/echo"
-              >>= Writers.setMimeType "image/gif"
-              >>= warbler (fun ctx ->
+              >=> Writers.setMimeType "image/gif"
+              >=> warbler (fun ctx ->
                   let file = ctx.request.files.Head
                   //printfn "||| in suave, handing over to sendFile, file %s len %d"
                   //        file.tempFilePath (FileInfo(file.tempFilePath).Length)
@@ -41,7 +42,7 @@ let tests =
   let postTo res = createRequest Post (uriFor res) |> withKeepAlive false
 
   testCase "can send/receive" <| fun _ ->
-    async {
+    job {
       let ctx = runWithConfig app
       try
         use fs = File.OpenRead (pathOf "pix.gif")
@@ -55,7 +56,7 @@ let tests =
           |> withHeader (Custom ("Access-Code", "Super-Secret"))
           |> getResponse
 
-        do! resp.Body.CopyToAsync ms
+        do! resp.body.CopyToAsync ms
 
         fs.Seek(0L, SeekOrigin.Begin) |> ignore
         ms.Seek(0L, SeekOrigin.Begin) |> ignore
@@ -63,4 +64,4 @@ let tests =
       finally
         disposeContext ctx
         ()
-    } |> Async.RunSynchronously
+    } |> run

@@ -5,13 +5,12 @@ open System
 open System.Reflection
 open System.IO
 open System.Threading
-
+open Hopac
 open Suave
-open Suave.Types
-open Suave.Http
-open Suave.Http.Applicatives
-open Suave.Http.Successful
-open Suave.Http.RequestErrors
+open Suave.Filters
+open Suave.Successful
+open Suave.RequestErrors
+open Suave.Operators
 open Suave.Web
 
 open HttpFs // Async.AwaitTask overload
@@ -20,13 +19,13 @@ open HttpFs.Client // The client itself
 let app =
   choose
     [ POST
-      >>= choose [
-          path "/filecount" >>= warbler (fun ctx ->
+      >=> choose [
+          path "/filecount" >=> warbler (fun ctx ->
             OK (string ctx.request.files.Length))
 
           path "/filenames"
-              >>= Writers.setMimeType "application/json"
-              >>= warbler (fun ctx ->
+              >=> Writers.setMimeType "application/json"
+              >=> warbler (fun ctx ->
                   //printfn "+++++++++ inside suave +++++++++++++"
                   ctx.request.files
                   |> List.map (fun f -> "\"" + f.fileName + "\"")
@@ -83,7 +82,7 @@ type ``Suave Integration Tests`` () =
                  ])
             ])
     System.Net.ServicePointManager.Expect100Continue <- false
-    let response = Request.responseAsString req |> Async.RunSynchronously
+    let response = Request.responseAsString req |> run
 
     for fileName in [ "file1.txt"; "file2.gif"; "file3.gif"; "cute-cat.gif" ] do
       Assert.That(response, Is.StringContaining(fileName))

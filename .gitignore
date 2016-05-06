@@ -47,3 +47,4 @@ Thumbs.db
 build/
 AssemblyVersionInfo.fs
 TestResult.xml
+paket-files/

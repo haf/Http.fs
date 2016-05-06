@@ -14,22 +14,22 @@ let utf8 = Encoding.UTF8
 let apiUsage =
     testList "api usage" [
         testCase "withBody sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyString """Hello mum!%2\/@$""").Body,
+            Assert.Equal((createValidRequest |> withBodyString """Hello mum!%2\/@$""").body,
               BodyString """Hello mum!%2\/@$""")
 
         testCase "withBody sets the request body binary" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBody (BodyRaw [| 98uy; 111uy; 100uy; 121uy |])).Body,
+            Assert.Equal((createValidRequest |> withBody (BodyRaw [| 98uy; 111uy; 100uy; 121uy |])).body,
               BodyRaw [| 98uy; 111uy; 100uy; 121uy |])
 
         testCase "withBody uses default character encoding of UTF-8" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyString "whatever").BodyCharacterEncoding, utf8)
+            Assert.Equal((createValidRequest |> withBodyString "whatever").bodyCharacterEncoding, utf8)
 
         testCase "withBodyEncoded sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyStringEncoded """Hello mum!%2\/@$""" utf8).Body,
+            Assert.Equal((createValidRequest |> withBodyStringEncoded """Hello mum!%2\/@$""" utf8).body,
                          BodyString """Hello mum!%2\/@$""")
 
         testCase "withBodyEncoded sets the body encoding" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyStringEncoded "Hi Mum" utf8).BodyCharacterEncoding,
+            Assert.Equal((createValidRequest |> withBodyStringEncoded "Hi Mum" utf8).bodyCharacterEncoding,
                          utf8)
     ]
 
@@ -46,13 +46,13 @@ let bodyFormatting =
     let bodyToBytes body =
       use stream = new IO.MemoryStream()
       for writer in body do
-        do writer stream |> ignore
+        do writer stream |> Hopac.Job.Global.run
       stream.Seek(0L, IO.SeekOrigin.Begin) |> ignore
       stream.ToArray()
 
     testList "formatting different sorts of body" [
         testCase "can format raw" <| fun _ ->
-            let clientState = { DefaultHttpFsState with random = Random testSeed }
+            let clientState = { HttpFsState.empty with random = Random testSeed }
             let newCt, body = Impl.formatBody clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
             let bytes = bodyToBytes body
             Assert.Equal("body should be sequence of stream writers", [|1uy; 2uy; 3uy|], bytes)
@@ -61,7 +61,7 @@ let bodyFormatting =
         testCase "ordinary multipart/form-data" <| fun _ ->
             if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
-            let clientState = { DefaultHttpFsState with random = Random testSeed }
+            let clientState = { HttpFsState.empty with random = Random testSeed }
 
             let fileCt, fileContents =
                 ContentType.Parse "text/plain" |> Option.get,
@@ -102,7 +102,7 @@ let bodyFormatting =
         testCase "multipart/form-data with multipart/mixed" <| fun _ ->
             if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
-            let clientState = { DefaultHttpFsState with random = Random testSeed }
+            let clientState = { HttpFsState.empty with random = Random testSeed }
 
             let firstCt, secondCt, fileContents =
                 ContentType.Parse "text/plain" |> Option.get,
@@ -168,7 +168,7 @@ let bodyFormatting =
                          ])
 
         testCase "can format urlencoded form" <| fun _ ->
-            let clientState = { DefaultHttpFsState with random = Random testSeed }
+            let clientState = { HttpFsState.empty with random = Random testSeed }
             // example from http://www.w3.org/TR/html401/interact/forms.html
             [   NameValue ("submit", "Join Now!")
                 NameValue ("user_name", "Åsa den Röde")
@@ -187,5 +187,5 @@ let bodyFormatting =
 let internals =
     testCase "http web request url" <| fun _ ->
         let hfsReq = createRequest Get (Uri "http://localhost/") |> withQueryStringItem "a" "1"
-        let netReq, _ = DotNetWrapper.toHttpWebRequest DefaultHttpFsState hfsReq
+        let netReq, _ = DotNetWrapper.toHttpWebRequest HttpFsState.empty hfsReq
         Assert.Equal(string netReq.RequestUri, "http://localhost/?a=1")

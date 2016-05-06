@@ -1,5 +1,6 @@
 source https://www.nuget.org/api/v2
 
+nuget Hopac
 nuget FAKE
 nuget FSharp.Core
 nuget FsUnit ~> 1.2
@@ -11,3 +12,4 @@ nuget NuGet.CommandLine
 nuget OpenCover ~> 4.5
 nuget Suave
 nuget Suave.Testing
+github haf/YoLo YoLo.fs

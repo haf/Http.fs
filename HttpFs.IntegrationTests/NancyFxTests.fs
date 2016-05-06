@@ -1,5 +1,6 @@
 ﻿module HttpFs.IntegrationTests.NancyFxTests
 
+open Hopac
 open System
 open System.IO
 open System.Net
@@ -30,7 +31,7 @@ let uriFor path =
 
 let runIgnore =
   getResponse
-  >> Async.RunSynchronously
+  >> run
   >> (fun (r : HttpFs.Client.Response) -> (r :> IDisposable).Dispose())
 
 [<TestFixture>]
@@ -94,37 +95,39 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``readResponseBodyAsString should return the entity body as a string`` () =
     createRequest Get (uriFor "/GotBody")
-    |> Request.responseAsString |> Async.RunSynchronously
+    |> Request.responseAsString
+    |> run
     |> should equal "Check out my sexy body"
 
   [<Test>]
   member x.``readResponseBodyAsString should return an empty string when there is no body`` () =
     createRequest Get (uriFor "/GoodStatusCode")
-    |> Request.responseAsString |> Async.RunSynchronously
+    |> Request.responseAsString
+    |> run
     |> should equal ""
 
   [<Test>]
   member x.``all details of the response should be available after a call to getResponse`` () =
     let request = createRequest Get (uriFor "/AllTheThings")
-    use response = request |> getResponse |> Async.RunSynchronously
-    response.StatusCode |> should equal 418
-    let body = Response.readBodyAsString response |> Async.RunSynchronously
+    use response = request |> getResponse |> run
+    response.statusCode |> should equal 418
+    let body = Response.readBodyAsString response |> run
     body |> should equal "Some JSON or whatever"
-    response.ContentLength |> should equal 21
-    response.Cookies.["cookie1"] |> should equal "chocolate+chip" // cookies get encoded
-    response.Cookies.["cookie2"] |> should equal "smarties"
-    response.Headers.[ContentEncoding] |> should equal "gzip"
-    response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
+    response.contentLength |> should equal 21
+    response.cookies.["cookie1"] |> should equal "chocolate+chip" // cookies get encoded
+    response.cookies.["cookie2"] |> should equal "smarties"
+    response.headers.[ContentEncoding] |> should equal "gzip"
+    response.headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
   [<Test>]
   member x.``simplest possible response`` () =
     let request = createRequest Get (uriFor "/NoCookies")
-    use response = request |> getResponse |> Async.RunSynchronously
-    response.StatusCode |> should equal 200
+    use response = request |> getResponse |> run
+    response.statusCode |> should equal 200
     use ms = new MemoryStream()
-    response.Body.CopyTo ms // Windows workaround "this stream does not support seek"
+    response.body.CopyTo ms // Windows workaround "this stream does not support seek"
     ms.Length |> should equal 4
-    response.Cookies.IsEmpty |> should equal true
+    response.cookies.IsEmpty |> should equal true
 
   [<Test>]
   member x.``getResponseAsync, given a request with an invalid url, throws an exception`` () =
@@ -136,8 +139,8 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``when called on a non-existant page, returns 404`` () =
-    use response = createRequest Get (uriFor "/NoPage") |> getResponse |> Async.RunSynchronously
-    response.StatusCode |> should equal 404
+    use response = createRequest Get (uriFor "/NoPage") |> getResponse |> run
+    response.statusCode |> should equal 404
 
   [<Test>] 
   member x.``all of the manually-set request headers get sent to the server`` ()=
@@ -225,41 +228,41 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``all of the response headers are available after a call to getResponse`` () =
-    use response = createRequest Get (uriFor "/AllHeaders") |> getResponse |> Async.RunSynchronously
-    response.Headers.[AccessControlAllowOrigin] |> should equal "*"
-    response.Headers.[AcceptRanges] |> should equal "bytes"
-    response.Headers.[Age] |> should equal "12"
-    response.Headers.[Allow] |> should equal "GET, HEAD"
-    response.Headers.[CacheControl] |> should equal "max-age=3600"
-    //response.Headers.[Connection] |> should equal "close" // don't seem to get connection header from nancy
-    response.Headers.[ContentEncoding] |> should equal "gzip"
-    response.Headers.[ContentLanguage] |> should equal "EN-gb"
-    response.Headers.[ContentLocation] |> should equal "/index.htm"
-    response.Headers.[ContentMD5Response] |> should equal "Q2hlY2sgSW50ZWdyaXR5IQ=="
-    response.Headers.[ContentDisposition] |> should equal "attachment; filename=\"fname.ext\""
-    response.Headers.[ContentRange] |> should equal "bytes 21010-47021/47022"
-    response.Headers.[ContentTypeResponse] |> should equal "text/html; charset=utf-8"
-    let (parsedOK,_) = System.DateTime.TryParse(response.Headers.[DateResponse])
+    use response = createRequest Get (uriFor "/AllHeaders") |> getResponse |> run
+    response.headers.[AccessControlAllowOrigin] |> should equal "*"
+    response.headers.[AcceptRanges] |> should equal "bytes"
+    response.headers.[Age] |> should equal "12"
+    response.headers.[Allow] |> should equal "GET, HEAD"
+    response.headers.[CacheControl] |> should equal "max-age=3600"
+    //response.headers.[Connection] |> should equal "close" // don't seem to get connection header from nancy
+    response.headers.[ContentEncoding] |> should equal "gzip"
+    response.headers.[ContentLanguage] |> should equal "EN-gb"
+    response.headers.[ContentLocation] |> should equal "/index.htm"
+    response.headers.[ContentMD5Response] |> should equal "Q2hlY2sgSW50ZWdyaXR5IQ=="
+    response.headers.[ContentDisposition] |> should equal "attachment; filename=\"fname.ext\""
+    response.headers.[ContentRange] |> should equal "bytes 21010-47021/47022"
+    response.headers.[ContentTypeResponse] |> should equal "text/html; charset=utf-8"
+    let (parsedOK,_) = System.DateTime.TryParse(response.headers.[DateResponse])
     parsedOK |> should equal true
-    response.Headers.[ETag] |> should equal "737060cd8c284d8af7ad3082f209582d"
-    response.Headers.[Expires] |> should equal "Thu, 01 Dec 1994 16:00:00 GMT"
-    response.Headers.[LastModified] |> should equal "Tue, 15 Nov 1994 12:45:26 +0000"
-    response.Headers.[Link] |> should equal "</feed>; rel=\"alternate\""
-    response.Headers.[Location] |> should equal "http://www.w3.org/pub/WWW/People.html"
-    response.Headers.[P3P] |> should equal "CP=\"your_compact_policy\""
-    response.Headers.[PragmaResponse] |> should equal "no-cache"
-    response.Headers.[ProxyAuthenticate] |> should equal "Basic"
-    response.Headers.[Refresh] |> should equal "5; url=http://www.w3.org/pub/WWW/People.html"
-    response.Headers.[RetryAfter] |> should equal "120"
-    response.Headers.[Server] |> should contain "HTTPAPI/"
-    response.Headers.[StrictTransportSecurity] |> should equal "max-age=16070400; includeSubDomains"
-    response.Headers.[Trailer] |> should equal "Max-Forwards"
-    response.Headers.[TransferEncoding] |> should equal "identity"
-    response.Headers.[Vary] |> should equal "*"
-    response.Headers.[ViaResponse] |> should equal "1.0 fred, 1.1 example.com (Apache/1.1)"
-    response.Headers.[WarningResponse] |> should equal "199 Miscellaneous warning"
-    response.Headers.[WWWAuthenticate] |> should equal "Basic"
-    response.Headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
+    response.headers.[ETag] |> should equal "737060cd8c284d8af7ad3082f209582d"
+    response.headers.[Expires] |> should equal "Thu, 01 Dec 1994 16:00:00 GMT"
+    response.headers.[LastModified] |> should equal "Tue, 15 Nov 1994 12:45:26 +0000"
+    response.headers.[Link] |> should equal "</feed>; rel=\"alternate\""
+    response.headers.[Location] |> should equal "http://www.w3.org/pub/WWW/People.html"
+    response.headers.[P3P] |> should equal "CP=\"your_compact_policy\""
+    response.headers.[PragmaResponse] |> should equal "no-cache"
+    response.headers.[ProxyAuthenticate] |> should equal "Basic"
+    response.headers.[Refresh] |> should equal "5; url=http://www.w3.org/pub/WWW/People.html"
+    response.headers.[RetryAfter] |> should equal "120"
+    response.headers.[Server] |> should contain "HTTPAPI/"
+    response.headers.[StrictTransportSecurity] |> should equal "max-age=16070400; includeSubDomains"
+    response.headers.[Trailer] |> should equal "Max-Forwards"
+    response.headers.[TransferEncoding] |> should equal "identity"
+    response.headers.[Vary] |> should equal "*"
+    response.headers.[ViaResponse] |> should equal "1.0 fred, 1.1 example.com (Apache/1.1)"
+    response.headers.[WarningResponse] |> should equal "199 Miscellaneous warning"
+    response.headers.[WWWAuthenticate] |> should equal "Basic"
+    response.headers.[NonStandard("X-New-Fangled-Header")] |> should equal "some value"
 
   [<Test>]
   member x.``if body character encoding is specified, encodes the request body with it`` () =
@@ -276,7 +279,7 @@ type ``Integration tests`` ()=
       createRequest Get (uriFor "/MoonLanguageCorrectEncoding")
       |> withResponseCharacterEncoding (Encoding.GetEncoding "utf-16")
       |> Request.responseAsString
-      |> Async.RunSynchronously
+      |> run
 
     responseBodyString |> should equal "迿ꞧ쒿" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with utf-16
 
@@ -285,7 +288,7 @@ type ``Integration tests`` ()=
     let responseBodyString =
       createRequest Get (uriFor "/MoonLanguageCorrectEncoding")
       |> Request.responseAsString
-      |> Async.RunSynchronously
+      |> run
 
     responseBodyString|> should equal "яЏ§§їДЙ"
 
@@ -293,10 +296,13 @@ type ``Integration tests`` ()=
   member x.``response charset IS NOT SPECIFIED, NO Content-Type header, body read by default as Latin 1`` () =
     let expected = "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
 
-    let response = createRequest Get (uriFor "/MoonLanguageTextPlainNoEncoding") |> Request.responseAsString |> Async.RunSynchronously
+    let response =
+      createRequest Get (uriFor "/MoonLanguageTextPlainNoEncoding")
+      |> Request.responseAsString
+      |> run
     response |> should equal expected
 
-    let response = createRequest Get (uriFor "/MoonLanguageApplicationXmlNoEncoding") |> Request.responseAsString |> Async.RunSynchronously
+    let response = createRequest Get (uriFor "/MoonLanguageApplicationXmlNoEncoding") |> Request.responseAsString |> run
     response |> should equal expected
 
   [<Test>]
@@ -304,7 +310,7 @@ type ``Integration tests`` ()=
     try
       createRequest Get (uriFor "/MoonLanguageInvalidEncoding")
       |> Request.responseAsString
-      |> Async.RunSynchronously
+      |> run
       |> ignore
       Assert.Fail "should throw ArgumentException"
     with :? ArgumentException as e ->
@@ -313,12 +319,15 @@ type ``Integration tests`` ()=
   // .Net encoder doesn't like utf8, seems to need utf-8
   [<Test>]
   member x.``if the response character encoding is specified as 'utf8', uses 'utf-8' instead`` () =
-    let str = createRequest Get (uriFor "/utf8") |> Request.responseAsString |> Async.RunSynchronously
+    let str =
+      createRequest Get (uriFor "/utf8")
+      |> Request.responseAsString
+      |> run
     str |> should equal "'Why do you hate me so much, Windows?!' - utf8"
 
   [<Test>]
   member x.``if the response character encoding is specified as 'utf16', uses 'utf-16' instead`` () =
-    let str = createRequest Get (uriFor "/utf16") |> Request.responseAsString |> Async.RunSynchronously
+    let str = createRequest Get (uriFor "/utf16") |> Request.responseAsString |> run
     str |> should equal "'Why are you so picky, Windows?!' - utf16"
 
   [<Test>]
@@ -326,40 +335,46 @@ type ``Integration tests`` ()=
     use response =
       createRequest Get (uriFor "/CookieRedirect")
       |> getResponse
-      |> Async.RunSynchronously
+      |> run
 
-    response.StatusCode |> should equal 200
-    response.Cookies.ContainsKey "cookie1" |> should equal false
+    response.statusCode |> should equal 200
+    response.cookies.ContainsKey "cookie1" |> should equal false
 
   [<Test>]
   member x.``reading the body as bytes works properly`` () =
-    use response = createRequest Get (uriFor "/Raw") |> getResponse |> Async.RunSynchronously
+    use response =
+      createRequest Get (uriFor "/Raw")
+      |> getResponse
+      |> run
     let expected =
       [| 98uy
          111uy
          100uy
          121uy |]
-    let actual = Response.readBodyAsBytes response |> Async.RunSynchronously
+    let actual = Response.readBodyAsBytes response |> run
     actual |> should equal expected
 
   [<Test>]
   member x.``when there is no body, reading it as bytes gives an empty array`` () =
-    use response = createRequest Get (uriFor "/GoodStatusCode") |> getResponse |> Async.RunSynchronously
+    use response = createRequest Get (uriFor "/GoodStatusCode") |> getResponse |> run
     use ms = new MemoryStream()
-    response.Body.CopyTo ms // Windows workaround "this stream does not support seek"
+    response.body.CopyTo ms // Windows workaround "this stream does not support seek"
     Assert.That(ms.Length, Is.EqualTo(0), "Should be zero length")
 
   [<Test>]
   member x.``readResponseBodyAsString can read the response body`` () =
     createRequest Get (uriFor "/Raw")
     |> Request.responseAsString
-    |> Async.RunSynchronously
+    |> run
     |> should equal "body"
 
   [<Test>]
   member x.``Closing the response body stream retrieved from getResponseAsync does not cause an exception`` () =
-    use response = createRequest Get (uriFor "/Raw") |> getResponse |> Async.RunSynchronously
-    response.Body.Close ()
+    use response =
+      createRequest Get (uriFor "/Raw")
+      |> getResponse
+      |> run
+    response.body.Close ()
 
   [<Test; Ignore "exception not thrown on Mono - investigate">]
   /// Timeout follows .Net behaviour and throws WebException exception when reached.
@@ -370,7 +385,7 @@ type ``Integration tests`` ()=
       |> withTimeout 1000<ms>
       |> withBodyString "hi mum"
       |> Request.responseAsString
-      |> Async.RunSynchronously
+      |> run
       |> ignore)
     |> should throw typeof<WebException>
 
@@ -379,18 +394,18 @@ type ``Integration tests`` ()=
     use resp =
       createRequest Get (uriFor "/Get")
       |> getResponse
-      |> Async.RunSynchronously
+      |> run
 
-    resp.StatusCode |> should equal 200
+    resp.statusCode |> should equal 200
 
   [<Test>]
   member x.``Options method works`` () =
     use resp =
       createRequest Options (uriFor "/Options")
       |> getResponse
-      |> Async.RunSynchronously
+      |> run
 
-    resp.StatusCode |> should equal 200
+    resp.statusCode |> should equal 200
 
   [<Test>]
   member x.``Post method works`` () =
@@ -398,24 +413,26 @@ type ``Integration tests`` ()=
       createRequest Post (uriFor "/Post") 
       |> withBodyString "hi mum" // posts need a body in Nancy
       |> getResponse
-      |> Async.RunSynchronously
+      |> run
 
-    resp.StatusCode |> should equal 200
+    resp.statusCode |> should equal 200
 
   [<Test>]
   member x.``Patch method works`` () =
     createRequest Patch (uriFor "/Patch")
-    |> getResponse |> Async.RunSynchronously
-    |> fun r -> r.StatusCode |> should equal 200
+    |> getResponse
+    |> run
+    |> fun r ->
+      r.statusCode |> should equal 200
 
   [<Test>]
   member x.``Head method works`` () =
     use resp =
       createRequest Head (uriFor "/Get")
       |> getResponse
-      |> Async.RunSynchronously
+      |> run
 
-    resp.StatusCode |> should equal 200
+    resp.statusCode |> should equal 200
     // Head method automatically handled for Get methods in Nancy
 
   [<Test>]
@@ -424,18 +441,18 @@ type ``Integration tests`` ()=
       createRequest Put (uriFor "/Put")
       |> withBodyString "hi mum" // puts need a body in Nancy
       |> getResponse
-      |> Async.RunSynchronously
+      |> run
 
-    resp.StatusCode |> should equal 200
+    resp.statusCode |> should equal 200
 
   [<Test>]
   member x.``Delete method works`` () =
     use resp =
       createRequest Delete (uriFor "/Delete")
       |> getResponse
-      |> Async.RunSynchronously
+      |> run
 
-    resp.StatusCode |> should equal 200
+    resp.statusCode |> should equal 200
 
   [<Test>]
   member x.``getResponse.ResponseUri should contain URI that responded to the request`` () =
@@ -444,9 +461,9 @@ type ``Integration tests`` ()=
       createRequest Post (uriFor "/Redirect")
       |> withBodyString "hi mum" // posts need a body in Nancy
 
-    use resp = request |> getResponse |> Async.RunSynchronously
-    resp.StatusCode |> should equal 200
-    resp.ResponseUri.ToString() |> should equal "http://localhost:1234/TestServer/GoodStatusCode"
+    use resp = request |> getResponse |> run
+    resp.statusCode |> should equal 200
+    resp.responseUri.ToString() |> should equal "http://localhost:1234/TestServer/GoodStatusCode"
 
   // Nancy doesn't support Trace or Connect HTTP methods, so we can't test them easily
 
@@ -477,7 +494,7 @@ type ``Integration tests`` ()=
           ]
           |> BodyForm)
 
-    let response = req |> Request.responseAsString |> Async.RunSynchronously
+    let response = req |> Request.responseAsString |> run
 
     for fileName in [ "file1.txt"; "file2.gif" ] do
       Assert.That(response, Is.StringContaining(fileName))

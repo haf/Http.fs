@@ -30,7 +30,7 @@ build :quick_compile do |b|
 end
 
 task :paket_bootstrap do
-system 'tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'tools/paket.exe'
+  system 'tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'tools/paket.exe'
 end
 
 desc 'restore all nugets as per the packages.config files'
@@ -38,8 +38,13 @@ task :restore => :paket_bootstrap do
   system 'tools/paket.exe', 'restore', clr_command: true
 end
 
+task :yolo do
+  system %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal Fakta.YoLo')" paket-files/haf/YoLo/YoLo.fs} \
+    unless Albacore.windows?
+end
+
 desc 'Perform full build'
-build :compile => [:versioning, :restore, :assembly_info] do |b|
+build :compile => [:versioning, :restore, :assembly_info, :yolo] do |b|
   b.prop 'Configuration', Configuration
   b.sln = 'Http.fs.sln'
 end

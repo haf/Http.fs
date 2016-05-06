@@ -3,6 +3,7 @@ module HttpFs.SampleApplication.Program
 
 open HttpFs.Client
 open HttpFs.SampleApplication
+open Hopac
 open System.IO
 open System
 
@@ -25,7 +26,7 @@ let download = createRequest Get >> Request.responseAsBytes
 // We pass the getResponseBody function in as a dependency to PageDownloader so
 // it can be unit tested
 let countWords () =
-  async {
+  job {
     let downloader = new PageDownloader(Request.responseAsString)
     printfn "What word would you like to count on bbc.co.uk/news?"
     let word = Console.ReadLine()
@@ -51,7 +52,7 @@ let downloadSequentially sites =
 /// Download some sites in parallel
 let downloadInParallel (sites : Uri list) =
   let res, timer = withTimer <| fun _ ->
-    sites |> List.map download |> Async.Parallel |> Async.RunSynchronously |> List.ofArray
+    sites |> List.map download |> Job.conCollect |> run
   printfn "Pages downloaded in parallel in %d ms" timer.ElapsedMilliseconds
   res
 
@@ -61,55 +62,55 @@ let returnToContinue message =
 
 // create a more coplex request, and see the request & response
 // (this should get a 302)
-let complexRequest() = async {
-    let request =
-      createRequest Get (Uri "http://www.google.com/search")
-      |> withQueryStringItem "q" "gibbons"
-      |> withAutoDecompression DecompressionScheme.GZip
-      |> withAutoFollowRedirectsDisabled
-      |> withCookie (Cookie.Create("ignoreMe", "hi mum"))
-      |> withHeader (Accept "text/html")
-      |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")
+let complexRequest() = job {
+  let request =
+    createRequest Get (Uri "http://www.google.com/search")
+    |> withQueryStringItem "q" "gibbons"
+    |> withAutoDecompression DecompressionScheme.GZip
+    |> withAutoFollowRedirectsDisabled
+    |> withCookie (Cookie.Create("ignoreMe", "hi mum"))
+    |> withHeader (Accept "text/html")
+    |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")
 
-    returnToContinue "Press Return to see the request"
-    printfn "%A" request
+  returnToContinue "Press Return to see the request"
+  printfn "%A" request
 
-    printfn "\nRetrieving response..."
-    let! response = request |> getResponse
+  printfn "\nRetrieving response..."
+  let! response = request |> getResponse
 
-    returnToContinue "Press Return to see the response"
-    printfn "%A" response
-    return response
-  }
+  returnToContinue "Press Return to see the response"
+  printfn "%A" response
+  return response
+}
 
-let downloadImage() = async {
-    let! response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
-    use ms = new IO.MemoryStream()
-    response.Body.CopyTo(ms)
-    let bytes = ms.ToArray()
+let downloadImage() = job {
+  let! response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
+  use ms = new IO.MemoryStream()
+  response.body.CopyTo(ms)
+  let bytes = ms.ToArray()
 
-    printfn "Please enter path to save the image to, e.g. c:/temp (file will be testImage.png)"
-    let filename = Console.ReadLine() + "/testImage.png"
+  printfn "Please enter path to save the image to, e.g. c:/temp (file will be testImage.png)"
+  let filename = Console.ReadLine() + "/testImage.png"
 
-    use file = File.Create(filename)
-    file.Write(bytes, 0, bytes.Length)
+  use file = File.Create(filename)
+  file.Write(bytes, 0, bytes.Length)
 
-    printfn "'%s' written to disk" filename
-  }
+  printfn "'%s' written to disk" filename
+}
 
 let downloadImagesInParallel images =
   let res, timer = withTimer <| fun _ ->
     images
     |> List.map (createRequest Get >> getResponse)
-    |> List.map (Async.map Response.readBodyAsBytes)
-    |> Async.Parallel
-    |> Async.RunSynchronously
+    |> List.map (Job.map Response.readBodyAsBytes)
+    |> Job.conCollect
+    |> run
     |> ignore
   printfn "Images downloaded in parallel in %d ms" timer.ElapsedMilliseconds
 
 // access the response stream and save it to a file directly
 let downloadLargeFile() =
-  async {
+  job {
     printfn "Please enter path to save the 'large' file to, e.g. c:/temp (file will be large.bin)"
     let filename = Console.ReadLine() + "/large.bin"
 
@@ -118,18 +119,18 @@ let downloadLargeFile() =
       do sourceStream.CopyTo(destStream)
 
     use! response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
-    saveToFile response.Body
+    saveToFile response.body
 
     printfn "'%s' downloaded" filename
   }
 
 [<EntryPoint>]
 let Main(_) =
-  async {
+  job {
     let! count = countWords ()
     printfn "** Word Count **"
     return count }
-  |> Async.RunSynchronously |> printfn "%d"
+  |> run |> printfn "%d"
 
   printfn "\n** Downloading sites: Sequential vs Parallel **"
   [ "http://news.bbc.co.uk"
@@ -141,7 +142,7 @@ let Main(_) =
   |> ignore
 
   printfn "\n** Creating a complex request **"
-  complexRequest () |> Async.RunSynchronously |> printfn "%A"
+  complexRequest () |> run |> printfn "%A"
 
   printfn "\n** Downloading image **"
   downloadImage () |> ignore
