@@ -2,7 +2,7 @@ source https://www.nuget.org/api/v2
 
 nuget Hopac
 nuget FAKE
-nuget FSharp.Core
+nuget FSharp.Core ~> 3
 nuget FsUnit ~> 1.2
 nuget Nancy ~> 0.22
 nuget Nancy.Hosting.Self ~> 0.22
