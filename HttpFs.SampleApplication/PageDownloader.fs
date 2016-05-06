@@ -13,6 +13,6 @@ type PageDownloader(getResponseBodyFunction : Request -> Job<_>) =
       0
 
   member this.countWordInstances word url = job {
-    let! (body:string) = createRequest Get url |> getResponseBodyFunction
+    let! (body:string) = Request.create Get url |> getResponseBodyFunction
     return body |> countWord word
   }

@@ -55,34 +55,34 @@ type ``Integration tests`` ()=
   [<Test>]
   // This needs to be run first, as the keep-alive is only set on the first call.  They seem to be run alphabetically.
   member x.``_if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones`` () =
-    createRequest Get (uriFor "/RecordRequest") |> runIgnore
+    Request.create Get (uriFor "/RecordRequest") |> runIgnore
     HttpServer.recordedRequest.Value |> should not' (equal null)
     HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "keep-alive"
 
     HttpServer.recordedRequest := null
-    createRequest Get (uriFor "/RecordRequest") |> runIgnore
+    Request.create Get (uriFor "/RecordRequest") |> runIgnore
     HttpServer.recordedRequest.Value |> should not' (equal null)
     HttpServer.recordedRequest.Value.Headers.Connection |> should equal ""
 
   [<Test>]
   member x.``if KeepAlive is false, Connection set to 'Close' on every request`` () =
-    createRequest Get (uriFor "/RecordRequest") |> withKeepAlive false |> runIgnore
+    Request.create Get (uriFor "/RecordRequest") |> Request.keepAlive false |> runIgnore
     HttpServer.recordedRequest.Value |> should not' (equal null)
     HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "close"
 
     HttpServer.recordedRequest := null
-    createRequest Get (uriFor "/RecordRequest") |> withKeepAlive false |> runIgnore
+    Request.create Get (uriFor "/RecordRequest") |> Request.keepAlive false |> runIgnore
     HttpServer.recordedRequest.Value |> should not' (equal null)
     HttpServer.recordedRequest.Value.Headers.Connection.ToLowerInvariant() |> should equal "close"
 
   [<Test>] 
   member x.``createRequest should set everything correctly in the HTTP request`` ()=
-    createRequest Post (uriFor "/RecordRequest")
-    |> withQueryStringItem "search" "jeebus"
-    |> withQueryStringItem "qs2" "hi mum"
-    |> withHeader (Accept "application/xml")
-    |> withCookie (Cookie.Create("SESSIONID", "1234"))
-    |> withBodyString "some XML or whatever"
+    Request.create Post (uriFor "/RecordRequest")
+    |> Request.queryStringItem "search" "jeebus"
+    |> Request.queryStringItem "qs2" "hi mum"
+    |> Request.setHeader (Accept "application/xml")
+    |> Request.cookie (Cookie.create("SESSIONID", "1234"))
+    |> Request.bodyString "some XML or whatever"
     |> runIgnore
     HttpServer.recordedRequest.Value |> should not' (equal null)
     HttpServer.recordedRequest.Value.Query?search.ToString() |> should equal "jeebus"
@@ -94,21 +94,21 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``readResponseBodyAsString should return the entity body as a string`` () =
-    createRequest Get (uriFor "/GotBody")
+    Request.create Get (uriFor "/GotBody")
     |> Request.responseAsString
     |> run
     |> should equal "Check out my sexy body"
 
   [<Test>]
   member x.``readResponseBodyAsString should return an empty string when there is no body`` () =
-    createRequest Get (uriFor "/GoodStatusCode")
+    Request.create Get (uriFor "/GoodStatusCode")
     |> Request.responseAsString
     |> run
     |> should equal ""
 
   [<Test>]
   member x.``all details of the response should be available after a call to getResponse`` () =
-    let request = createRequest Get (uriFor "/AllTheThings")
+    let request = Request.create Get (uriFor "/AllTheThings")
     use response = request |> getResponse |> run
     response.statusCode |> should equal 418
     let body = Response.readBodyAsString response |> run
@@ -121,7 +121,7 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``simplest possible response`` () =
-    let request = createRequest Get (uriFor "/NoCookies")
+    let request = Request.create Get (uriFor "/NoCookies")
     use response = request |> getResponse |> run
     response.statusCode |> should equal 200
     use ms = new MemoryStream()
@@ -132,44 +132,44 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``getResponseAsync, given a request with an invalid url, throws an exception`` () =
     (fun() ->
-      createRequest Get (Uri "www.google.com")
+      Request.create Get (Uri "www.google.com")
       |> getResponse
       |> ignore)
     |> should throw typeof<UriFormatException>
 
   [<Test>]
   member x.``when called on a non-existant page, returns 404`` () =
-    use response = createRequest Get (uriFor "/NoPage") |> getResponse |> run
+    use response = Request.create Get (uriFor "/NoPage") |> getResponse |> run
     response.statusCode |> should equal 404
 
   [<Test>] 
   member x.``all of the manually-set request headers get sent to the server`` ()=
-    createRequest Get (uriFor "/RecordRequest")
-    |> withHeader (Accept "application/xml,text/html;q=0.3")
-    |> withHeader (AcceptCharset "utf-8, utf-16;q=0.5" )
-    |> withHeader (AcceptDatetime "Thu, 31 May 2007 20:35:00 GMT" )
-    |> withHeader (AcceptLanguage "en-GB, en-US;q=0.1" )
-    |> withHeader (Authorization  "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
-    |> withHeader (Connection "conn1" )
-    |> withHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
-    |> withHeader (ContentType (ContentType.Create("application", "json")))
-    |> withHeader (Date (new DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
-    |> withHeader (From "user@example.com" )
-    |> withHeader (IfMatch "737060cd8c284d8af7ad3082f209582d" )
-    |> withHeader (IfModifiedSince (new DateTime(2000, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
-    |> withHeader (IfNoneMatch "737060cd8c284d8af7ad3082f209582d" )
-    |> withHeader (IfRange "737060cd8c284d8af7ad3082f209582d" )
-    |> withHeader (MaxForwards 5 )
-    |> withHeader (Origin "http://www.mybot.com" )
-    |> withHeader (RequestHeader.Pragma "no-cache" )
-    |> withHeader (ProxyAuthorization "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
-    |> withHeader (Range {start=0L; finish=500L} )
-    |> withHeader (Referer "http://en.wikipedia.org/" )
-    |> withHeader (Upgrade "HTTP/2.0, SHTTP/1.3" )
-    |> withHeader (UserAgent "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0" )
-    |> withHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)" )
-    |> withHeader (Warning "199 Miscellaneous warning" )
-    |> withHeader (Custom ("X-Greeting", "Happy Birthday"))
+    Request.create Get (uriFor "/RecordRequest")
+    |> Request.setHeader (Accept "application/xml,text/html;q=0.3")
+    |> Request.setHeader (AcceptCharset "utf-8, utf-16;q=0.5" )
+    |> Request.setHeader (AcceptDatetime "Thu, 31 May 2007 20:35:00 GMT" )
+    |> Request.setHeader (AcceptLanguage "en-GB, en-US;q=0.1" )
+    |> Request.setHeader (Authorization  "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
+    |> Request.setHeader (Connection "conn1" )
+    |> Request.setHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
+    |> Request.setHeader (ContentType (ContentType.Create("application", "json")))
+    |> Request.setHeader (Date (new DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
+    |> Request.setHeader (From "user@example.com" )
+    |> Request.setHeader (IfMatch "737060cd8c284d8af7ad3082f209582d" )
+    |> Request.setHeader (IfModifiedSince (new DateTime(2000, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
+    |> Request.setHeader (IfNoneMatch "737060cd8c284d8af7ad3082f209582d" )
+    |> Request.setHeader (IfRange "737060cd8c284d8af7ad3082f209582d" )
+    |> Request.setHeader (MaxForwards 5 )
+    |> Request.setHeader (Origin "http://www.mybot.com" )
+    |> Request.setHeader (RequestHeader.Pragma "no-cache" )
+    |> Request.setHeader (ProxyAuthorization "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
+    |> Request.setHeader (Range {start=0L; finish=500L} )
+    |> Request.setHeader (Referer "http://en.wikipedia.org/" )
+    |> Request.setHeader (Upgrade "HTTP/2.0, SHTTP/1.3" )
+    |> Request.setHeader (UserAgent "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0" )
+    |> Request.setHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)" )
+    |> Request.setHeader (Warning "199 Miscellaneous warning" )
+    |> Request.setHeader (Custom ("X-Greeting", "Happy Birthday"))
     |> runIgnore
 
     HttpServer.recordedRequest.Value |> should not' (equal null)
@@ -206,16 +206,16 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``Content-Length header is set automatically for Posts with a body`` () =
-    createRequest Post (uriFor "/RecordRequest")
-    |> withBodyString "Hi Mum"
+    Request.create Post (uriFor "/RecordRequest")
+    |> Request.bodyString "Hi Mum"
     |> runIgnore
     HttpServer.recordedRequest.Value |> should not' (equal null)
     HttpServer.recordedRequest.Value.Headers.ContentLength |> should equal 6
 
   [<Test>]
   member x.``accept-encoding header is set automatically when decompression scheme is set`` () =
-    createRequest Get (uriFor "/RecordRequest")
-    |> withAutoDecompression (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
+    Request.create Get (uriFor "/RecordRequest")
+    |> Request.autoDecompression (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
     |> runIgnore
     HttpServer.recordedRequest.Value |> should not' (equal null)
     HttpServer.recordedRequest.Value.Headers.AcceptEncoding |> should contain "gzip"
@@ -228,7 +228,7 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``all of the response headers are available after a call to getResponse`` () =
-    use response = createRequest Get (uriFor "/AllHeaders") |> getResponse |> run
+    use response = Request.create Get (uriFor "/AllHeaders") |> getResponse |> run
     response.headers.[AccessControlAllowOrigin] |> should equal "*"
     response.headers.[AcceptRanges] |> should equal "bytes"
     response.headers.[Age] |> should equal "12"
@@ -266,8 +266,8 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``if body character encoding is specified, encodes the request body with it`` () =
-    createRequest Post (uriFor "/RecordRequest")
-    |> withBodyStringEncoded "¥§±Æ" utf8 // random UTF-8 characters
+    Request.create Post (uriFor "/RecordRequest")
+    |> Request.bodyStringEncoded "¥§±Æ" utf8 // random UTF-8 characters
     |> runIgnore
 
     use bodyStream = new StreamReader(HttpServer.recordedRequest.Value.Body,Encoding.GetEncoding("UTF-8"))
@@ -276,8 +276,8 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``response charset SPECIFIED, is used regardless of Content-Type header`` () =
     let responseBodyString =
-      createRequest Get (uriFor "/MoonLanguageCorrectEncoding")
-      |> withResponseCharacterEncoding (Encoding.GetEncoding "utf-16")
+      Request.create Get (uriFor "/MoonLanguageCorrectEncoding")
+      |> Request.responseCharacterEncoding (Encoding.GetEncoding "utf-16")
       |> Request.responseAsString
       |> run
 
@@ -286,7 +286,7 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``response charset IS NOT SPECIFIED, Content-Type header is used`` () =
     let responseBodyString =
-      createRequest Get (uriFor "/MoonLanguageCorrectEncoding")
+      Request.create Get (uriFor "/MoonLanguageCorrectEncoding")
       |> Request.responseAsString
       |> run
 
@@ -297,18 +297,18 @@ type ``Integration tests`` ()=
     let expected = "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
 
     let response =
-      createRequest Get (uriFor "/MoonLanguageTextPlainNoEncoding")
+      Request.create Get (uriFor "/MoonLanguageTextPlainNoEncoding")
       |> Request.responseAsString
       |> run
     response |> should equal expected
 
-    let response = createRequest Get (uriFor "/MoonLanguageApplicationXmlNoEncoding") |> Request.responseAsString |> run
+    let response = Request.create Get (uriFor "/MoonLanguageApplicationXmlNoEncoding") |> Request.responseAsString |> run
     response |> should equal expected
 
   [<Test>]
   member x.``throws ArgumentException for invalid Content-Type charset when reading string`` () =
     try
-      createRequest Get (uriFor "/MoonLanguageInvalidEncoding")
+      Request.create Get (uriFor "/MoonLanguageInvalidEncoding")
       |> Request.responseAsString
       |> run
       |> ignore
@@ -320,20 +320,20 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``if the response character encoding is specified as 'utf8', uses 'utf-8' instead`` () =
     let str =
-      createRequest Get (uriFor "/utf8")
+      Request.create Get (uriFor "/utf8")
       |> Request.responseAsString
       |> run
     str |> should equal "'Why do you hate me so much, Windows?!' - utf8"
 
   [<Test>]
   member x.``if the response character encoding is specified as 'utf16', uses 'utf-16' instead`` () =
-    let str = createRequest Get (uriFor "/utf16") |> Request.responseAsString |> run
+    let str = Request.create Get (uriFor "/utf16") |> Request.responseAsString |> run
     str |> should equal "'Why are you so picky, Windows?!' - utf16"
 
   [<Test>]
   member x.``cookies are not kept during an automatic redirect`` () =
     use response =
-      createRequest Get (uriFor "/CookieRedirect")
+      Request.create Get (uriFor "/CookieRedirect")
       |> getResponse
       |> run
 
@@ -343,7 +343,7 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``reading the body as bytes works properly`` () =
     use response =
-      createRequest Get (uriFor "/Raw")
+      Request.create Get (uriFor "/Raw")
       |> getResponse
       |> run
     let expected =
@@ -356,14 +356,14 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``when there is no body, reading it as bytes gives an empty array`` () =
-    use response = createRequest Get (uriFor "/GoodStatusCode") |> getResponse |> run
+    use response = Request.create Get (uriFor "/GoodStatusCode") |> getResponse |> run
     use ms = new MemoryStream()
     response.body.CopyTo ms // Windows workaround "this stream does not support seek"
     Assert.That(ms.Length, Is.EqualTo(0), "Should be zero length")
 
   [<Test>]
   member x.``readResponseBodyAsString can read the response body`` () =
-    createRequest Get (uriFor "/Raw")
+    Request.create Get (uriFor "/Raw")
     |> Request.responseAsString
     |> run
     |> should equal "body"
@@ -371,7 +371,7 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``Closing the response body stream retrieved from getResponseAsync does not cause an exception`` () =
     use response =
-      createRequest Get (uriFor "/Raw")
+      Request.create Get (uriFor "/Raw")
       |> getResponse
       |> run
     response.body.Close ()
@@ -381,9 +381,9 @@ type ``Integration tests`` ()=
   /// https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx
   member x.``if the resource is not returned within Timeout, throw WebException`` () =
     (fun() ->
-      createRequest Post (uriFor "/SlowResponse")
-      |> withTimeout 1000<ms>
-      |> withBodyString "hi mum"
+      Request.create Post (uriFor "/SlowResponse")
+      |> Request.timeout 1000<ms>
+      |> Request.bodyString "hi mum"
       |> Request.responseAsString
       |> run
       |> ignore)
@@ -392,7 +392,7 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``Get method works`` () =
     use resp =
-      createRequest Get (uriFor "/Get")
+      Request.create Get (uriFor "/Get")
       |> getResponse
       |> run
 
@@ -401,7 +401,7 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``Options method works`` () =
     use resp =
-      createRequest Options (uriFor "/Options")
+      Request.create Options (uriFor "/Options")
       |> getResponse
       |> run
 
@@ -410,8 +410,8 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``Post method works`` () =
     use resp =
-      createRequest Post (uriFor "/Post") 
-      |> withBodyString "hi mum" // posts need a body in Nancy
+      Request.create Post (uriFor "/Post") 
+      |> Request.bodyString "hi mum" // posts need a body in Nancy
       |> getResponse
       |> run
 
@@ -419,7 +419,7 @@ type ``Integration tests`` ()=
 
   [<Test>]
   member x.``Patch method works`` () =
-    createRequest Patch (uriFor "/Patch")
+    Request.create Patch (uriFor "/Patch")
     |> getResponse
     |> run
     |> fun r ->
@@ -428,7 +428,7 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``Head method works`` () =
     use resp =
-      createRequest Head (uriFor "/Get")
+      Request.create Head (uriFor "/Get")
       |> getResponse
       |> run
 
@@ -438,8 +438,8 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``Put method works`` () =
     use resp =
-      createRequest Put (uriFor "/Put")
-      |> withBodyString "hi mum" // puts need a body in Nancy
+      Request.create Put (uriFor "/Put")
+      |> Request.bodyString "hi mum" // puts need a body in Nancy
       |> getResponse
       |> run
 
@@ -448,7 +448,7 @@ type ``Integration tests`` ()=
   [<Test>]
   member x.``Delete method works`` () =
     use resp =
-      createRequest Delete (uriFor "/Delete")
+      Request.create Delete (uriFor "/Delete")
       |> getResponse
       |> run
 
@@ -458,8 +458,8 @@ type ``Integration tests`` ()=
   member x.``getResponse.ResponseUri should contain URI that responded to the request`` () =
     // Is going to redirect to another route and return GET 200.
     let request =
-      createRequest Post (uriFor "/Redirect")
-      |> withBodyString "hi mum" // posts need a body in Nancy
+      Request.create Post (uriFor "/Redirect")
+      |> Request.bodyString "hi mum" // posts need a body in Nancy
 
     use resp = request |> getResponse |> run
     resp.statusCode |> should equal 200
@@ -484,8 +484,8 @@ type ``Integration tests`` ()=
       ContentType.Parse "text/plain" |> Option.get
 
     let req =
-      createRequest Post (uriFor "/filenames")
-      |> withBody
+      Request.create Post (uriFor "/filenames")
+      |> Request.body
           //([ SingleFile ("file", ("file1.txt", firstCt, Plain "Hello World")) ]|> BodyForm)
                           // example from http://www.w3.org/TR/html401/interact/forms.html
           ([ NameValue ("submit-name", "Larry")

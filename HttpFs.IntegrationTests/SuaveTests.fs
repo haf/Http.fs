@@ -44,7 +44,7 @@ let pathOf relativePath =
 type ``Suave Integration Tests`` () =
   let cts = new CancellationTokenSource()
   let uriFor (res : string) = Uri (sprintf "http://localhost:8083/%s" (res.TrimStart('/')))
-  let postTo res = createRequest Post (uriFor res) |> withKeepAlive false
+  let postTo res = Request.create Post (uriFor res) |> Request.keepAlive false
 
   [<TestFixtureSetUp>]
   member x.fixtureSetup() =
@@ -70,7 +70,7 @@ type ``Suave Integration Tests`` () =
 
     let req =
       postTo "filenames"
-      |> withBody
+      |> Request.body
           // example from http://www.w3.org/TR/html401/interact/forms.html
           (BodyForm
             [  NameValue ("submit-name", "Larry")

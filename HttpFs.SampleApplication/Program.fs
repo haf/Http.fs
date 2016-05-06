@@ -20,7 +20,7 @@ module Async =
     }
 
 
-let download = createRequest Get >> Request.responseAsBytes
+let download = Request.create Get >> Request.responseAsBytes
 
 // Use our PageDownloader to count the instances of a word on the bbc news site
 // We pass the getResponseBody function in as a dependency to PageDownloader so
@@ -64,13 +64,13 @@ let returnToContinue message =
 // (this should get a 302)
 let complexRequest() = job {
   let request =
-    createRequest Get (Uri "http://www.google.com/search")
-    |> withQueryStringItem "q" "gibbons"
-    |> withAutoDecompression DecompressionScheme.GZip
-    |> withAutoFollowRedirectsDisabled
-    |> withCookie (Cookie.Create("ignoreMe", "hi mum"))
-    |> withHeader (Accept "text/html")
-    |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")
+    Request.create Get (Uri "http://www.google.com/search")
+    |> Request.queryStringItem "q" "gibbons"
+    |> Request.autoDecompression DecompressionScheme.GZip
+    |> Request.autoFollowRedirectsDisabled
+    |> Request.cookie (Cookie.create("ignoreMe", "hi mum"))
+    |> Request.setHeader (Accept "text/html")
+    |> Request.setHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")
 
   returnToContinue "Press Return to see the request"
   printfn "%A" request
@@ -84,7 +84,7 @@ let complexRequest() = job {
 }
 
 let downloadImage() = job {
-  let! response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
+  let! response = Request.create Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
   use ms = new IO.MemoryStream()
   response.body.CopyTo(ms)
   let bytes = ms.ToArray()
@@ -101,7 +101,7 @@ let downloadImage() = job {
 let downloadImagesInParallel images =
   let res, timer = withTimer <| fun _ ->
     images
-    |> List.map (createRequest Get >> getResponse)
+    |> List.map (Request.create Get >> getResponse)
     |> List.map (Job.map Response.readBodyAsBytes)
     |> Job.conCollect
     |> run
@@ -118,7 +118,7 @@ let downloadLargeFile() =
       use destStream = new FileStream(filename, FileMode.Create)
       do sourceStream.CopyTo(destStream)
 
-    use! response = createRequest Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
+    use! response = Request.create Get (Uri "http://fsharp.org/img/logo.png") |> getResponse
     saveToFile response.body
 
     printfn "'%s' downloaded" filename

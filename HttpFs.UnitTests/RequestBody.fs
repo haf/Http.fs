@@ -2,42 +2,41 @@
 
 open System
 open System.Text
-
 open Fuchu
 open HttpFs.Client
 
-let VALID_URL = Uri "http://www"
-let createValidRequest = createRequest Get VALID_URL
+let ValidUri = Uri "http://www"
+let createValidRequest = Request.create Get ValidUri
 let utf8 = Encoding.UTF8
 
 [<Tests>]
 let apiUsage =
-    testList "api usage" [
-        testCase "withBody sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyString """Hello mum!%2\/@$""").body,
-              BodyString """Hello mum!%2\/@$""")
+  testList "api usage" [
+    testCase "withBody sets the request body" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.bodyString """Hello mum!%2\/@$""").body,
+        BodyString """Hello mum!%2\/@$""")
 
-        testCase "withBody sets the request body binary" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBody (BodyRaw [| 98uy; 111uy; 100uy; 121uy |])).body,
-              BodyRaw [| 98uy; 111uy; 100uy; 121uy |])
+    testCase "withBody sets the request body binary" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.body (BodyRaw [| 98uy; 111uy; 100uy; 121uy |])).body,
+        BodyRaw [| 98uy; 111uy; 100uy; 121uy |])
 
-        testCase "withBody uses default character encoding of UTF-8" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyString "whatever").bodyCharacterEncoding, utf8)
+    testCase "withBody uses default character encoding of UTF-8" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.bodyString "whatever").bodyCharacterEncoding, utf8)
 
-        testCase "withBodyEncoded sets the request body" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyStringEncoded """Hello mum!%2\/@$""" utf8).body,
-                         BodyString """Hello mum!%2\/@$""")
+    testCase "withBodyEncoded sets the request body" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.bodyStringEncoded """Hello mum!%2\/@$""" utf8).body,
+                   BodyString """Hello mum!%2\/@$""")
 
-        testCase "withBodyEncoded sets the body encoding" <| fun _ ->
-            Assert.Equal((createValidRequest |> withBodyStringEncoded "Hi Mum" utf8).bodyCharacterEncoding,
-                         utf8)
-    ]
+    testCase "withBodyEncoded sets the body encoding" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.bodyStringEncoded "Hi Mum" utf8).bodyCharacterEncoding,
+                   utf8)
+  ]
 
 [<Tests>]
 let contentType =
-    testCase "can convert to string" <| fun _ ->
-        let subject = ContentType.Create("application", "multipart", charset=Encoding.UTF8, boundary="---apa")
-        Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=---apa")
+  testCase "can convert to string" <| fun _ ->
+    let subject = ContentType.Create("application", "multipart", charset=Encoding.UTF8, boundary="---apa")
+    Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=---apa")
 
 [<Tests>]
 let bodyFormatting =
@@ -186,6 +185,6 @@ let bodyFormatting =
 [<Tests>]
 let internals =
     testCase "http web request url" <| fun _ ->
-        let hfsReq = createRequest Get (Uri "http://localhost/") |> withQueryStringItem "a" "1"
+        let hfsReq = Request.create Get (Uri "http://localhost/") |> Request.queryStringItem "a" "1"
         let netReq, _ = DotNetWrapper.toHttpWebRequest HttpFsState.empty hfsReq
         Assert.Equal(string netReq.RequestUri, "http://localhost/?a=1")

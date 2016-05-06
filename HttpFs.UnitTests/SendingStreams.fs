@@ -39,7 +39,7 @@ let tests =
   let config = { defaultConfig with logger = Loggers.saneDefaultsFor LogLevel.Warn }
   let runWithConfig = runWith config
   let uriFor (res : string) = Uri (sprintf "http://localhost:8083/%s" (res.TrimStart('/')))
-  let postTo res = createRequest Post (uriFor res) |> withKeepAlive false
+  let postTo res = Request.create Post (uriFor res) |> Request.keepAlive false
 
   testCase "can send/receive" <| fun _ ->
     job {
@@ -52,8 +52,8 @@ let tests =
         //printfn "--- get response"
         use! resp =
           postTo "gifs/echo"
-          |> withBody (BodyForm [ FormFile ("img", file) ])
-          |> withHeader (Custom ("Access-Code", "Super-Secret"))
+          |> Request.body (BodyForm [ FormFile ("img", file) ])
+          |> Request.setHeader (Custom ("Access-Code", "Super-Secret"))
           |> getResponse
 
         do! resp.body.CopyToAsync ms

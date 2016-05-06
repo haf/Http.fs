@@ -181,54 +181,66 @@ module Logging =
         member x.Equals other =
           x.ToInt() = other.ToInt()
 
-  /// When logging, write a log line like this with the source of your
+  type Value =
+    | Event of template:string
+    | Gauge of value:float * units:string
+
+  /// When logging, write a Message like this with the source of your
   /// log line as well as a message and an optional exception.
-  type LogLine =
+  type Message =
     { /// the level that this log line has
       level     : LogLevel
       /// the source of the log line, e.g. 'ModuleName.FunctionName'
-      path      : string
+      path      : string[]
       /// the message that the application wants to log
-      message   : string
-      /// any key-value based data to log
-      data      : Map<string, obj>
+      value     : Value
+      /// Any key-value data pairs to log or interpolate into the message
+      /// template.
+      fields    : Map<string, obj>
       /// timestamp when this log line was created
       timestamp : DateTimeOffset }
 
   /// The primary Logger abstraction that you can log data into
   type Logger =
-    abstract Verbose : (unit -> LogLine) -> unit
-    abstract Debug : (unit -> LogLine) -> unit
-    abstract Log : LogLine -> unit
+    abstract logVerbose : (unit -> Message) -> Alt<Promise<unit>>
+    abstract log : Message -> Alt<Promise<unit>>
+    abstract logSimple : Message -> unit
 
   let NoopLogger =
     { new Logger with
-        member x.Verbose f_line = ()
-        member x.Debug f_line = ()
-        member x.Log line = () }
+        member x.logVerbose evaluate = Alt.always (Promise.Now.withValue ())
+        member x.log message = Alt.always (Promise.Now.withValue ())
+        member x.logSimple message = () }
 
   let private logger =
     ref ((fun () -> DateTimeOffset.UtcNow), fun (name : string) -> NoopLogger)
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-  module LogLine =
+  module Message =
 
-    let mk (clock : unit -> DateTimeOffset) path level data message =
-      { message   = message
+    let create (clock : unit -> DateTimeOffset) path level fields message =
+      { value     = Event message
         level     = level
         path      = path
-        data      = data
+        fields    = fields
         timestamp = clock () }
 
-    let private message data message =
-      { message   = message
+    let event fields message =
+      { value     = Event message
         level     = Verbose
-        path      = ""
-        data      = data |> Map.ofList
+        path      = Array.empty
+        fields    = fields |> Map.ofList
+        timestamp = (fst !logger) () }
+
+    let gauge value units =
+      { value     = Gauge (value, units)
+        level     = Verbose
+        path      = Array.empty
+        fields    = Map.empty
         timestamp = (fst !logger) () }
 
     let sprintf data =
-      Printf.kprintf (message data)
+      Printf.kprintf (event data)
 
   let configure clock fLogger =
     logger := (clock, fLogger)
@@ -239,14 +251,14 @@ module Logging =
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Logger =
 
-    let log (logger : Logger) (line : LogLine) =
-      logger.Log line
+    let log (logger : Logger) message =
+      logger.log message
 
-    let debug (logger : Logger) f_line =
-      logger.Debug f_line
+    let logVerbose (logger : Logger) evaluate =
+      logger.logVerbose evaluate
 
-    let verbose (logger : Logger) f_line =
-      logger.Verbose f_line
+    let logSimple (logger : Logger) message =
+      logger.logSimple message
 
 module Client =
 
@@ -566,7 +578,7 @@ module Client =
       secure   : bool
       httpOnly : bool }
 
-    static member Create(name : CookieName, value : string, ?expires, ?path, ?domain, ?secure, ?httpOnly) =
+    static member create(name : CookieName, value : string, ?expires, ?path, ?domain, ?secure, ?httpOnly) =
       { name     = name
         value    = value
         expires  = expires
@@ -577,7 +589,7 @@ module Client =
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Cookie =
-    let toSystem x =
+    let internal toSystem x =
       let sc = System.Net.Cookie(x.name, x.value, Option.orDefault "/" x.path, Option.orDefault "" x.domain)
       x.expires |> Option.iter (fun e -> sc.Expires <- e.DateTime)
       sc.HttpOnly <- x.httpOnly
@@ -614,9 +626,8 @@ module Client =
       expectedEncoding : Encoding option
       responseUri      : System.Uri
       body             : Stream
-      luggage          : IDisposable option
-    }
-  with
+      luggage          : IDisposable option }
+
     interface IDisposable with
       member x.Dispose() =
         x.body.Dispose()
@@ -847,115 +858,6 @@ module Client =
 
   open Impl
 
-  /// <summary>Creates the Request record which can be used to make an HTTP request</summary>
-  /// <param name="httpMethod">The type of request to be made (Get, Post, etc.)</param>
-  /// <param name="url">The URL of the resource including protocol, e.g. 'http://www.relentlessdevelopment.net'</param>
-  /// <returns>The Request record</returns>
-  let createRequest httpMethod (url : Uri) =
-    { url                       = url
-      ``method``                    = httpMethod
-      cookiesEnabled            = true
-      autoFollowRedirects       = true
-      autoDecompression         = DecompressionScheme.None
-      headers                   = Map.empty
-      body                      = BodyRaw [||]
-      bodyCharacterEncoding     = DefaultBodyEncoding
-      queryStringItems          = Map.empty
-      cookies                   = Map.empty
-      responseCharacterEncoding = None
-      proxy                     = None
-      keepAlive                 = true
-      /// The default value is 100,000 milliseconds (100 seconds).
-      /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
-      timeout                   = 100000<ms>
-      networkCredentials        = None }
-
-  /// Disables cookies, which are enabled by default
-  let withCookiesDisabled request =
-    { request with cookiesEnabled = false }
-
-  /// Disables automatic following of redirects, which is enabled by default
-  let withAutoFollowRedirectsDisabled request =
-    { request with autoFollowRedirects = false }
-
-  /// Adds a header, defined as a RequestHeader
-  /// The current implementation doesn't allow you to add a single header multiple
-  /// times. File an issue if this is a limitation for you.
-  let withHeader (header : RequestHeader) (request : Request) =
-    { request with headers = request.headers |> Map.put header.Key header }
-
-  /// Adds an HTTP Basic Authentication header, which includes the username and password encoded as a base-64 string
-  let withBasicAuthentication username password =
-    withHeader (basicAuthorz username password)
-
-  /// Adds a credential cache to support NTLM authentication
-  let withNTLMAuthentication username password (request : Request) =
-    {request with networkCredentials = Some (Credentials.Custom { username = username; password = password}) }
-
-  /// Sets the accept-encoding request header to accept the decompression methods selected,
-  /// and automatically decompresses the responses.
-  ///
-  /// Multiple schemes can be OR'd together, e.g. (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
-  let withAutoDecompression decompressionSchemes request =
-    { request with autoDecompression = decompressionSchemes}
-
-  /// Lets you set your own body - use the RequestBody type to build it up.
-  let withBody body (request : Request) =
-    { request with body = body }
-
-  /// Sets the the request body, using UTF-8 character encoding.
-  ///
-  /// Only certain request types should have a body, e.g. Posts.
-  let withBodyString body (request : Request) =
-    { request with body = BodyString body }
-
-  /// Sets the request body, using the provided character encoding.
-  let withBodyStringEncoded body characterEncoding request =
-    { request with body = BodyString body; bodyCharacterEncoding = characterEncoding }
-
-  /// Adds the provided QueryString record onto the request URL.
-  /// Multiple items can be appended, but only the last appended key/value with
-  /// the same key as a previous key/value will be used.
-  let withQueryStringItem (name : QueryStringName) (value : QueryStringValue) request =
-    { request with queryStringItems = request.queryStringItems |> Map.put name value }
-
-  /// Adds a cookie to the request
-  /// The domain will be taken from the URL, and the path set to '/'.
-  ///
-  /// If your cookie appears not to be getting set, it could be because the response is a redirect,
-  /// which (by default) will be followed automatically, but cookies will not be re-sent.
-  let withCookie cookie request =
-    if not request.cookiesEnabled then failwithf "Cannot add cookie %A - cookies disabled" cookie.name
-    { request with cookies = request.cookies |> Map.put cookie.name cookie }
-
-  /// Decodes the response using the specified encoding, regardless of what the response specifies.
-  ///
-  /// If this is not set, response character encoding will be:
-  ///  - taken from the response content-encoding header, if provided, otherwise
-  ///  UTF8
-  ///
-  /// Many web pages define the character encoding in the HTML. This will not be used.
-  let withResponseCharacterEncoding encoding request : Request =
-    { request with responseCharacterEncoding = Some encoding }
-
-  /// Sends the request via the provided proxy.
-  ///
-  /// If this is no set, the proxy settings from IE will be used, if available.
-  let withProxy proxy request =
-    {request with proxy = Some proxy }
-
-  /// Sets the keep-alive header.  Defaults to true.
-  ///
-  /// If true, Connection header also set to 'Keep-Alive'
-  /// If false, Connection header also set to 'Close'
-  ///
-  /// NOTE: If true, headers only sent on first request.
-  let withKeepAlive value request =
-    { request with keepAlive = value }
-
-  let withTimeout timeout request =
-    { request with timeout = timeout }
-
   module internal DotNetWrapper =
     /// Sets headers on HttpWebRequest.
     /// Mutates HttpWebRequest.
@@ -1047,6 +949,9 @@ module Client =
       if ServicePointManager.Expect100Continue then
         ServicePointManager.Expect100Continue <- false
 
+    let setHeader (request : Request) (header : RequestHeader) =
+      { request with headers = request.headers |> Map.put header.Key header }
+
     /// The nasty business of turning a Request into an HttpWebRequest
     let toHttpWebRequest state (request : Request) =
       ensureNo100Continue ()
@@ -1079,7 +984,7 @@ module Client =
         // updates the request value with that header
         newContentType
         |> Option.map RequestHeader.ContentType
-        |> Option.fold (flip withHeader) request
+        |> Option.fold setHeader request
 
       webRequest.Method <- getMethodAsString request
       webRequest.ProtocolVersion <- HttpVersion.Version11
@@ -1233,6 +1138,118 @@ module Client =
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Request =
 
+    /// <summary>Creates the Request record which can be used to make an HTTP request</summary>
+    /// <param name="httpMethod">The type of request to be made (Get, Post, etc.)</param>
+    /// <param name="url">The URL of the resource including protocol, e.g. 'http://www.relentlessdevelopment.net'</param>
+    /// <returns>The Request record</returns>
+    let create httpMethod (url : Uri) =
+      { url                       = url
+        ``method``                = httpMethod
+        cookiesEnabled            = true
+        autoFollowRedirects       = true
+        autoDecompression         = DecompressionScheme.None
+        headers                   = Map.empty
+        body                      = BodyRaw [||]
+        bodyCharacterEncoding     = DefaultBodyEncoding
+        queryStringItems          = Map.empty
+        cookies                   = Map.empty
+        responseCharacterEncoding = None
+        proxy                     = None
+        keepAlive                 = true
+        /// The default value is 100,000 milliseconds (100 seconds).
+        /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
+        timeout                   = 100000<ms>
+        networkCredentials        = None }
+
+    let createUrl httpMethod url =
+      create httpMethod (Uri url)
+
+    /// Disables cookies, which are enabled by default
+    let cookiesDisabled request =
+      { request with cookiesEnabled = false }
+
+    /// Disables automatic following of redirects, which is enabled by default
+    let autoFollowRedirectsDisabled request =
+      { request with autoFollowRedirects = false }
+
+    /// Adds a header, defined as a RequestHeader
+    /// The current implementation doesn't allow you to add a single header multiple
+    /// times. File an issue if this is a limitation for you.
+    let setHeader (header : RequestHeader) (request : Request) =
+      { request with headers = request.headers |> Map.put header.Key header }
+
+    /// Adds an HTTP Basic Authentication header, which includes the username and password encoded as a base-64 string
+    let basicAuthentication username password =
+      setHeader (basicAuthorz username password)
+
+    /// Adds a credential cache to support NTLM authentication
+    let withNTLMAuthentication username password (request : Request) =
+      {request with networkCredentials = Some (Credentials.Custom { username = username; password = password}) }
+
+    /// Sets the accept-encoding request header to accept the decompression methods selected,
+    /// and automatically decompresses the responses.
+    ///
+    /// Multiple schemes can be OR'd together, e.g. (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
+    let autoDecompression decompressionSchemes request =
+      { request with autoDecompression = decompressionSchemes}
+
+    /// Lets you set your own body - use the RequestBody type to build it up.
+    let body body (request : Request) =
+      { request with body = body }
+
+    /// Sets the the request body, using UTF-8 character encoding.
+    ///
+    /// Only certain request types should have a body, e.g. Posts.
+    let bodyString body (request : Request) =
+      { request with body = BodyString body }
+
+    /// Sets the request body, using the provided character encoding.
+    let bodyStringEncoded body characterEncoding request =
+      { request with body = BodyString body; bodyCharacterEncoding = characterEncoding }
+
+    /// Adds the provided QueryString record onto the request URL.
+    /// Multiple items can be appended, but only the last appended key/value with
+    /// the same key as a previous key/value will be used.
+    let queryStringItem (name : QueryStringName) (value : QueryStringValue) request =
+      { request with queryStringItems = request.queryStringItems |> Map.put name value }
+
+    /// Adds a cookie to the request
+    /// The domain will be taken from the URL, and the path set to '/'.
+    ///
+    /// If your cookie appears not to be getting set, it could be because the response is a redirect,
+    /// which (by default) will be followed automatically, but cookies will not be re-sent.
+    let cookie cookie request =
+      if not request.cookiesEnabled then failwithf "Cannot add cookie %A - cookies disabled" cookie.name
+      { request with cookies = request.cookies |> Map.put cookie.name cookie }
+
+    /// Decodes the response using the specified encoding, regardless of what the response specifies.
+    ///
+    /// If this is not set, response character encoding will be:
+    ///  - taken from the response content-encoding header, if provided, otherwise
+    ///  UTF8
+    ///
+    /// Many web pages define the character encoding in the HTML. This will not be used.
+    let responseCharacterEncoding encoding request : Request =
+      { request with responseCharacterEncoding = Some encoding }
+
+    /// Sends the request via the provided proxy.
+    ///
+    /// If this is no set, the proxy settings from IE will be used, if available.
+    let proxy proxy request =
+      {request with proxy = Some proxy }
+
+    /// Sets the keep-alive header.  Defaults to true.
+    ///
+    /// If true, Connection header also set to 'Keep-Alive'
+    /// If false, Connection header also set to 'Close'
+    ///
+    /// NOTE: If true, headers only sent on first request.
+    let keepAlive value request =
+      { request with keepAlive = value }
+
+    let timeout timeout request =
+      { request with timeout = timeout }
+
     /// Note: this sends the request, reads the response, disposes it and its stream
     let responseAsString req = job {
       use! resp = getResponse req
@@ -1244,3 +1261,40 @@ module Client =
       use! resp = getResponse req
       return! Response.readBodyAsBytes resp
     }
+
+module Composition =
+
+  open Logging
+  open Client
+  open System.Diagnostics
+
+  type JobFunc<'a, 'b> = 'a -> Job<'b>
+
+  module JobFunc =
+    let map (f : 'b -> 'c) (func : JobFunc<'a, 'b>) : JobFunc<'a, 'c> =
+      func >> Job.map f
+
+    let mapLeft (f : 'a -> 'c) (func : JobFunc<'c, 'b>) : JobFunc<'a, 'b> =
+      f >> func
+
+  type JobFilter<'a, 'b, 'c, 'd> = JobFunc<'a, 'b> -> JobFunc<'c, 'd>
+  type JobFilter<'a, 'b> = JobFilter<'a, 'b, 'a, 'b>
+  type JobSink<'a> = JobFunc<'a, unit>
+
+  let identify clientName : JobFilter<Request, Response> =
+    fun service ->
+      Request.setHeader (RequestHeader.UserAgent clientName)
+      >> service
+
+  let timerFilter (state : HttpFsState) : JobFilter<Request, Response> =
+    fun func req -> job {
+      let sw = Stopwatch.StartNew()
+      let! res = func req
+      sw.Stop()
+      Message.gauge (float sw.ElapsedMilliseconds) "ms" |> Logger.logSimple state.logger
+      return res
+    }
+
+  let codecFilter (enc, dec) : JobFilter<'i, 'o, Request, Response> =
+    JobFunc.mapLeft enc
+    >> JobFunc.map dec
