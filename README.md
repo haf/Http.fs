@@ -5,7 +5,7 @@ A gloriously functional HTTP client library for F#! NuGet name: `Http.fs-prerele
 
 .Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)
 Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/relentless/Http.fs.svg?branch=master)](https://travis-ci.org/relentless/Http.fs)
-NuGet package: [![NuGet](http://img.shields.io/badge/NuGet-1.5.1-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
+NuGet package: [![NuGet](http://img.shields.io/badge/NuGet-1.5.1-blue.svg?style=flat)](http://www.nuget.org/packages/Http.fs-prerelease/)
 
 ## How do I use it? ##
 
@@ -143,7 +143,7 @@ tested.
 
 ## Cool!  So how do I get it in my code? ##
 
-The easiest way, if you have a full-on project, is to us [the NuGet package](https://www.nuget.org/packages/Http.fs/):
+The easiest way, if you have a full-on project, is to us [the NuGet package](https://www.nuget.org/packages/Http.fs-prerelease/):
 
 ``` shell
 PM> install-package Http.fs-prerelease
