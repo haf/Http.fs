@@ -6,6 +6,7 @@ require 'albacore/tasks/versionizer'
 require 'albacore/ext/teamcity'
 
 Configuration = ENV['CONFIGURATION'] || 'Release'
+HttpFsStrongName = ENV['HTTPFS_STRONG_NAME'] && true || false
 
 Albacore::Tasks::Versionizer.new :versioning
 
@@ -27,6 +28,9 @@ build :quick_compile do |b|
   b.prop 'Configuration', Configuration
   b.logging = 'detailed'
   b.sln     = 'Http.fs.sln'
+  if HttpFsStrongName
+    b.prop 'AssemblyStrongName', 'true'
+  end
 end
 
 task :paket_bootstrap do

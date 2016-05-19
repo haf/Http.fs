@@ -1,10 +1,7 @@
 ![Http.fs logo](https://raw.githubusercontent.com/relentless/Http.fs/master/docs/files/img/logo_small.png) Http.fs
 =======
 
-A gloriously functional HTTP client library for F#!
-
-**NOTE:** These instructions are for the forthcoming version 2.0.  For the current version on NuGet (1.5.1), see:  
-[Readme for Version 1.5.1](https://github.com/relentless/Http.fs/blob/d456af90164586ebd41a1c0601548c8dbf19c9e7/README.md)
+A gloriously functional HTTP client library for F#! NuGet name: `Http.fs-prerelease`.
 
 .Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)
 Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/relentless/Http.fs.svg?branch=master)](https://travis-ci.org/relentless/Http.fs)
@@ -32,20 +29,20 @@ open System.Text
 
 let request =
     createRequest Post <| Uri("https://example.com")
-    |> withQueryStringItem "search" "jeebus"
-    |> withBasicAuthentication "myUsername" "myPassword" // UTF8-encoded
-    |> withHeader (UserAgent "Chrome or summat")
-    |> withHeader (Custom ("X-My-Header", "hi mum"))
-    |> withAutoDecompression DecompressionScheme.GZip 
-    |> withAutoFollowRedirectsDisabled
-    |> withCookie (Cookie.Create("session", "123", path="/"))
-    |> withBodyString "This body will make heads turn"
-    |> withBodyStringEncoded "Check out my sexy foreign body" (Encoding.UTF8)
-    |> withBody (BodyRaw [| 1uy; 2uy; 3uy |])
-    |> withBody (BodyString "this is a greeting from Santa")
+    |> Request.withQueryStringItem "search" "jeebus"
+    |> Request.withBasicAuthentication "myUsername" "myPassword" // UTF8-encoded
+    |> Request.withHeader (UserAgent "Chrome or summat")
+    |> Request.withHeader (Custom ("X-My-Header", "hi mum"))
+    |> Request.withAutoDecompression DecompressionScheme.GZip 
+    |> Request.withAutoFollowRedirectsDisabled
+    |> Request.withCookie (Cookie.Create("session", "123", path="/"))
+    |> Request.withBodyString "This body will make heads turn"
+    |> Request.withBodyStringEncoded "Check out my sexy foreign body" (Encoding.UTF8)
+    |> Request.withBody (BodyRaw [| 1uy; 2uy; 3uy |])
+    |> Request.withBody (BodyString "this is a greeting from Santa")
 
     // if you submit a BodyForm, then Http.fs will also set the correct Content-Type, so you don't have to
-    |> withBody (BodyForm [
+    |> Request.withBody (BodyForm [
         // if you only have this in your form, it will be submitted as application/x-www-form-urlencoded
         NameValue ("submit", "Hit Me!")
 
@@ -61,9 +58,9 @@ let request =
             "cute-cat.gif", fourthCt, Binary (File.ReadAllBytes (pathOf "cat-stare.gif")) // => binary
           ])
     ])
-    |> withResponseCharacterEncoding (Encoding.UTF8)
-    |> withKeepAlive false
-    |> withProxy {
+    |> Request.withResponseCharacterEncoding (Encoding.UTF8)
+    |> Request.withKeepAlive false
+    |> Request.withProxy {
           Address = "proxy.com";
           Port = 8080;
           Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
@@ -74,7 +71,7 @@ let request =
 2 - The Http response (or just the response code/body) is retrieved using one of the following:
 
 ``` fsharp
-async {
+job {
   use! response = getResponse request // disposed at the end of async, don't
                                       // fetch outside async body
   // the above doesn't download the response, so you'll have to do that:
@@ -106,20 +103,20 @@ So you can do the old download-multiple-sites-in-parallel thing:
 [ "http://news.bbc.co.uk"
   "http://www.wikipedia.com"
   "http://www.stackoverflow.com"]
-|> List.map (fun u -> Uri u)
-|> List.map (createRequest Get)
+|> List.map (createRequestSimple Get)
 |> List.map (Request.responseAsString) // this takes care to dispose (req, body)
-|> Async.Parallel
-|> Async.RunSynchronously
-|> Array.iter (printfn "%s")
+|> Job.conCollect
+|> Job.map (printfn "%s")
+|> start
 ```
 
 If you need direct access to the response stream for some reason (for example to download a large file), you need to write yourself a function and pass it to getResponseStream like so:
 
 ``` fsharp
+open Hopac
 open System.IO
 
-async {
+job {
   use! resp = createRequest Get "http://fsharp.org/img/logo.png"
   use fileStream = new FileStream("c:\\bigImage.png", FileMode.Create)
   do! resp.Body.CopyToAsync fileStream
@@ -131,6 +128,10 @@ async {
 ``` fsharp
 response.Headers.[ContentTypeResponse]
 ```
+
+## Building
+
+`bundle exec rake` or strongly named `HTTPFS_STRONG_NAME=true bundle exec rake`
 
 ## Examples ##
 
@@ -145,7 +146,7 @@ tested.
 The easiest way, if you have a full-on project, is to us [the NuGet package](https://www.nuget.org/packages/Http.fs/):
 
 ``` shell
-PM> install-package Http.fs
+PM> install-package Http.fs-prerelease
 ```
     
 Then just open the module and use as required:
@@ -165,7 +166,7 @@ To use it from a script, it would be this:
 
 open HttpClient  
 
-printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
+printfn "%s" (createRequestSimple Get "http://www.google.com" |> getResponseBody |> run)
 ```
 
 ## Version History ##
@@ -198,6 +199,7 @@ Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defi
     issue with an empty response.CharacterSet
   * 1.5.1 - Corrected the assembly version
   * 2.0.0 - Production hardened, major release, major improvements
+  * 3.0.3 - Async -> Job, withXX -> Request.withXX
 
 ## FAQ ##
 
