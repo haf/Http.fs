@@ -7,6 +7,7 @@ open System
 open System.IO
 open System.Reflection
 open Hopac
+open Hopac.Infixes
 open Suave
 open Suave.Logging
 open Suave.Filters
@@ -40,6 +41,9 @@ let tests =
   let runWithConfig = runWith config
   let uriFor (res : string) = Uri (sprintf "http://localhost:8083/%s" (res.TrimStart('/')))
   let postTo res = Request.create Post (uriFor res) |> Request.keepAlive false
+  let successful = function
+    | Choice1Of2 resp -> resp
+    | Choice2Of2 err -> Tests.failtestf "Error from request %A" err
 
   testCase "can send/receive" <| fun _ ->
     job {
@@ -49,17 +53,20 @@ let tests =
         let file = "pix.gif", ContentType.create("image", "gif"), StreamData fs
 
         use ms = new MemoryStream()
-        //printfn "--- get response"
+        printfn "--- get response"
         use! resp =
           postTo "gifs/echo"
           |> Request.body (BodyForm [ FormFile ("img", file) ])
           |> Request.setHeader (Custom ("Access-Code", "Super-Secret"))
           |> getResponse
+          |> Job.map successful
 
+        printfn "--- reading response body stream"
         do! resp.body.CopyToAsync ms
 
         fs.Seek(0L, SeekOrigin.Begin) |> ignore
         ms.Seek(0L, SeekOrigin.Begin) |> ignore
+        printfn "--- asserting"
         Assert.StreamsEqual("the input should eq the echoed data", ms, fs)
       finally
         disposeContext ctx

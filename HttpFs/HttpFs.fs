@@ -958,8 +958,8 @@ module Client =
       | WebExceptionStatus.UnknownError ->
         match wex.InnerException with
         | null ->
-          failwith "CLR returned 'Unknown Error' but there's no inner exception, here's the inner message '%s'"
-                   wex.Message
+          failwithf "CLR returned 'Unknown Error' but there's no inner exception, here's the inner message '%s'"
+                    wex.Message
 
         | :? System.Net.Sockets.SocketException as se ->
           TcpException (SocketException se)
@@ -991,6 +991,7 @@ module Client =
 
         let rJ =
           job {
+            printfn "[tryCommunicate] running inside job"
             try
               return! xJ
 
@@ -1009,33 +1010,44 @@ module Client =
               return Choice.createSnd (TcpException (SocketException sex))
           }
 
-        nack >>- (fun () ->
-          // https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.abort.aspx
-          request.Abort())
-        |> Job.start
-        >>-. rI
+        let res =
+          nack >>- (fun () ->
+            printfn "[tryCommunicate] aborting request"
+            // https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.abort.aspx
+            request.Abort())
+          |> Job.start
+          >>-. rI
+
+        printfn "[tryCommunicate] returning from withNackJob function"
+        res
 
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
     let tryWriteBody (writers : seq<Stream -> Job<unit>>) (webRequest : HttpWebRequest) : Alt<Choice<unit, Error>> =
+      printfn "[tryWriteBody] initial"
       if webRequest.Method = "POST" || webRequest.Method = "PUT" then
-        /// We'll be writing *a lot* of small pieces of data, so let's buffer that.
+        // We'll be writing *a lot* of small pieces of data, so let's buffer that.
         webRequest.AllowWriteStreamBuffering <- true
         let writer =
           job {
             // Getting the request stream seems to be actually connecting to the server
             use! reqStream = Job.fromBeginEnd webRequest.BeginGetRequestStream webRequest.EndGetRequestStream
 
+            printfn "[tryWriteBody] running writers"
             for writer in writers do
               do! writer reqStream
 
+            printfn "[tryWriteBody] flushing"
             // Finally flush it!
             do! reqStream.FlushAsync()
             return Choice.create ()
           }
 
+        printfn "[tryWriteBody] calling tryCommunicate"
         // We can get the exceptions during connection, too
-        tryCommunicate webRequest writer ignore
+        let res = tryCommunicate webRequest writer ignore
+        printfn "[tryWriteBody] after call to tryCommunicate"
+        res
 
       else Alt.always (Choice.create ())
 
@@ -1067,8 +1079,12 @@ module Client =
       let url =
         let b = UriBuilder request.url
         match b.Query with
-        | "" | null -> b.Query <- getQueryString contentEncoding request
-        | _ -> ()
+        | "" | null ->
+          b.Query <- getQueryString contentEncoding request
+
+        | _ ->
+          ()
+
         b.Uri
 
       let webRequest =
@@ -1103,6 +1119,7 @@ module Client =
       webRequest.KeepAlive <- request.keepAlive
       webRequest.Timeout <- (int)request.timeout
 
+      printfn "[toHttpWebRequest] returning executables"
       webRequest, webRequest |> tryWriteBody body
 
     /// Uses the HttpWebRequest to get the response.
@@ -1192,10 +1209,12 @@ module Client =
 
   /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
   let getResponse request : Alt<Choice<Response, Error>> =
+    printfn "[getResponse] initial"
     let webRequest, writeRequest = toHttpWebRequest HttpFsState.empty request
 
     let wrapResponse = function
       | Choice1Of2 res ->
+        printfn "[getResponse] wrapResponse"
         { Response.ofHttpResponse res with
             expectedEncoding = request.responseCharacterEncoding }
         |> Choice.create
@@ -1204,8 +1223,12 @@ module Client =
         Choice.createSnd err
 
     let bindReqResp : Choice<unit, Error> -> Alt<_> = function
-      | Choice1Of2 ()  -> getResponseNoException webRequest
-      | Choice2Of2 err -> Alt.always (Choice.createSnd err)
+      | Choice1Of2 ()  ->
+        printfn "[getResponse] bindReqResp"
+        getResponseNoException webRequest
+
+      | Choice2Of2 err ->
+        Alt.always (Choice.createSnd err)
 
     (writeRequest ^=> bindReqResp) ^-> wrapResponse
 
@@ -1354,16 +1377,29 @@ module Client =
       { request with timeout = timeout }
 
     /// Note: this sends the request, reads the response, disposes it and its stream
-    let responseAsString req = job {
-      use! resp = getResponse req
-      return! Response.readBodyAsString resp
-    }
+    let responseAsString req : Alt<Choice<string, Error>> =
+      // Note: it won't be possible to cancel the reading of the potentially large response body
+      getResponse req ^=> function
+      | Choice1Of2 resp ->
+        job {
+          use resp = resp 
+          let! str = Response.readBodyAsString resp
+          return Choice.create str
+        }
+      | Choice2Of2 err ->
+        Job.result (Choice.createSnd err)
 
     /// Note: this sends the request, reads the response, disposes it and its stream
-    let responseAsBytes req = job {
-      use! resp = getResponse req
-      return! Response.readBodyAsBytes resp
-    }
+    let responseAsBytes req =
+      getResponse req ^=> function
+      | Choice1Of2 resp ->
+        job {
+          use resp = resp
+          let! bytes = Response.readBodyAsBytes resp
+          return Choice.create bytes
+        }
+      | Choice2Of2 err ->
+        Job.result (Choice.createSnd err)
 
 module Composition =
 
