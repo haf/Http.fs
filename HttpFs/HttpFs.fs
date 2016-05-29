@@ -6,6 +6,7 @@ open System.IO
 open System.Text
 open System.Runtime.CompilerServices
 open Hopac
+open Hopac.Infixes
 
 [<assembly: InternalsVisibleTo "HttpFs.IntegrationTests">]
 [<assembly: InternalsVisibleTo "HttpFs.UnitTests">]
@@ -549,6 +550,51 @@ module Client =
 
   type CharacterSet = string
 
+  type TcpException =
+    /// WebExceptionStatus.ConnectFailure
+    | ConnectFailure
+    /// WebExceptionStatus.ConnectionClosed
+    /// WebExceptionStatus.ReceiveFailure
+    /// WebExceptionStatus.SendFailure
+    | SocketClosed
+    /// WebExceptionStatus.RequestProhibitedByProxy
+    | SocketClosedProxy
+    /// WebExceptionStatus.NameResolutionFailure
+    | NameResolutionFailure
+    /// WebExceptionStatus.ProxyNameResolutionFailure
+    | NameResolutionFailureProxy
+    /// Unhandled Tcp exception
+    | SocketException of System.Net.Sockets.SocketException
+    | IOException of System.IO.IOException
+
+  type HttpException =
+    /// WebExceptionStatus.KeepAliveFailure
+    | KeepAliveClosed
+    /// WebExceptionStatus.MessageLengthLimitExceeded
+    /// https://code.logos.com/blog/2012/01/webexception-the-message-limit-length-was-exceeded.html
+    | TooLongResponseHeaders
+    /// WebExceptionStatus.ServerProtocolViolation
+    /// The server did not reply with a valid HTTP response.
+    | InvalidServerResponse
+
+  type TlsException =
+    /// A server certificate could not be validated.
+    /// WebExceptionStatus.TrustFailure
+    | BrokenTrust
+    /// E.g. the data was corrupted and a message-authenticating protocol like
+    /// AES-GCM was used. Or there was a TLS ALERT message on the channel. This
+    /// means that you're experiencing meddelsome man-in-the-middle, like
+    /// a bad forward proxy, an over-eager ISP or an active man-in-the-middle
+    /// attack.
+    /// WebExceptionStatus.SecureChannelFailure
+    | SecureChannelFailure
+
+  type Error =
+    | TlsException of TlsException
+    | TcpException of TcpException
+    | HttpException of HttpException
+    | Cancelled
+
   type Response =
     { statusCode       : int
       contentLength    : int64
@@ -863,17 +909,135 @@ module Client =
         | Credentials.Default -> webRequest.UseDefaultCredentials <- true
         | Credentials.None -> webRequest.Credentials <- null)
 
+    let mapFailure (wex : WebException) : Error =
+      match wex.Status with
+      | WebExceptionStatus.Success ->
+        failwith "The Success status should not be used when exceptions are thrown"
+
+      | WebExceptionStatus.NameResolutionFailure ->
+        TcpException NameResolutionFailure
+
+      | WebExceptionStatus.ConnectFailure ->
+        TcpException ConnectFailure
+
+      | WebExceptionStatus.ConnectionClosed
+      | WebExceptionStatus.ReceiveFailure
+      | WebExceptionStatus.SendFailure ->
+        TcpException SocketClosed
+
+      | WebExceptionStatus.PipelineFailure ->
+        failwith "HttpFs has not been tested with HTTP pipelining; got WebExceptionStatus.PipelineFailure"
+
+      | WebExceptionStatus.RequestCanceled ->
+        Cancelled
+
+      | WebExceptionStatus.ProtocolError ->
+        failwith "HttpFs handles HTTP status codes, not as exceptions, but as normal responses"
+
+      | WebExceptionStatus.TrustFailure ->
+        TlsException BrokenTrust
+
+      | WebExceptionStatus.SecureChannelFailure ->
+        TlsException SecureChannelFailure
+
+      | WebExceptionStatus.ServerProtocolViolation ->
+        HttpException InvalidServerResponse
+
+      | WebExceptionStatus.KeepAliveFailure ->
+        HttpException KeepAliveClosed
+
+      | WebExceptionStatus.Pending ->
+        failwith "HttpFs should not call operations out of order on the underlying HTTP libraries"
+
+      | WebExceptionStatus.Timeout ->
+        failwith "HttpFs handles timeout by not committing to the returned Alt and using Hopac.Global.timeOut"
+
+      | WebExceptionStatus.ProxyNameResolutionFailure ->
+        TcpException NameResolutionFailureProxy
+
+      | WebExceptionStatus.UnknownError ->
+        match wex.InnerException with
+        | null ->
+          failwith "CLR returned 'Unknown Error' but there's no inner exception, here's the inner message '%s'"
+                   wex.Message
+
+        | :? System.Net.Sockets.SocketException as se ->
+          TcpException (SocketException se)
+
+        | :? System.IO.IOException as ioe ->
+          TcpException (IOException ioe)
+
+        | e ->
+          raise <| Exception(sprintf "Unknown exception from the CLR - %s" wex.Message, e)
+
+      | WebExceptionStatus.MessageLengthLimitExceeded ->
+        HttpException TooLongResponseHeaders
+
+      | WebExceptionStatus.RequestProhibitedByCachePolicy ->
+        failwith "HttpFs doesn't support cache policies"
+
+      | WebExceptionStatus.RequestProhibitedByProxy ->
+        TcpException NameResolutionFailureProxy
+
+      | WebExceptionStatus.CacheEntryNotFound ->
+        failwith "using CacheEntry with HttpFs not supported"
+
+      | other ->
+        failwith "There are only 21 options in this enum, something the F# compiler should be aware of"
+
+    let tryCommunicate (request : WebRequest) (xJ : Job<_>) fWebExnResp : Alt<Choice<'a, Error>> =
+      Alt.withNackJob <| fun nack ->
+        let rI = IVar ()
+
+        let rJ =
+          job {
+            try
+              return! xJ
+
+            with
+            | :? WebException as wex ->
+              if wex.Response <> null then
+                return Choice.create (fWebExnResp (wex.Response :?> HttpWebResponse))
+
+              else
+                return Choice.createSnd (mapFailure wex)
+
+            | :? IOException as ioex ->
+              return Choice.createSnd (TcpException (IOException ioex))
+
+            | :? System.Net.Sockets.SocketException as sex ->
+              return Choice.createSnd (TcpException (SocketException sex))
+          }
+
+        nack >>- (fun () ->
+          // https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.abort.aspx
+          request.Abort())
+        |> Job.start
+        >>-. rI
+
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
-    let tryWriteBody (writers : seq<Stream -> Job<unit>>) (webRequest : HttpWebRequest) =
+    let tryWriteBody (writers : seq<Stream -> Job<unit>>) (webRequest : HttpWebRequest) : Alt<Choice<unit, Error>> =
       if webRequest.Method = "POST" || webRequest.Method = "PUT" then
-        job {
-          // Getting the request stream seems to be actually connecting
-          use reqStream = webRequest.GetRequestStream()
-          for writer in writers do
-            do! writer reqStream
-        }
-      else Job.result ()
+        /// We'll be writing *a lot* of small pieces of data, so let's buffer that.
+        webRequest.AllowWriteStreamBuffering <- true
+        let writer =
+          job {
+            // Getting the request stream seems to be actually connecting to the server
+            use! reqStream = Job.fromBeginEnd webRequest.BeginGetRequestStream webRequest.EndGetRequestStream
+
+            for writer in writers do
+              do! writer reqStream
+
+            // Finally flush it!
+            do! reqStream.FlushAsync()
+            return Choice.create ()
+          }
+
+        // We can get the exceptions during connection, too
+        tryCommunicate webRequest writer ignore
+
+      else Alt.always (Choice.create ())
 
     let matchCtHeader k = function
       | RequestHeader.ContentType ct -> Some ct
@@ -944,17 +1108,13 @@ module Client =
     /// Uses the HttpWebRequest to get the response.
     /// HttpWebRequest throws an exception on anything but a 200-level response,
     /// so we handle such exceptions and return the response.
-    let getResponseNoException (request : HttpWebRequest) = job {
-      try
-        let! response = request.AsyncGetResponse()
-        return response :?> HttpWebResponse
-      with
-      | :? WebException as wex ->
-        if wex.Response <> null then
-          return wex.Response :?> HttpWebResponse
-        else
-          return raise wex
-    }
+    let getResponseNoException (request : HttpWebRequest) : Alt<Choice<HttpWebResponse, Error>> = 
+      let requestJob =
+        Job.fromBeginEnd request.BeginGetResponse request.EndGetResponse
+        >>- (fun resp -> resp :?> HttpWebResponse)
+        >>- Choice.create
+
+      tryCommunicate request requestJob id
 
     let getCookiesAsMap (response:HttpWebResponse) =
       let cookieArray = Array.zeroCreate response.Cookies.Count
@@ -1031,15 +1191,23 @@ module Client =
         luggage          = Some (upcast response) }
 
   /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
-  let getResponse request = job {
-    let webRequest, exec = toHttpWebRequest HttpFsState.empty request
-    do! exec
-    let! resp = getResponseNoException webRequest
-    let wrapped =
-      { Response.ofHttpResponse resp with
-          expectedEncoding = request.responseCharacterEncoding }
-    return wrapped
-  }
+  let getResponse request : Alt<Choice<Response, Error>> =
+    let webRequest, writeRequest = toHttpWebRequest HttpFsState.empty request
+
+    let wrapResponse = function
+      | Choice1Of2 res ->
+        { Response.ofHttpResponse res with
+            expectedEncoding = request.responseCharacterEncoding }
+        |> Choice.create
+
+      | Choice2Of2 err ->
+        Choice.createSnd err
+
+    let bindReqResp : Choice<unit, Error> -> Alt<_> = function
+      | Choice1Of2 ()  -> getResponseNoException webRequest
+      | Choice2Of2 err -> Alt.always (Choice.createSnd err)
+
+    (writeRequest ^=> bindReqResp) ^-> wrapResponse
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Response =
