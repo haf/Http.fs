@@ -673,7 +673,7 @@ module Client =
 
       /// Writes a string and CRLF as UTF8
       let writeLineUtf8 string =
-        String.Concat [ string; CRLF ] |> ASCII.bytes |> writeBytes
+        String.Concat [ string; CRLF ] |> UTF8.bytes |> writeBytes
 
       /// Writes a string as UTF8
       let writeUtf8 : string -> Stream -> Job<unit> =
@@ -940,6 +940,31 @@ module Client =
       webRequest.Timeout <- (int)request.timeout
 
       webRequest, webRequest |> tryWriteBody body
+
+    /// For debugging purposes only
+    /// Converts the Request body to a format suitable for HttpWebRequest and returns this raw body as a string.
+    let getRawRequestBodyString (state : HttpFsState) (request : Request) =
+      let contentType = request.headers |> Map.tryPick matchCtHeader
+      let contentEncoding =
+        // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
+        contentType
+        |> function
+        | Some { charset = Some enc } -> Some enc
+        | _ -> None
+        |> Option.fold (fun s t -> t) request.bodyCharacterEncoding
+
+      let newContentType, body =
+        formatBody state (contentType, contentEncoding, request.body)
+
+      use dataStream = new IO.MemoryStream()
+      job {
+          for writer in body do
+            do! writer dataStream
+        } |> Hopac.Job.Global.run
+
+      dataStream.Position <- 0L // Reset stream position before reading
+      use reader = new IO.StreamReader(dataStream)
+      reader.ReadToEnd()
 
     /// Uses the HttpWebRequest to get the response.
     /// HttpWebRequest throws an exception on anything but a 200-level response,
