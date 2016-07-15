@@ -63,8 +63,8 @@ nugets_pack :create_nugets => ['build/pkg', :versioning, :compile] do |p|
   p.out     = 'build/pkg'
   p.exe     = 'packages/NuGet.CommandLine/tools/NuGet.exe'
   p.with_metadata do |m|
-    m.id          = 'Http.fs-prerelease'
-    m.title       = 'Http.fs Latest'
+    m.id          = 'Http.fs'
+    m.title       = 'Http.fs'
     m.description = 'A simple, functional HTTP client library for F#'
     m.authors     = 'Grant Crofton, Henrik Feldt'
     m.project_url = 'https://github.com/relentless/Http.fs'
