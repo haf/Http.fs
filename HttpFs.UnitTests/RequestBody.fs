@@ -4,6 +4,7 @@ open System
 open System.Text
 open Fuchu
 open HttpFs.Client
+
 let ValidUri = Uri "http://www"
 let createValidRequest = Request.create Get ValidUri
 let utf8 = Encoding.UTF8
