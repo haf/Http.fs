@@ -4,7 +4,6 @@ open System
 open System.Text
 open Fuchu
 open HttpFs.Client
-
 let ValidUri = Uri "http://www"
 let createValidRequest = Request.create Get ValidUri
 let utf8 = Encoding.UTF8
@@ -188,3 +187,21 @@ let internals =
         let hfsReq = Request.create Get (Uri "http://localhost/") |> Request.queryStringItem "a" "1"
         let netReq, _ = DotNetWrapper.toHttpWebRequest HttpFsState.empty hfsReq
         Assert.Equal(string netReq.RequestUri, "http://localhost/?a=1")
+
+[<Tests>]
+let textEncodingTest =
+    let pathOf relativePath =
+        let here = IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+        IO.Path.Combine(here, relativePath)
+    testCase "character encoding when files are attached to request" <| fun _ ->
+        let requestBody =
+            Request.create Post (Uri "http://localhost/")
+            |> Request.body (
+                BodyForm [
+                    NameValue("Special letters", "åäö")
+                    NameValue("More Special letters", "©®™")
+                    FormFile("file", ("pix.gif", ContentType.create("image", "gif"), Binary (System.IO.File.ReadAllBytes(pathOf "pix.gif"))))
+            ])
+        let rawBodyString = DotNetWrapper.getRawRequestBodyString HttpFsState.empty requestBody
+        Assert.StringContains("", "åäö", rawBodyString)
+        Assert.StringContains("", "©®™", rawBodyString)
