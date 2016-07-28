@@ -58,7 +58,6 @@ let bodyFormatting =
             Assert.Equal("no new content type for byte body", None, newCt)
 
         testCase "ordinary multipart/form-data" <| fun _ ->
-            if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
             let clientState = { HttpFsState.empty with random = Random testSeed }
 
@@ -99,13 +98,15 @@ let bodyFormatting =
                          newCt |> Option.get)
 
         testCase "multipart/form-data with multipart/mixed" <| fun _ ->
-            if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
             let clientState = { HttpFsState.empty with random = Random testSeed }
 
-            let firstCt, secondCt, fileContents =
+            let firstCt, secondCt, thirdCt, fourthCt, fifthCt, fileContents =
                 ContentType.parse "text/plain" |> Option.get,
                 ContentType.parse "text/plain" |> Option.get,
+                ContentType.parse "application/json" |> Option.get,
+                ContentType.parse "application/atom+xml" |> Option.get,
+                ContentType.parse "application/x-doom" |> Option.get,
                 "Hello World"
 
             let form =
@@ -114,6 +115,9 @@ let bodyFormatting =
                     MultipartMixed ("files",
                                [ "file1.txt", firstCt, Plain fileContents
                                  "file2.gif", secondCt, Plain "...contents of file2.gif..."
+                                 "file3.json", thirdCt, Plain fileContents
+                                 "file4.rss", fourthCt, Plain fileContents
+                                 "file5.wad", fifthCt, Plain fileContents
                                ])
                 ]
 
@@ -145,6 +149,22 @@ let bodyFormatting =
                   "Content-Type: text/plain"
                   ""
                   "...contents of file2.gif..."
+                  sprintf "--%s" expectedBoundary2
+                  "Content-Disposition: file; filename=\"file3.json\""
+                  "Content-Type: application/json"
+                  ""
+                  "Hello World"
+                  sprintf "--%s" expectedBoundary2
+                  "Content-Disposition: file; filename=\"file4.rss\""
+                  "Content-Type: application/atom+xml"
+                  ""
+                  "Hello World"
+                  sprintf "--%s" expectedBoundary2
+                  "Content-Disposition: file; filename=\"file5.wad\""
+                  "Content-Type: application/x-doom"
+                  "Content-Transfer-Encoding: base64"
+                  ""
+                  "SGVsbG8gV29ybGQ="
                   sprintf "--%s--" expectedBoundary2
                   sprintf "--%s--" expectedBoundary1
                   ""
