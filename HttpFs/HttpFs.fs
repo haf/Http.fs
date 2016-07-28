@@ -692,7 +692,12 @@ module Client =
 
     let generateFileData (encoding : Encoding) contentType contents = seq {
       match contentType, contents with
-      | { typ = "text"; subtype = "plain" }, Plain text ->
+      | { typ = "text"; subtype = _ }, Plain text ->
+        yield writeLineAscii ""
+        yield writeLineUtf8 text
+
+      | { typ = "application"; subtype = subtype }, Plain text 
+        when List.exists ((=) (subtype.Split('+') |> Seq.last)) ["json"; "xml"] ->
         yield writeLineAscii ""
         yield writeLineUtf8 text
 
