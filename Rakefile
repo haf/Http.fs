@@ -50,7 +50,7 @@ end
 desc 'Perform full build'
 build :compile => [:versioning, :restore, :assembly_info, :yolo] do |b|
   b.prop 'Configuration', Configuration
-  b.logging = 'detailed'
+  b.logging = 'normal'
   b.sln = 'Http.fs.sln'
 end
 
