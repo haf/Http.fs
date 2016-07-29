@@ -56,11 +56,12 @@ let tests =
           |> Request.setHeader (Custom ("Access-Code", "Super-Secret"))
           |> getResponse
 
-        do! resp.body.CopyToAsync ms
+        do! Job.awaitUnitTask (resp.body.CopyToAsync ms)
 
         fs.Seek(0L, SeekOrigin.Begin) |> ignore
         ms.Seek(0L, SeekOrigin.Begin) |> ignore
         Assert.StreamsEqual("the input should eq the echoed data", ms, fs)
+
       finally
         disposeContext ctx
         ()

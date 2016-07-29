@@ -655,12 +655,12 @@ module Client =
 
     module StreamWriters =
       let writeBytes bs (output : Stream) =
-        job { return! output.WriteAsync(bs, 0, bs.Length) }
+        Job.awaitUnitTask (output.WriteAsync(bs, 0, bs.Length))
 
       let writeBytesLine bs (output : Stream) =
         job {
           do! writeBytes bs output
-          do! output.WriteAsync (ASCII.bytes CRLF, 0, 2)
+          do! Job.awaitUnitTask (output.WriteAsync (ASCII.bytes CRLF, 0, 2))
         }
 
       /// Writes a string and CRLF as ASCII
@@ -680,12 +680,12 @@ module Client =
         UTF8.bytes >> writeBytes
 
       let writeStream (input : Stream) (output : Stream) =
-        job { return! input.CopyToAsync output }
+        Job.awaitUnitTask (input.CopyToAsync output)
 
       let writeStreamLine input output =
         job {
           do! writeStream input output
-          do! output.WriteAsync (ASCII.bytes CRLF, 0, 2)
+          do! Job.awaitUnitTask (output.WriteAsync (ASCII.bytes CRLF, 0, 2))
         }
 
     open StreamWriters
@@ -1095,7 +1095,7 @@ module Client =
     let readBodyAsBytes (response : Response) : Job<byte []> =
       job {
         use ms = new MemoryStream()
-        do! response.body.CopyToAsync ms
+        do! Job.awaitUnitTask (response.body.CopyToAsync ms)
         return ms.ToArray()
       }
 
