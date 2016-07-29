@@ -1,7 +1,8 @@
 ![Http.fs logo](https://raw.githubusercontent.com/relentless/Http.fs/master/docs/files/img/logo_small.png) Http.fs
 =======
 
-A gloriously functional HTTP client library for F#! NuGet name: `Http.fs-prerelease`.
+A gloriously functional HTTP client library for F#! NuGet name:
+`Http.fs`.
 
 .Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)
 Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/relentless/Http.fs.svg?branch=master)](https://travis-ci.org/relentless/Http.fs)
@@ -12,7 +13,15 @@ NuGet package: [![NuGet](http://img.shields.io/badge/NuGet-1.5.1-blue.svg?style=
 In it's simplest form, this will get you a web page:
 
 ``` fsharp
-createRequest Get "http://somesite.com" |> getResponseBody
+open Hopac
+open HttpFs.Client
+
+let body =
+  Request.createUrl Get "http://somesite.com"
+  |> Request.responseAsString
+  |> run
+
+printfn "Here's the body: %s" body
 ```
 
 To get into the details a bit more, there are two or three steps to getting what
@@ -28,7 +37,7 @@ open System
 open System.Text
 
 let request =
-    createRequest Post <| Uri("https://example.com")
+    Request.createUrl Post "https://example.com"
     |> Request.withQueryStringItem "search" "jeebus"
     |> Request.withBasicAuthentication "myUsername" "myPassword" // UTF8-encoded
     |> Request.withHeader (UserAgent "Chrome or summat")
@@ -115,9 +124,10 @@ If you need direct access to the response stream for some reason (for example to
 ``` fsharp
 open Hopac
 open System.IO
+open HttpFs.Client
 
 job {
-  use! resp = createRequest Get "http://fsharp.org/img/logo.png"
+  use! resp = Request.createUrl Get "http://fsharp.org/img/logo.png" |> getResponse
   use fileStream = new FileStream("c:\\bigImage.png", FileMode.Create)
   do! resp.Body.CopyToAsync fileStream
 }
@@ -139,35 +149,8 @@ Check out *HttpClient.SampleApplication*, which contains a program demonstrating
 the various functions of the library being used and (to a limited extent) unit
 tested.
 
-[SamplePostApplication](https://github.com/relentless/Http.fs/blob/master/HttpClient.SamplePostApplication/README.md) shows how you can create a post with a body containing forms.
-
-## Cool!  So how do I get it in my code? ##
-
-The easiest way, if you have a full-on project, is to us [the NuGet package](https://www.nuget.org/packages/Http.fs-prerelease/):
-
-``` shell
-PM> install-package Http.fs-prerelease
-```
-    
-Then just open the module and use as required:
-
-``` fsharp
-open HttpClient  
-
-printfn "%s" (createRequest Get "http://www.google.com" |> getResponseBody)
-```
-
-If you can't use NuGet (perhaps you're writing a script), check out the [Releases](https://github.com/relentless/Http.fs/releases), where you should be able to find the latest version.
-
-To use it from a script, it would be this:
-
-``` fsharp
-#r "HttpClient.dll"
-
-open HttpClient  
-
-printfn "%s" (createRequestSimple Get "http://www.google.com" |> getResponseBody |> run)
-```
+[SamplePostApplication](https://github.com/relentless/Http.fs/blob/master/HttpClient.SamplePostApplication/README.md)
+shows how you can create a post with a body containing forms.
 
 ## Version History ##
 
@@ -262,17 +245,16 @@ AsyncStreamReader.fs, a source file taken directly from the
 
 However, for testing a couple of other things are used:
 
+  * [Suave](https://suave.io) to create a web server for integration testing
   * [FsUnit](https://github.com/fsharp/FsUnit) for unit testing
   * [NancyFX](http://nancyfx.org/) to create a web server for integration testing
-  * [Suave](http://suave.io) to create a web server for integration testing
 
 And for building, there's also:
 
-  * [FAKE](http://fsharp.github.io/FAKE/), the F# MAKE tool
   * [Albacore](https://github.com/albacore/albacore)
 
 That's about it.
 Happy requesting!
 
-Grant Crofton
-@relentlessdev
+Grant Crofton and Henrik Feldt
+@relentlessdev, @haf

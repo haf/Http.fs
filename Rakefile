@@ -34,12 +34,12 @@ build :quick_compile do |b|
 end
 
 task :paket_bootstrap do
-  system 'tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'tools/paket.exe'
+  system 'Tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'Tools/paket.exe'
 end
 
 desc 'restore all nugets as per the packages.config files'
 task :restore => :paket_bootstrap do
-  system 'tools/paket.exe', 'restore', clr_command: true
+  system 'Tools/paket.exe', 'restore', clr_command: true
 end
 
 task :yolo do
