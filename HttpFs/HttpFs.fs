@@ -248,7 +248,7 @@ module Client =
         | Some enc -> yield! [ ";"; " charset="; enc.WebName ]
         match x.boundary with
         | None -> ()
-        | Some b -> yield! [ ";"; " boundary="; b ]
+        | Some b -> yield! [ ";"; " boundary="; sprintf "\"%s\"" b ]
       ]
 
     interface IComparable with
@@ -742,7 +742,7 @@ module Client =
 
           | MultipartMixed (name, files) ->
             let boundary' = generateBoundary state
-            yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=%s" boundary')
+            yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=\"%s\"" boundary')
             yield writeLineUtf8 (generateContentDispos "form-data" [ "name", name ])
             yield writeLineUtf8 ""
             // remap the multi-files to single files and recursively call myself
