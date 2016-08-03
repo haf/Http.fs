@@ -36,7 +36,7 @@ let apiUsage =
 let contentType =
   testCase "can convert to string" <| fun _ ->
     let subject = ContentType.create("application", "multipart", charset=Encoding.UTF8, boundary="---apa")
-    Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=---apa")
+    Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=\"---apa\"")
 
 [<Tests>]
 let bodyFormatting =
@@ -136,7 +136,7 @@ let bodyFormatting =
                   ""
                   "Larry"
                   sprintf "--%s" expectedBoundary1
-                  sprintf "Content-Type: multipart/mixed; boundary=%s" expectedBoundary2
+                  sprintf "Content-Type: multipart/mixed; boundary=\"%s\"" expectedBoundary2
                   "Content-Disposition: form-data; name=\"files\""
                   ""
                   sprintf "--%s" expectedBoundary2
