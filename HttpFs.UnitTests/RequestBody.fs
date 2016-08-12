@@ -36,7 +36,7 @@ let apiUsage =
 let contentType =
   testCase "can convert to string" <| fun _ ->
     let subject = ContentType.create("application", "multipart", charset=Encoding.UTF8, boundary="---apa")
-    Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=---apa")
+    Assert.Equal(subject.ToString(), "application/multipart; charset=utf-8; boundary=\"---apa\"")
 
 [<Tests>]
 let bodyFormatting =
@@ -58,7 +58,6 @@ let bodyFormatting =
             Assert.Equal("no new content type for byte body", None, newCt)
 
         testCase "ordinary multipart/form-data" <| fun _ ->
-            if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
             let clientState = { HttpFsState.empty with random = Random testSeed }
 
@@ -99,13 +98,15 @@ let bodyFormatting =
                          newCt |> Option.get)
 
         testCase "multipart/form-data with multipart/mixed" <| fun _ ->
-            if Type.GetType ("Mono.Runtime") = null then Tests.skiptest "random impl different on .Net"
             /// can't lift outside, because test cases may run in parallel
             let clientState = { HttpFsState.empty with random = Random testSeed }
 
-            let firstCt, secondCt, fileContents =
+            let firstCt, secondCt, thirdCt, fourthCt, fifthCt, fileContents =
                 ContentType.parse "text/plain" |> Option.get,
                 ContentType.parse "text/plain" |> Option.get,
+                ContentType.parse "application/json" |> Option.get,
+                ContentType.parse "application/atom+xml" |> Option.get,
+                ContentType.parse "application/x-doom" |> Option.get,
                 "Hello World"
 
             let form =
@@ -114,6 +115,9 @@ let bodyFormatting =
                     MultipartMixed ("files",
                                [ "file1.txt", firstCt, Plain fileContents
                                  "file2.gif", secondCt, Plain "...contents of file2.gif..."
+                                 "file3.json", thirdCt, Plain fileContents
+                                 "file4.rss", fourthCt, Plain fileContents
+                                 "file5.wad", fifthCt, Plain fileContents
                                ])
                 ]
 
@@ -132,7 +136,7 @@ let bodyFormatting =
                   ""
                   "Larry"
                   sprintf "--%s" expectedBoundary1
-                  sprintf "Content-Type: multipart/mixed; boundary=%s" expectedBoundary2
+                  sprintf "Content-Type: multipart/mixed; boundary=\"%s\"" expectedBoundary2
                   "Content-Disposition: form-data; name=\"files\""
                   ""
                   sprintf "--%s" expectedBoundary2
@@ -145,6 +149,22 @@ let bodyFormatting =
                   "Content-Type: text/plain"
                   ""
                   "...contents of file2.gif..."
+                  sprintf "--%s" expectedBoundary2
+                  "Content-Disposition: file; filename=\"file3.json\""
+                  "Content-Type: application/json"
+                  ""
+                  "Hello World"
+                  sprintf "--%s" expectedBoundary2
+                  "Content-Disposition: file; filename=\"file4.rss\""
+                  "Content-Type: application/atom+xml"
+                  ""
+                  "Hello World"
+                  sprintf "--%s" expectedBoundary2
+                  "Content-Disposition: file; filename=\"file5.wad\""
+                  "Content-Type: application/x-doom"
+                  "Content-Transfer-Encoding: base64"
+                  ""
+                  "SGVsbG8gV29ybGQ="
                   sprintf "--%s--" expectedBoundary2
                   sprintf "--%s--" expectedBoundary1
                   ""
@@ -188,3 +208,21 @@ let internals =
         let hfsReq = Request.create Get (Uri "http://localhost/") |> Request.queryStringItem "a" "1"
         let netReq, _ = DotNetWrapper.toHttpWebRequest HttpFsState.empty hfsReq
         Assert.Equal(string netReq.RequestUri, "http://localhost/?a=1")
+
+[<Tests>]
+let textEncodingTest =
+  let pathOf relativePath =
+    let here = IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+    IO.Path.Combine(here, relativePath)
+  testCase "character encoding when files are attached to request" <| fun _ ->
+    let requestBody =
+      Request.create Post (Uri "http://localhost/")
+        |> Request.body (
+          BodyForm [
+            NameValue("Special letters", "åäö")
+            NameValue("More Special letters", "©®™")
+            FormFile("file", ("pix.gif", ContentType.create("image", "gif"), Binary (System.IO.File.ReadAllBytes(pathOf "pix.gif"))))
+        ])
+    let rawBodyString = DotNetWrapper.getRawRequestBodyString HttpFsState.empty requestBody
+    Assert.StringContains("", "åäö", rawBodyString)
+    Assert.StringContains("", "©®™", rawBodyString)

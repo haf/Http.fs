@@ -34,12 +34,12 @@ build :quick_compile do |b|
 end
 
 task :paket_bootstrap do
-  system 'tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'tools/paket.exe'
+  system 'Tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'Tools/paket.exe'
 end
 
 desc 'restore all nugets as per the packages.config files'
 task :restore => :paket_bootstrap do
-  system 'tools/paket.exe', 'restore', clr_command: true
+  system 'Tools/paket.exe', 'restore', clr_command: true
 end
 
 task :yolo do
@@ -50,6 +50,7 @@ end
 desc 'Perform full build'
 build :compile => [:versioning, :restore, :assembly_info, :yolo] do |b|
   b.prop 'Configuration', Configuration
+  b.logging = 'normal'
   b.sln = 'Http.fs.sln'
 end
 
@@ -63,8 +64,8 @@ nugets_pack :create_nugets => ['build/pkg', :versioning, :compile] do |p|
   p.out     = 'build/pkg'
   p.exe     = 'packages/NuGet.CommandLine/tools/NuGet.exe'
   p.with_metadata do |m|
-    m.id          = 'Http.fs-prerelease'
-    m.title       = 'Http.fs Latest'
+    m.id          = 'Http.fs'
+    m.title       = 'Http.fs'
     m.description = 'A simple, functional HTTP client library for F#'
     m.authors     = 'Grant Crofton, Henrik Feldt'
     m.project_url = 'https://github.com/relentless/Http.fs'

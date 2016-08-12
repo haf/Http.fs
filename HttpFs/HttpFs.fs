@@ -249,7 +249,7 @@ module Client =
         | Some enc -> yield! [ ";"; " charset="; enc.WebName ]
         match x.boundary with
         | None -> ()
-        | Some b -> yield! [ ";"; " boundary="; b ]
+        | Some b -> yield! [ ";"; " boundary="; sprintf "\"%s\"" b ]
       ]
 
     interface IComparable with
@@ -701,12 +701,12 @@ module Client =
 
     module StreamWriters =
       let writeBytes bs (output : Stream) =
-        job { return! output.WriteAsync(bs, 0, bs.Length) }
+        Job.awaitUnitTask (output.WriteAsync(bs, 0, bs.Length))
 
       let writeBytesLine bs (output : Stream) =
         job {
           do! writeBytes bs output
-          do! output.WriteAsync (ASCII.bytes CRLF, 0, 2)
+          do! Job.awaitUnitTask (output.WriteAsync (ASCII.bytes CRLF, 0, 2))
         }
 
       /// Writes a string and CRLF as ASCII
@@ -719,26 +719,31 @@ module Client =
 
       /// Writes a string and CRLF as UTF8
       let writeLineUtf8 string =
-        String.Concat [ string; CRLF ] |> ASCII.bytes |> writeBytes
+        String.Concat [ string; CRLF ] |> UTF8.bytes |> writeBytes
 
       /// Writes a string as UTF8
       let writeUtf8 : string -> Stream -> Job<unit> =
         UTF8.bytes >> writeBytes
 
       let writeStream (input : Stream) (output : Stream) =
-        job { return! input.CopyToAsync output }
+        Job.awaitUnitTask (input.CopyToAsync output)
 
       let writeStreamLine input output =
         job {
           do! writeStream input output
-          do! output.WriteAsync (ASCII.bytes CRLF, 0, 2)
+          do! Job.awaitUnitTask (output.WriteAsync (ASCII.bytes CRLF, 0, 2))
         }
 
     open StreamWriters
 
     let generateFileData (encoding : Encoding) contentType contents = seq {
       match contentType, contents with
-      | { typ = "text"; subtype = "plain" }, Plain text ->
+      | { typ = "text"; subtype = _ }, Plain text ->
+        yield writeLineAscii ""
+        yield writeLineUtf8 text
+
+      | { typ = "application"; subtype = subtype }, Plain text 
+        when List.exists ((=) (subtype.Split('+') |> Seq.last)) ["json"; "xml"] ->
         yield writeLineAscii ""
         yield writeLineUtf8 text
 
@@ -783,7 +788,7 @@ module Client =
 
           | MultipartMixed (name, files) ->
             let boundary' = generateBoundary state
-            yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=%s" boundary')
+            yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=\"%s\"" boundary')
             yield writeLineUtf8 (generateContentDispos "form-data" [ "name", name ])
             yield writeLineUtf8 ""
             // remap the multi-files to single files and recursively call myself
@@ -1122,6 +1127,31 @@ module Client =
       printfn "[toHttpWebRequest] returning executables"
       webRequest, webRequest |> tryWriteBody body
 
+    /// For debugging purposes only
+    /// Converts the Request body to a format suitable for HttpWebRequest and returns this raw body as a string.
+    let getRawRequestBodyString (state : HttpFsState) (request : Request) =
+      let contentType = request.headers |> Map.tryPick matchCtHeader
+      let contentEncoding =
+        // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
+        contentType
+        |> function
+        | Some { charset = Some enc } -> Some enc
+        | _ -> None
+        |> Option.fold (fun s t -> t) request.bodyCharacterEncoding
+
+      let newContentType, body =
+        formatBody state (contentType, contentEncoding, request.body)
+
+      use dataStream = new IO.MemoryStream()
+      job {
+          for writer in body do
+            do! writer dataStream
+        } |> Hopac.Job.Global.run
+
+      dataStream.Position <- 0L // Reset stream position before reading
+      use reader = new IO.StreamReader(dataStream)
+      reader.ReadToEnd()
+
     /// Uses the HttpWebRequest to get the response.
     /// HttpWebRequest throws an exception on anything but a 200-level response,
     /// so we handle such exceptions and return the response.
@@ -1256,7 +1286,7 @@ module Client =
     let readBodyAsBytes (response : Response) : Job<byte []> =
       job {
         use ms = new MemoryStream()
-        do! response.body.CopyToAsync ms
+        do! Job.awaitUnitTask (response.body.CopyToAsync ms)
         return ms.ToArray()
       }
 

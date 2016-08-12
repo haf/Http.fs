@@ -7,7 +7,6 @@ open System
 open System.IO
 open System.Reflection
 open Hopac
-open Hopac.Infixes
 open Suave
 open Suave.Logging
 open Suave.Filters
@@ -53,7 +52,7 @@ let tests =
         let file = "pix.gif", ContentType.create("image", "gif"), StreamData fs
 
         use ms = new MemoryStream()
-        printfn "--- get response"
+        //printfn "--- get response"
         use! resp =
           postTo "gifs/echo"
           |> Request.body (BodyForm [ FormFile ("img", file) ])
@@ -62,12 +61,13 @@ let tests =
           |> Job.map successful
 
         printfn "--- reading response body stream"
-        do! resp.body.CopyToAsync ms
+        do! Job.awaitUnitTask (resp.body.CopyToAsync ms)
 
         fs.Seek(0L, SeekOrigin.Begin) |> ignore
         ms.Seek(0L, SeekOrigin.Begin) |> ignore
         printfn "--- asserting"
         Assert.StreamsEqual("the input should eq the echoed data", ms, fs)
+
       finally
         disposeContext ctx
         ()
