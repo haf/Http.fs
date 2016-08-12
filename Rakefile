@@ -1,9 +1,7 @@
 require 'bundler/setup'
-
 require 'albacore'
 require 'albacore/tasks/release'
 require 'albacore/tasks/versionizer'
-require 'albacore/ext/teamcity'
 
 Configuration = ENV['CONFIGURATION'] || 'Release'
 HttpFsStrongName = ENV['HTTPFS_STRONG_NAME'] && true || false
@@ -42,13 +40,17 @@ task :restore => :paket_bootstrap do
   system 'Tools/paket.exe', 'restore', clr_command: true
 end
 
-task :yolo do
-  system %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal HttpFs.YoLo')" paket-files/haf/YoLo/YoLo.fs} \
-    unless Albacore.windows?
+task :paket_replace do
+  sh %{ruby -pi.bak -e \
+         "gsub(/module internal YoLo/, 'module internal HttpFs.YoLo')" \
+         paket-files/haf/YoLo/YoLo.fs}
+  sh %{ruby -pi.bak -e \
+         "gsub(/namespace Logary.Facade/, 'namespace HttpFs.Logging')" \
+         paket-files/logary/logary/src/Logary.Facade/Facade.fs}
 end
 
 desc 'Perform full build'
-build :compile => [:versioning, :restore, :assembly_info, :yolo] do |b|
+build :compile => [:versioning, :restore, :assembly_info, :paket_replace] do |b|
   b.prop 'Configuration', Configuration
   b.logging = 'normal'
   b.sln = 'Http.fs.sln'

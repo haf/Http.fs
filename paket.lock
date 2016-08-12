@@ -24,4 +24,6 @@ NUGET
       Suave (>= 1.1.3)
 GITHUB
   remote: haf/YoLo
-    YoLo.fs (f122eebb2ab82e06ac31ce51f3b4632fb26fd130)
+    YoLo.fs (c8cab523cd9cc30d3a5a450249de561e5069dc6d)
+  remote: logary/logary
+    src/Logary.Facade/Facade.fs (03f22113078e5f791620e8be91f8c6e8db48071f)

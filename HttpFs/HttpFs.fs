@@ -5,8 +5,10 @@ open System.Diagnostics
 open System.IO
 open System.Text
 open System.Runtime.CompilerServices
+open System.Security.Cryptography
 open Hopac
 open Hopac.Infixes
+open HttpFs.Logging
 
 [<assembly: InternalsVisibleTo "HttpFs.IntegrationTests">]
 [<assembly: InternalsVisibleTo "HttpFs.UnitTests">]
@@ -14,8 +16,6 @@ open Hopac.Infixes
 
 [<AutoOpen>]
 module internal Prelude =
-  open System
-
   module Option =
     let orDefault def =
       Option.fold (fun s t -> t) def
@@ -26,175 +26,74 @@ module internal Prelude =
     let bytes (s : string) =
       Encoding.ASCII.GetBytes s
 
-module Logging =
+  module ThreadSafeRandom =
+    open System.Threading
 
-  /// The log levels specify the severity of the message.
-  [<CustomEquality; CustomComparison>]
-  type LogLevel =
-    /// The most verbose log level, more verbose than Debug.
-    | Verbose
-    /// Less verbose than Verbose, more verbose than Info
-    | Debug
-    /// Less verbose than Debug, more verbose than Warn
-    | Info
-    /// Less verbose than Info, more verbose than Error
-    | Warn
-    /// Less verbose than Warn, more verbose than Fatal
-    | Error
-    /// The least verbose level. Will only pass through fatal
-    /// log lines that cause the application to crash or become
-    /// unusable.
-    | Fatal
-    with
-      /// Convert the LogLevel to a string
-      override x.ToString () =
-        match x with
-        | Verbose -> "verbose"
-        | Debug -> "debug"
-        | Info -> "info"
-        | Warn -> "warn"
-        | Error -> "error"
-        | Fatal -> "fatal"
+    let private seed = ref Environment.TickCount
+    let private rnd = new ThreadLocal<Random>(fun () -> Random (Interlocked.Increment seed))
 
-      /// Converts the string passed to a Loglevel.
-      [<System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)>]
-      static member FromString str =
-        match str with
-        | "verbose" -> Verbose
-        | "debug" -> Debug
-        | "info" -> Info
-        | "warn" -> Warn
-        | "error" -> Error
-        | "fatal" -> Fatal
-        | _ -> Info
+    /// Fill buffer with random bytes
+    let nextBytes (buffer : byte []) =
+      rnd.Value.NextBytes buffer
 
-      /// Turn the LogLevel into an integer
-      [<System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)>]
-      member x.ToInt () =
-        (function
-        | Verbose -> 1
-        | Debug -> 2
-        | Info -> 3
-        | Warn -> 4
-        | Error -> 5
-        | Fatal -> 6) x
+    /// Generate a new random int32 value bounded to [minInclusive; maxExclusive)
+    let next (minInclusive : int) (maxExclusive : int) =
+      rnd.Value.Next(minInclusive, maxExclusive)
 
-      /// Turn an integer into a LogLevel
-      [<System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)>]
-      static member FromInt i =
-        (function
-        | 1 -> Verbose
-        | 2 -> Debug
-        | 3 -> Info
-        | 4 -> Warn
-        | 5 -> Error
-        | 6 -> Fatal
-        | _ as i -> failwithf "rank %i not available" i) i
+    /// Generate a new random ulong64 value
+    let nextUInt64 () =
+      let buffer = Array.zeroCreate<byte> sizeof<UInt64>
+      rnd.Value.NextBytes buffer
+      BitConverter.ToUInt64(buffer, 0)
 
-      static member op_LessThan (a, b) = (a :> IComparable<LogLevel>).CompareTo(b) < 0
-      static member op_LessThanOrEqual (a, b) = (a :> IComparable<LogLevel>).CompareTo(b) <= 0
-      static member op_GreaterThan (a, b) = (a :> IComparable<LogLevel>).CompareTo(b) > 0
-      static member op_GreaterThanOrEqual (a, b) = (a :> IComparable<LogLevel>).CompareTo(b) >= 0
+  module Counter =
 
-      override x.Equals other = (x :> IComparable).CompareTo other = 0
+    type private T =
+      { getNext : Ch<unit * IVar<unit>> }
 
-      override x.GetHashCode () = x.ToInt ()
+    let create () =
+      let getNext = Ch ()
 
-      interface IComparable with
-        member x.CompareTo other =
-          match other with
-          | null -> 1
-          | :? LogLevel as tother ->
-            (x :> IComparable<LogLevel>).CompareTo tother
-          | _ -> failwith <| sprintf "invalid comparison %A to %A" x other
+      let run () =
+        Job.foreverServer <| fun current ->
+          getNext ^-> IVar.fill current
+          <|> nack
 
-      interface IComparable<LogLevel> with
-        member x.CompareTo other =
-          compare (x.ToInt()) (other.ToInt())
+      { getNextCh = getNext }
 
-      interface IEquatable<LogLevel> with
-        member x.Equals other =
-          x.ToInt() = other.ToInt()
+    let getNext (t:T) : Alt<uint64> =
+      t *<=->- fun (resp, nack) -> resp, nack
 
-  type Value =
-    | Event of template:string
-    | Gauge of value:float * units:string
+type HttpFsConfig =
+  { /// Gets a new random number. Calls to this function must be thread-
+    /// safe. This number doesn't have to be cryptographically strong.
+    getRandom : unit -> uint64
 
-  /// When logging, write a Message like this with the source of your
-  /// log line as well as a message and an optional exception.
-  type Message =
-    { /// the level that this log line has
-      level     : LogLevel
-      /// the source of the log line, e.g. 'ModuleName.FunctionName'
-      path      : string[]
-      /// the message that the application wants to log
-      value     : Value
-      /// Any key-value data pairs to log or interpolate into the message
-      /// template.
-      fields    : Map<string, obj>
-      /// timestamp when this log line was created
-      timestamp : DateTimeOffset }
+    /// Gets the next sequence number. Calls to this function must be
+    /// thread-safe. This is used for generating pipelined requests
+    /// and keeping track of messages sent/in flight.
+    getNext   : unit -> Alt<uint64>
 
-  /// The primary Logger abstraction that you can log data into
-  type Logger =
-    abstract logVerbose : (unit -> Message) -> Alt<Promise<unit>>
-    abstract log : Message -> Alt<Promise<unit>>
-    abstract logSimple : Message -> unit
+    /// The logger to use for logging inside the library.
+    logger    : Logger }
 
-  let NoopLogger =
-    { new Logger with
-        member x.logVerbose evaluate = Alt.always (Promise.Now.withValue ())
-        member x.log message = Alt.always (Promise.Now.withValue ())
-        member x.logSimple message = () }
+  /// Will re-generate random CLR per-app-domain -- create your own state for
+  /// deterministic boundary generation (or anything else needing random).
+  static member create(?logger, ?getNext, ?getRandom) =
+    let counter = lazy (Counter.create ())
+    let logger = defaultArg logger (Log.create "HttpFs")
+    { getRandom   = defaultArg getRandom ThreadSafeRandom.nextUInt64
+      getNext     = defaultArg getNext (fun () -> Counter.getNext counter.Value)
+      logger      = logger }
 
-  let private logger =
-    ref ((fun () -> DateTimeOffset.UtcNow), fun (name : string) -> NoopLogger)
+  member x.getRandomInRange minValue maxValue =
+    let raw = x.getRandom ()
+    minValue + (raw % (minValue - maxValue))
 
-  [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-  module Message =
+type Client(config : HttpFsConfig) =
+  member x.hi = "there"
 
-    let create (clock : unit -> DateTimeOffset) path level fields message =
-      { value     = Event message
-        level     = level
-        path      = path
-        fields    = fields
-        timestamp = clock () }
-
-    let event fields message =
-      { value     = Event message
-        level     = Verbose
-        path      = Array.empty
-        fields    = fields |> Map.ofList
-        timestamp = (fst !logger) () }
-
-    let gauge value units =
-      { value     = Gauge (value, units)
-        level     = Verbose
-        path      = Array.empty
-        fields    = Map.empty
-        timestamp = (fst !logger) () }
-
-    let sprintf data =
-      Printf.kprintf (event data)
-
-  let configure clock fLogger =
-    logger := (clock, fLogger)
-
-  let getLoggerByName name =
-    (!logger |> snd) name
-
-  [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-  module Logger =
-
-    let log (logger : Logger) message =
-      logger.log message
-
-    let logVerbose (logger : Logger) evaluate =
-      logger.logVerbose evaluate
-
-    let logSimple (logger : Logger) message =
-      logger.logSimple message
-
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Client =
 
   open System
@@ -202,7 +101,6 @@ module Client =
   open System.Net
   open System.Text
   open System.Web
-  open System.Security.Cryptography
   open Microsoft.FSharp.Control
   open Microsoft.FSharp.Control.CommonExtensions
   open Microsoft.FSharp.Control.WebExtensions
@@ -623,18 +521,6 @@ module Client =
         //     yield x.EntityBody |> Option.get
       } |> String.concat Environment.NewLine
 
-  type HttpFsState =
-    { random      : Random
-      cryptRandom : RandomNumberGenerator
-      logger      : Logging.Logger }
-
-    /// Will re-generate random CLR per-app-domain -- create your own state for
-    /// deterministic boundary generation (or anything else needing random).
-    static member empty =
-      { random      = Random()
-        cryptRandom = RandomNumberGenerator.Create()
-        logger      = Logging.NoopLogger }
-
   /// The header you tried to add was already there, see issue #64.
   exception DuplicateHeader of RequestHeader
 
@@ -688,16 +574,17 @@ module Client =
     let generateBoundary =
       let boundaryChars = "abcdefghijklmnopqrstuvwxyz_-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
       let boundaryLen = 30
-      fun clientState ->
-          let rnd = clientState.random
-          let sb = new StringBuilder(boundaryLen)
-          for i in 0 .. boundaryLen - 1 do
-              sb.Append (boundaryChars.[rnd.Next(boundaryChars.Length)]) |> ignore
-          sb.ToString()
+      fun (config : HttpFsConfig) ->
+        let sb = new StringBuilder(boundaryLen)
+        for i in 0 .. boundaryLen - 1 do
+          let rndIndex =
+            int (config.getRandomInRange 0UL (uint64 boundaryChars.Length))
+          sb.Append (boundaryChars.[rndIndex]) |> ignore
+        sb.ToString()
 
     let escapeQuotes (s : string) =
-        // https://github.com/rack/rack/issues/323#issuecomment-3609743
-        s.Replace("\"", "\\\"")
+      // https://github.com/rack/rack/issues/323#issuecomment-3609743
+      s.Replace("\"", "\\\"")
 
     module StreamWriters =
       let writeBytes bs (output : Stream) =
@@ -816,7 +703,7 @@ module Client =
         |> writeBytes
       ]
 
-    let formatBody (clientState : HttpFsState) =
+    let formatBody (config : HttpFsConfig) =
                  // we may actually change the content type if it's wrong
                  //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
       function
@@ -837,13 +724,19 @@ module Client =
           ContentType.parse "application/x-www-form-urlencoded",
           formatBodyUrlencoded encoding formData
         else
-          let boundary = generateBoundary clientState
+          let boundary = generateBoundary config
           ContentType.create("multipart", "form-data", boundary=boundary) |> Some,
-          generateFormData clientState encoding boundary formData
+          generateFormData config encoding boundary formData
 
   open Impl
 
   module internal DotNetWrapper =
+
+    open HttpFs.Logging.Message
+
+    let private setLocalName lastBit =
+      setName [| "HttpFs"; "Client"; "DotNetWrapper"; lastBit |]
+
     /// Sets headers on HttpWebRequest.
     /// Mutates HttpWebRequest.
     let setHeaders (headers : RequestHeader list) (webRequest : HttpWebRequest) =
@@ -990,46 +883,58 @@ module Client =
       | other ->
         failwith "There are only 21 options in this enum, something the F# compiler should be aware of"
 
-    let tryCommunicate (request : WebRequest) (xJ : Job<_>) fWebExnResp : Alt<Choice<'a, Error>> =
+    let tryCommunicate (config : HttpFsConfig)
+                       (request : WebRequest)
+                       (xJ : Job<_>)
+                       fWebExnResp
+                       : Alt<Choice<'a, Error>> =
+
       Alt.withNackJob <| fun nack ->
+        let abort () =
+          // https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.abort.aspx
+          config.logger.debug (eventX "Aborting request" >> setLocalName "tryCommunicate")
+          request.Abort()
+
+        // Result holder
         let rI = IVar ()
 
-        let rJ =
-          job {
-            printfn "[tryCommunicate] running inside job"
-            try
-              return! xJ
+        // Non-throwing job
+        let wrJ =
+          Job.tryIn xJ (IVar.fill rI) (IVar.fill rI << function
+          | :? WebException as wex ->
+            if wex.Response <> null then
+              Choice.create (fWebExnResp (wex.Response :?> HttpWebResponse))
+            else
+              Choice.createSnd (mapFailure wex)
 
-            with
-            | :? WebException as wex ->
-              if wex.Response <> null then
-                return Choice.create (fWebExnResp (wex.Response :?> HttpWebResponse))
+          | :? IOException as ioex ->
+            Choice.createSnd (TcpException (IOException ioex))
 
-              else
-                return Choice.createSnd (mapFailure wex)
+          | :? System.Net.Sockets.SocketException as sex ->
+            Choice.createSnd (TcpException (SocketException sex))
+            
+          | otherwise ->
+            // We should only be getting IOEceptions, TcpExceptions and WebExceptions.
+            // So it's OK to crash the runtime fatally if this happens; then
+            // afterwards we can patch this library.
+            failwithf "Unknown exception type from network API: %O" otherwise)
 
-            | :? IOException as ioex ->
-              return Choice.createSnd (TcpException (IOException ioex))
+        // Send the request!
+        start wrJ
 
-            | :? System.Net.Sockets.SocketException as sex ->
-              return Choice.createSnd (TcpException (SocketException sex))
-          }
+        // Enable abort when nack is signalled
+        Job.start (nack ^-> abort) >>-.
 
-        let res =
-          nack >>- (fun () ->
-            printfn "[tryCommunicate] aborting request"
-            // https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.abort.aspx
-            request.Abort())
-          |> Job.start
-          >>-. rI
-
-        printfn "[tryCommunicate] returning from withNackJob function"
-        res
+        // Return the actual result
+        rI
 
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
-    let tryWriteBody (writers : seq<Stream -> Job<unit>>) (webRequest : HttpWebRequest) : Alt<Choice<unit, Error>> =
-      printfn "[tryWriteBody] initial"
+    let tryWriteBody (config : HttpFsConfig)
+                     (writers : seq<Stream -> Job<unit>>)
+                     (webRequest : HttpWebRequest)
+                     : Alt<Choice<unit, Error>> =
+
       if webRequest.Method = "POST" || webRequest.Method = "PUT" then
         // We'll be writing *a lot* of small pieces of data, so let's buffer that.
         webRequest.AllowWriteStreamBuffering <- true
@@ -1038,34 +943,42 @@ module Client =
             // Getting the request stream seems to be actually connecting to the server
             use! reqStream = Job.fromBeginEnd webRequest.BeginGetRequestStream webRequest.EndGetRequestStream
 
-            printfn "[tryWriteBody] running writers"
+            config.logger.verbose (
+              eventX "Starting to write body for {method}"
+              >> setField "method" webRequest.Method
+              >> setLocalName "tryWriteBody")
             for writer in writers do
               do! writer reqStream
 
-            printfn "[tryWriteBody] flushing"
-            // Finally flush it!
-            do! reqStream.FlushAsync()
+            config.logger.verbose (
+              eventX "Flushing"
+              >> setLocalName "tryWriteBody")
+
+            do! Job.awaitUnitTask (reqStream.FlushAsync())
             return Choice.create ()
           }
 
-        printfn "[tryWriteBody] calling tryCommunicate"
-        // We can get the exceptions during connection, too
-        let res = tryCommunicate webRequest writer ignore
-        printfn "[tryWriteBody] after call to tryCommunicate"
-        res
+        tryCommunicate config webRequest writer ignore
 
-      else Alt.always (Choice.create ())
+      else
+        config.logger.verbose (
+          eventX "No body to write for {method}"
+          >> setField "method" webRequest.Method
+          >> setLocalName "tryWriteBody")
+        Alt.always (Choice.create ())
 
     let matchCtHeader k = function
-      | RequestHeader.ContentType ct -> Some ct
-      | _ -> None
+      | RequestHeader.ContentType ct ->
+        Some ct
+      | _ ->
+        None
 
     let ensureNo100Continue () =
       if ServicePointManager.Expect100Continue then
         ServicePointManager.Expect100Continue <- false
 
     let setHeader (request : Request) (header : RequestHeader) =
-      { request with headers = request.headers |> Map.put header.Key header }
+      { request with headers = request.headers |> Map.add header.Key header }
 
     /// The nasty business of turning a Request into an HttpWebRequest
     let toHttpWebRequest state (request : Request) =
@@ -1076,17 +989,15 @@ module Client =
       let contentEncoding =
         // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
         contentType
-        |> function
-        | Some { charset = Some enc } -> Some enc
-        | _ -> None
+        |> Option.bind (function { charset = Some enc } -> Some enc | _ -> None)
         |> Option.fold (fun s t -> t) request.bodyCharacterEncoding
 
       let url =
         let b = UriBuilder request.url
         match b.Query with
-        | "" | null ->
+        | ""
+        | null ->
           b.Query <- getQueryString contentEncoding request
-
         | _ ->
           ()
 
@@ -1124,12 +1035,11 @@ module Client =
       webRequest.KeepAlive <- request.keepAlive
       webRequest.Timeout <- (int)request.timeout
 
-      printfn "[toHttpWebRequest] returning executables"
-      webRequest, webRequest |> tryWriteBody body
+      webRequest, webRequest |> tryWriteBody state body
 
     /// For debugging purposes only
     /// Converts the Request body to a format suitable for HttpWebRequest and returns this raw body as a string.
-    let getRawRequestBodyString (state : HttpFsState) (request : Request) =
+    let getRawRequestBodyString (config : HttpFsConfig) (request : Request) =
       let contentType = request.headers |> Map.tryPick matchCtHeader
       let contentEncoding =
         // default the ContentType charset encoding, otherwise, use BodyCharacterEncoding.
@@ -1140,13 +1050,13 @@ module Client =
         |> Option.fold (fun s t -> t) request.bodyCharacterEncoding
 
       let newContentType, body =
-        formatBody state (contentType, contentEncoding, request.body)
+        formatBody config (contentType, contentEncoding, request.body)
 
       use dataStream = new IO.MemoryStream()
       job {
           for writer in body do
             do! writer dataStream
-        } |> Hopac.Job.Global.run
+        } |> Hopac.run
 
       dataStream.Position <- 0L // Reset stream position before reading
       use reader = new IO.StreamReader(dataStream)
@@ -1155,13 +1065,14 @@ module Client =
     /// Uses the HttpWebRequest to get the response.
     /// HttpWebRequest throws an exception on anything but a 200-level response,
     /// so we handle such exceptions and return the response.
-    let getResponseNoException (request : HttpWebRequest) : Alt<Choice<HttpWebResponse, Error>> = 
+    let getResponseNoException state (request : HttpWebRequest)
+                               : Alt<Choice<HttpWebResponse, Error>> = 
       let requestJob =
         Job.fromBeginEnd request.BeginGetResponse request.EndGetResponse
         >>- (fun resp -> resp :?> HttpWebResponse)
         >>- Choice.create
 
-      tryCommunicate request requestJob id
+      tryCommunicate state request requestJob id
 
     let getCookiesAsMap (response:HttpWebResponse) =
       let cookieArray = Array.zeroCreate response.Cookies.Count
@@ -1238,13 +1149,12 @@ module Client =
         luggage          = Some (upcast response) }
 
   /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
-  let getResponse request : Alt<Choice<Response, Error>> =
-    printfn "[getResponse] initial"
-    let webRequest, writeRequest = toHttpWebRequest HttpFsState.empty request
+  let getResponse state request : Alt<Choice<Response, Error>> =
+    let webRequest, writeRequest =
+      toHttpWebRequest state request
 
     let wrapResponse = function
       | Choice1Of2 res ->
-        printfn "[getResponse] wrapResponse"
         { Response.ofHttpResponse res with
             expectedEncoding = request.responseCharacterEncoding }
         |> Choice.create
@@ -1255,7 +1165,7 @@ module Client =
     let bindReqResp : Choice<unit, Error> -> Alt<_> = function
       | Choice1Of2 ()  ->
         printfn "[getResponse] bindReqResp"
-        getResponseNoException webRequest
+        getResponseNoException state webRequest
 
       | Choice2Of2 err ->
         Alt.always (Choice.createSnd err)
@@ -1407,9 +1317,9 @@ module Client =
       { request with timeout = timeout }
 
     /// Note: this sends the request, reads the response, disposes it and its stream
-    let responseAsString req : Alt<Choice<string, Error>> =
+    let responseAsString state req : Alt<Choice<string, Error>> =
       // Note: it won't be possible to cancel the reading of the potentially large response body
-      getResponse req ^=> function
+      getResponse state req ^=> function
       | Choice1Of2 resp ->
         job {
           use resp = resp 
@@ -1420,8 +1330,8 @@ module Client =
         Job.result (Choice.createSnd err)
 
     /// Note: this sends the request, reads the response, disposes it and its stream
-    let responseAsBytes req =
-      getResponse req ^=> function
+    let responseAsBytes state req =
+      getResponse state req ^=> function
       | Choice1Of2 resp ->
         job {
           use resp = resp
@@ -1433,7 +1343,6 @@ module Client =
 
 module Composition =
 
-  open Logging
   open Client
   open System.Diagnostics
 
@@ -1455,12 +1364,12 @@ module Composition =
       Request.setHeader (RequestHeader.UserAgent clientName)
       >> service
 
-  let timerFilter (state : HttpFsState) : JobFilter<Request, Response> =
+  let timerFilter (config : HttpFsConfig) : JobFilter<Request, Response> =
     fun func req -> job {
       let sw = Stopwatch.StartNew()
       let! res = func req
       sw.Stop()
-      Message.gauge (float sw.ElapsedMilliseconds) "ms" |> Logger.logSimple state.logger
+      Message.gauge sw.ElapsedMilliseconds "ms" |> config.logger.logSimple
       return res
     }
 

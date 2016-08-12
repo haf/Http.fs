@@ -13,3 +13,4 @@ nuget OpenCover ~> 4.5
 nuget Suave
 nuget Suave.Testing
 github haf/YoLo YoLo.fs
+github logary/logary src/Logary.Facade/Facade.fs
