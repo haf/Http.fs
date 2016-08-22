@@ -52,7 +52,7 @@ let downloadSequentially sites =
 /// Download some sites in parallel
 let downloadInParallel (sites : Uri list) =
   let res, timer = withTimer <| fun _ ->
-    sites |> List.map download |> Job.conCollect |> run
+    sites |> List.map download |> Job.conCollect |> Hopac.run
   printfn "Pages downloaded in parallel in %d ms" timer.ElapsedMilliseconds
   res
 
@@ -104,7 +104,7 @@ let downloadImagesInParallel images =
     |> List.map (Request.create Get >> getResponse)
     |> List.map (Job.map Response.readBodyAsBytes)
     |> Job.conCollect
-    |> run
+    |> Hopac.run
     |> ignore
   printfn "Images downloaded in parallel in %d ms" timer.ElapsedMilliseconds
 
@@ -130,7 +130,7 @@ let Main(_) =
     let! count = countWords ()
     printfn "** Word Count **"
     return count }
-  |> run |> printfn "%d"
+  |> Hopac.run |> printfn "%d"
 
   printfn "\n** Downloading sites: Sequential vs Parallel **"
   [ "http://news.bbc.co.uk"
@@ -142,7 +142,7 @@ let Main(_) =
   |> ignore
 
   printfn "\n** Creating a complex request **"
-  complexRequest () |> run |> printfn "%A"
+  complexRequest () |> Hopac.run |> printfn "%A"
 
   printfn "\n** Downloading image **"
   downloadImage () |> ignore

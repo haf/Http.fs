@@ -65,4 +65,4 @@ let tests =
       finally
         disposeContext ctx
         ()
-    } |> run
+    } |> Hopac.run

@@ -14,5 +14,5 @@ let ``countWordInstances counts the number of times a word is repeated at a give
 
     let downloader = new PageDownloader( fakeGetResponseBodyFunction )
     downloader.countWordInstances "hi" (Uri "https://www")
-    |> run
+    |> Hopac.run
     |> should equal 5

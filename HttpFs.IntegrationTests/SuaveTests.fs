@@ -82,7 +82,7 @@ type ``Suave Integration Tests`` () =
                  ])
             ])
     System.Net.ServicePointManager.Expect100Continue <- false
-    let response = Request.responseAsString req |> run
+    let response = Request.responseAsString req |> Hopac.run
 
     for fileName in [ "file1.txt"; "file2.gif"; "file3.gif"; "cute-cat.gif" ] do
       Assert.That(response, Is.StringContaining(fileName))

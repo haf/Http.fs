@@ -19,9 +19,9 @@ hostConfig.AllowChunkedEncoding <- false
 // It also seems to mean the Content-Length isn't set in some cases.
 hostConfig.UrlReservations<-UrlReservations(CreateAutomatically=true)
 
-let nancyHost = 
+let nancyHost =
   new NancyHost(
-    hostConfig, 
+    hostConfig,
     new Uri("http://localhost:1234/TestServer/"))
 
 let utf8 = Encoding.UTF8
