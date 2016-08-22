@@ -77,7 +77,7 @@ end
 
 namespace :tests do
   task :integration do
-    system 'packages/NUnit.Runners/tools/nunit-console.exe', %W|
+    system 'packages/NUnit.Runners/tools/nunit-console.exe', '--noshadow', %W|
            HttpFs.IntegrationTests/bin/#{Configuration}/HttpFs.IntegrationTests.dll|,
            clr_command: true
   end
