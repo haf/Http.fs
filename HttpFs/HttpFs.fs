@@ -1221,6 +1221,7 @@ module Client =
     let keepAlive value request =
       { request with keepAlive = value }
 
+    /// TODO: use as filter instead (composition)
     let timeout timeout request =
       { request with timeout = timeout }
 
