@@ -974,17 +974,17 @@ module Client =
     /// Uses the HttpWebRequest to get the response.
     /// HttpWebRequest throws an exception on anything but a 200-level response,
     /// so we handle such exceptions and return the response.
-    let getResponseNoException (request : HttpWebRequest) = job {
-      try
-        let! response = request.AsyncGetResponse()
-        return response :?> HttpWebResponse
-      with
-      | :? WebException as wex ->
-        if wex.Response <> null then
-          return wex.Response :?> HttpWebResponse
-        else
-          return raise wex
-    }
+    let getResponseNoException (request : HttpWebRequest) : Alt<Choice<HttpWebResponse,exn>> =
+      let inline succeed (wr : WebResponse) : Choice<HttpWebResponse,exn> = downcast wr |> Choice1Of2
+      let inline failure (ex : exn) : Choice<HttpWebResponse,exn> = Choice2Of2 ex
+      let tryEndGetResponse ar =
+        try
+          request.EndGetResponse ar
+          |> succeed
+        with
+        | :? WebException as wex when wex.Response <> null -> succeed wex.Response
+        | ex -> failure ex
+      Alt.fromBeginEnd request.BeginGetResponse tryEndGetResponse (fun _ -> request.Abort())
 
     let getCookiesAsMap (response:HttpWebResponse) =
       let cookieArray = Array.zeroCreate response.Cookies.Count
@@ -1060,16 +1060,25 @@ module Client =
         body             = response.GetResponseStream()
         luggage          = Some (upcast response) }
 
-  /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
-  let getResponse request = job {
-    let webRequest, exec = toHttpWebRequest HttpFsState.empty request
-    do! exec
-    let! resp = getResponseNoException webRequest
-    let wrapped =
+  let tryGetResponse request =
+    let prepare req = job {
+      let webRequest, exec = toHttpWebRequest HttpFsState.empty req
+      do! exec
+      return getResponseNoException webRequest
+    }
+    let wrap resp =
       { Response.ofHttpResponse resp with
           expectedEncoding = request.responseCharacterEncoding }
-    return wrapped
-  }
+    Alt.prepareJob (fun () -> prepare request)
+    |> Alt.afterFun (Choice.map wrap)
+
+  /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
+  let getResponse request =
+    let getResponseOrFail = function
+      | Choice1Of2 resp -> resp
+      | Choice2Of2 exn -> raise exn
+    tryGetResponse request
+    |> Alt.afterFun getResponseOrFail
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Response =
