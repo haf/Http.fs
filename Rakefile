@@ -1,9 +1,7 @@
 require 'bundler/setup'
-
 require 'albacore'
 require 'albacore/tasks/release'
 require 'albacore/tasks/versionizer'
-require 'albacore/ext/teamcity'
 
 Configuration = ENV['CONFIGURATION'] || 'Release'
 HttpFsStrongName = ENV['HTTPFS_STRONG_NAME'] && true || false
