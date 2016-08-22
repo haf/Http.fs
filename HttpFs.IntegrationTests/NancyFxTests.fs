@@ -31,7 +31,7 @@ let uriFor path =
 
 let runIgnore =
   getResponse
-  >> run
+  >> Hopac.run
   >> (fun (r : HttpFs.Client.Response) -> (r :> IDisposable).Dispose())
 
 [<TestFixture>]
