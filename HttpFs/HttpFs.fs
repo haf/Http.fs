@@ -142,8 +142,8 @@ module Logging =
 
   let NoopLogger =
     { new Logger with
-        member x.logVerbose evaluate = Alt.always (Promise.Now.withValue ())
-        member x.log message = Alt.always (Promise.Now.withValue ())
+        member x.logVerbose evaluate = Alt.always (Promise ())
+        member x.log message = Alt.always (Promise ())
         member x.logSimple message = () }
 
   let private logger =
@@ -965,7 +965,7 @@ module Client =
       job {
           for writer in body do
             do! writer dataStream
-        } |> Hopac.Job.Global.run
+        } |> run
 
       dataStream.Position <- 0L // Reset stream position before reading
       use reader = new IO.StreamReader(dataStream)
