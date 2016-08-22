@@ -49,20 +49,18 @@ module internal Prelude =
   module Counter =
 
     type private T =
-      { getNext : Ch<unit * IVar<unit>> }
+      { getNext : Ch<IVar<uint64>> }
 
-    let create () =
-      let getNext = Ch ()
-
-      let run () =
-        Job.foreverServer <| fun current ->
-          getNext ^-> IVar.fill current
-          <|> nack
-
-      { getNextCh = getNext }
+    let create () : Job<T> =
+      let t = { getNext = Ch () }
+      Job.iterateServer 0UL (fun counter ->
+        t.getNext ^=> fun repl ->
+        repl *<= counter >>-.
+        counter + 1UL)
+      >>-. t
 
     let getNext (t:T) : Alt<uint64> =
-      t *<=->- fun (resp, nack) -> resp, nack
+      t.getNext *<-=>- id 
 
 type HttpFsConfig =
   { /// Gets a new random number. Calls to this function must be thread-
@@ -80,10 +78,10 @@ type HttpFsConfig =
   /// Will re-generate random CLR per-app-domain -- create your own state for
   /// deterministic boundary generation (or anything else needing random).
   static member create(?logger, ?getNext, ?getRandom) =
-    let counter = lazy (Counter.create ())
+    let counter = lazy (memo (Counter.create ()))
     let logger = defaultArg logger (Log.create "HttpFs")
     { getRandom   = defaultArg getRandom ThreadSafeRandom.nextUInt64
-      getNext     = defaultArg getNext (fun () -> Counter.getNext counter.Value)
+      getNext     = defaultArg getNext (fun () -> Alt.prepareJob (fun () -> counter.Value >>- Counter.getNext))
       logger      = logger }
 
   member x.getRandomInRange minValue maxValue =
