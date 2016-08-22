@@ -33,6 +33,15 @@ let app =
                   |> OK)
           NOT_FOUND "Nope."
       ]
+      GET
+      >=> choose [
+          path "/slowresp"
+              >=> ( fun ctx -> async {
+                      do! Async.Sleep 1000
+                      return! OK "Done" ctx
+                    }
+                  )
+      ]
     ]
 
 let pathOf relativePath =
@@ -44,6 +53,7 @@ type ``Suave Integration Tests`` () =
   let cts = new CancellationTokenSource()
   let uriFor (res : string) = Uri (sprintf "http://localhost:8083/%s" (res.TrimStart('/')))
   let postTo res = Request.create Post (uriFor res) |> Request.keepAlive false
+  let getFrom res = Request.create Get (uriFor res) |> Request.keepAlive false
 
   [<TestFixtureSetUp>]
   member x.fixtureSetup() =
@@ -86,3 +96,16 @@ type ``Suave Integration Tests`` () =
 
     for fileName in [ "file1.txt"; "file2.gif"; "file3.gif"; "cute-cat.gif" ] do
       Assert.That(response, Is.StringContaining(fileName))
+
+  [<Test>]
+  member x.``request is cancellable``() =
+    let req = getFrom "slowresp"
+    System.Net.ServicePointManager.Expect100Continue <- false
+    let respAlt =
+        Alt.choose
+            [ getResponse req |> Alt.afterFun (fun _ -> false)
+              timeOutMillis 10 |> Alt.afterFun (fun _ -> true)
+            ]
+    let timedOut = run respAlt
+
+    Assert.That(timedOut, Is.True)
