@@ -1,13 +1,13 @@
 NUGET
   remote: https://www.nuget.org/api/v2
-    FAKE (4.38.1)
+    FAKE (4.38.3)
     FSharp.Core (3.1.2.5)
     FsUnit (1.4.1)
       FSharp.Core (>= 3.1.2.5)
       NUnit (2.6.4)
     Fuchu (1.0.3)
       FSharp.Core (>= 3.1.2.1)
-    Hopac (0.3.12)
+    Hopac (0.3.13)
       FSharp.Core (>= 3.1.2.5)
     Nancy (0.23.2)
     Nancy.Hosting.Self (0.23.2)
