@@ -1074,15 +1074,16 @@ module Client =
 
 module Composition =
 
+  open Hopac.Infixes
   open HttpFs.Logging
   open Client
   open System.Diagnostics
 
-  type JobFunc<'a, 'b> = 'a -> Job<'b>
+  type JobFunc<'a, 'b> = 'a -> Alt<'b>
 
   module JobFunc =
     let map (f : 'b -> 'c) (func : JobFunc<'a, 'b>) : JobFunc<'a, 'c> =
-      func >> Job.map f
+      func >> Alt.afterFun f
 
     let mapLeft (f : 'a -> 'c) (func : JobFunc<'c, 'b>) : JobFunc<'a, 'b> =
       f >> func
@@ -1097,13 +1098,13 @@ module Composition =
       >> service
 
   let timerFilter (state : HttpFsState) : JobFilter<Request, Response> =
-    fun func req -> job {
-      let sw = Stopwatch.StartNew()
-      let! res = func req
-      sw.Stop()
-      Message.gauge sw.ElapsedTicks "ticks" |> state.logger.logSimple
-      return res
-    }
+    fun func req ->
+      Alt.prepareFun (fun () ->
+        let sw = Stopwatch.StartNew()
+        func req ^-> fun res ->
+        sw.Stop()
+        Message.gauge sw.ElapsedTicks "ticks" |> state.logger.logSimple
+        res)
 
   let codecFilter (enc, dec) : JobFilter<'i, 'o, Request, Response> =
     JobFunc.mapLeft enc
