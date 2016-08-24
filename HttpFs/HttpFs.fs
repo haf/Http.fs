@@ -1097,14 +1097,25 @@ module Composition =
       Request.setHeader (RequestHeader.UserAgent clientName)
       >> service
 
-  let timerFilter (state : HttpFsState) : JobFilter<Request, Response> =
+  let around before after : JobFilter<_, _> =
     fun func req ->
       Alt.prepareFun (fun () ->
-        let sw = Stopwatch.StartNew()
+        let pX = before ()
         func req ^-> fun res ->
-        sw.Stop()
-        Message.gauge sw.ElapsedTicks "ticks" |> state.logger.logSimple
+        after pX
         res)
+
+  let timerFilter (state : HttpFsState) : JobFilter<Request, Response> =
+    around (fun () -> Stopwatch.StartNew())
+           (fun sw -> sw.Stop(); Message.gauge sw.ElapsedTicks "ticks" |> state.logger.logSimple)
+
+  let timerFilterNamed (state : HttpFsState) (name) : JobFilter<Request, Response> =
+    around (fun () -> Stopwatch.StartNew())
+           (fun sw ->
+             sw.Stop()
+             Message.gauge sw.ElapsedTicks "ticks"
+             |> Message.setName name
+             |> state.logger.logSimple)
 
   let codecFilter (enc, dec) : JobFilter<'i, 'o, Request, Response> =
     JobFunc.mapLeft enc
