@@ -4,8 +4,8 @@
 A gloriously functional HTTP client library for F#! NuGet name:
 `Http.fs`.
 
-.Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/vcqrxl5d03xxyoa3/branch/master)](https://ci.appveyor.com/project/GrantCrofton/http-fs/branch/master)
-Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/relentless/Http.fs.svg?branch=master)](https://travis-ci.org/relentless/Http.fs)
+.Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/s3xy4lk0novh549h?svg=true)](https://ci.appveyor.com/project/haf/http-fs)
+Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/haf/Http.fs.svg?branch=releases%2Fv4.x)](https://travis-ci.org/haf/Http.fs)
 NuGet package: [![NuGet](http://img.shields.io/nuget/v/Http.fs.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
 
 ## How do I use it? ##
@@ -42,7 +42,7 @@ let request =
     |> Request.withBasicAuthentication "myUsername" "myPassword" // UTF8-encoded
     |> Request.withHeader (UserAgent "Chrome or summat")
     |> Request.withHeader (Custom ("X-My-Header", "hi mum"))
-    |> Request.withAutoDecompression DecompressionScheme.GZip 
+    |> Request.withAutoDecompression DecompressionScheme.GZip
     |> Request.withAutoFollowRedirectsDisabled
     |> Request.withCookie (Cookie.Create("session", "123", path="/"))
     |> Request.withBodyString "This body will make heads turn"
@@ -76,7 +76,7 @@ let request =
 ```
 
 (with everything after createRequest being optional)
-  
+
 2 - The Http response (or just the response code/body) is retrieved using one of the following:
 
 ``` fsharp
