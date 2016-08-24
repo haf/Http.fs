@@ -3,7 +3,6 @@ language: csharp
 mono:
   - 4.2.3
   - 4.4.1
-  - 4.6.0
   - latest # => "stable release"
   - weekly # => "latest commits"
 
@@ -21,4 +20,3 @@ matrix:
   allow_failures:
    - mono: latest
    - mono: weekly
-   - mono: 4.4.1
