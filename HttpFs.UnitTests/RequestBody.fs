@@ -3,6 +3,7 @@
 open System
 open System.Text
 open Fuchu
+open Hopac
 open HttpFs.Client
 
 let ValidUri = Uri "http://www"
@@ -45,7 +46,7 @@ let bodyFormatting =
     let bodyToBytes body =
       use stream = new IO.MemoryStream()
       for writer in body do
-        do writer stream |> Hopac.Job.Global.run
+        do writer stream |> Hopac.run
       stream.Seek(0L, IO.SeekOrigin.Begin) |> ignore
       stream.ToArray()
 

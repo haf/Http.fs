@@ -35,6 +35,10 @@
     <OtherFlags Condition="'$(AssemblyStrongName)' != ''">--keyfile:../Tools/HttpFs.snk</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\paket-files\logary\logary\src\Logary.Facade\Facade.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/Facade.fs</Link>
+    </Compile>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />

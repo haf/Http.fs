@@ -35,18 +35,20 @@ task :paket_bootstrap do
   system 'Tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'Tools/paket.exe'
 end
 
-desc 'restore all nugets as per the packages.config files'
-task :restore => :paket_bootstrap do
+task :paket_replace do
+  sh %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal HttpFs.YoLo')" paket-files/haf/YoLo/YoLo.fs}
+  sh %{ruby -pi.bak -e "gsub(/namespace Logary.Facade/, 'namespace HttpFs.Logging')" paket-files/logary/logary/src/Logary.Facade/Facade.fs}
+end
+
+task :paket_restore do
   system 'Tools/paket.exe', 'restore', clr_command: true
 end
 
-task :yolo do
-  system %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal HttpFs.YoLo')" paket-files/haf/YoLo/YoLo.fs} \
-    unless Albacore.windows?
-end
+desc 'restore all nugets as per the packages.config files'
+task :restore => [:paket_bootstrap, :paket_restore, :paket_replace]
 
 desc 'Perform full build'
-build :compile => [:versioning, :restore, :assembly_info, :yolo] do |b|
+build :compile => [:versioning, :restore, :assembly_info] do |b|
   b.prop 'Configuration', Configuration
   b.logging = 'normal'
   b.sln = 'Http.fs.sln'
