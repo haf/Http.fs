@@ -1072,6 +1072,7 @@ module Client =
       return! Response.readBodyAsBytes resp
     }
 
+/// Module that encapsulates common compositional patterns
 module Composition =
 
   open Hopac.Infixes
