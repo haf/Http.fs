@@ -38,7 +38,7 @@ open System.Text
 
 let request =
     Request.createUrl Post "https://example.com"
-    |> Request.withQueryStringItem "search" "jeebus"
+    |> Request.queryStringItem "search" "jeebus"
     |> Request.withBasicAuthentication "myUsername" "myPassword" // UTF8-encoded
     |> Request.withHeader (UserAgent "Chrome or summat")
     |> Request.withHeader (Custom ("X-My-Header", "hi mum"))
