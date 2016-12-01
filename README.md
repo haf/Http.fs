@@ -32,47 +32,59 @@ Builder](http://stefanoricciardi.com/2010/04/14/a-fluent-builder-in-c/) style
 as follows:
 
 ``` fsharp
-open HttpFs.Client
-open System
+open System.IO
 open System.Text
+open Hopac
+open HttpFs.Client
+
+let pathOf relativePath =
+  let here = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+  Path.Combine(here, relativePath)
+
+let firstCt, secondCt, thirdCt, fourthCt =
+    ContentType.parse "text/plain" |> Option.get,
+    ContentType.parse "text/plain" |> Option.get,
+    ContentType.create("application", "octet-stream"),
+    ContentType.create("image", "gif")
 
 let request =
     Request.createUrl Post "https://example.com"
     |> Request.queryStringItem "search" "jeebus"
-    |> Request.withBasicAuthentication "myUsername" "myPassword" // UTF8-encoded
-    |> Request.withHeader (UserAgent "Chrome or summat")
-    |> Request.withHeader (Custom ("X-My-Header", "hi mum"))
-    |> Request.withAutoDecompression DecompressionScheme.GZip
-    |> Request.withAutoFollowRedirectsDisabled
-    |> Request.withCookie (Cookie.Create("session", "123", path="/"))
-    |> Request.withBodyString "This body will make heads turn"
-    |> Request.withBodyStringEncoded "Check out my sexy foreign body" (Encoding.UTF8)
-    |> Request.withBody (BodyRaw [| 1uy; 2uy; 3uy |])
-    |> Request.withBody (BodyString "this is a greeting from Santa")
+    |> Request.basicAuthentication "myUsername" "myPassword" // UTF8-encoded
+    |> Request.setHeader (UserAgent "Chrome or summat")
+    |> Request.setHeader (Custom ("X-My-Header", "hi mum"))
+    |> Request.autoDecompression DecompressionScheme.GZip
+    |> Request.autoFollowRedirectsDisabled
+    |> Request.cookie (Cookie.create("session", "123", path="/"))
+    |> Request.bodyString "This body will make heads turn"
+    |> Request.bodyStringEncoded "Check out my sexy foreign body" (Encoding.UTF8)
+    |> Request.body (BodyRaw [| 1uy; 2uy; 3uy |])
+    |> Request.body (BodyString "this is a greeting from Santa")
 
     // if you submit a BodyForm, then Http.fs will also set the correct Content-Type, so you don't have to
-    |> Request.withBody (BodyForm [
-        // if you only have this in your form, it will be submitted as application/x-www-form-urlencoded
-        NameValue ("submit", "Hit Me!")
+    |> Request.body (BodyForm 
+        [
+            // if you only have this in your form, it will be submitted as application/x-www-form-urlencoded
+            NameValue ("submit", "Hit Me!")
 
-        // a single file form control, selecting two files from browser
-        FormFile ("file", ("file1.txt", ContentType.Create("text", "plain"), Plain "Hello World"))
-        FormFile ("file", ("file2.txt", ContentType.Create("text", "plain"), Binary [|1uy; 2uy; 3uy|]))
+            // a single file form control, selecting two files from browser
+            FormFile ("file", ("file1.txt", ContentType.create("text", "plain"), Plain "Hello World"))
+            FormFile ("file", ("file2.txt", ContentType.create("text", "plain"), Binary [|1uy; 2uy; 3uy|]))
 
-        // you can also use MultipartMixed for servers supporting it (this is not the browser-default)
-        MultipartMixed ("files",
-          [ "file1.txt", firstCt, Plain "Hello World" // => plain
-            "file2.gif", secondCt, Plain "Loopy" // => plain
-            "file3.gif", thirdCt, Plain "Thus" // => base64
-            "cute-cat.gif", fourthCt, Binary (File.ReadAllBytes (pathOf "cat-stare.gif")) // => binary
+            // you can also use MultipartMixed for servers supporting it (this is not the browser-default)
+            MultipartMixed ("files",
+              [ "file1.txt", firstCt, Plain "Hello World" // => plain
+                "file2.gif", secondCt, Plain "Loopy" // => plain
+                "file3.gif", thirdCt, Plain "Thus" // => base64
+                "cute-cat.gif", fourthCt, Binary (File.ReadAllBytes (pathOf "cat-stare.gif")) // => binary
           ])
     ])
-    |> Request.withResponseCharacterEncoding (Encoding.UTF8)
-    |> Request.withKeepAlive false
-    |> Request.withProxy {
+    |> Request.responseCharacterEncoding Encoding.UTF8
+    |> Request.keepAlive false
+    |> Request.proxy {
           Address = "proxy.com";
           Port = 8080;
-          Credentials = ProxyCredentials.Custom { username = "Tim"; password = "Password1" } }
+          Credentials = Credentials.Custom { username = "Tim"; password = "Password1" } }
 ```
 
 (with everything after createRequest being optional)
