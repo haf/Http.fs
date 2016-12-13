@@ -158,12 +158,13 @@ and then run `bundle` and then `bundle exec rake`. This does a few things:
 
  1. Downloads albacore (the `bundle` command)
  2. Executes the Rakefile
-   i. Downloads all nugets
-   ii. Downloads all github file references
-   iii. Generates assembly info
-   iv. Compiles the code
-   v. Runs the tests
-   vi. Generates nugets
+ 
+   1. Downloads all nugets
+   1. Downloads all github file references
+   1. Generates assembly info
+   1. Compiles the code
+   1. Runs the tests
+   1. Generates nugets
 
 ## Examples ##
 
