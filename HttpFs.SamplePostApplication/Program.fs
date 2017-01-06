@@ -49,7 +49,7 @@ let main argv =
     let request =
         Request.createUrl Post "http://httpbin.org/post"
         |> Request.body (BodyForm form)
-        |> Request.setHeader (Referer "https://github.com/relentless/Http.fs")
+        |> Request.setHeader (Referer "https://github.com/haf/Http.fs")
         |> Request.setHeader (UserAgent "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0")
         |> Request.setHeader (Accept "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
         |> Request.setHeader (AcceptLanguage "Accept-Language: en-US")
