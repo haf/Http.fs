@@ -1,66 +1,67 @@
-﻿open HttpClient
+﻿module HttpFs.SamplePostApplication
 
+open HttpFs.Client
+open Hopac
+open System
 open System.Web // TODO: remember to add reference to project ->
+open System.Text
 
-/// Any Key-value pair to store values. 
-type KeyValuePair = {Key:string; Value:string}
+type ApiHttpResponse =
+    | Ok of body:string
+    | Error of statusCode:int
+    | Exception of e:exn
+
+let sampleGetBody urlStr bodyStr : Async<ApiHttpResponse> =
+    let resp =
+        Request.create Post (Uri urlStr)
+        |> Request.bodyString bodyStr
+        |> getResponse
+
+    resp |> Alt.afterJob (fun resp ->
+        // if we don't cancel the request, let's read the body in full
+        match resp.statusCode with
+        | x when x < 300 ->
+            resp
+            |> Response.readBodyAsString
+            |> Job.map Ok
+        | x ->
+            Error resp.statusCode
+            |> Job.result
+    )
+    |> Alt.toAsync
 
 [<EntryPoint>]
 let main argv = 
-
-    // Set up parameters for small pizza with bacon and onions.
-    let bodyParams :KeyValuePair list = [
-        {Key = "custname"; Value = "John Doe"}
-        {Key = "custtel"; Value = "123456789"}
-        {Key = "custemail"; Value = "example@example.com"}
-         // Radio button
-        {Key = "size"; Value = "small"}
-         // Checkboxes
-        {Key = "topping"; Value = "bacon"}
-        {Key = "topping"; Value = "cheese"}
-
-        {Key = "delivery"; Value = "4:00"}
-        {Key = "comments"; Value = ""}
+    // Set up form for small pizza with bacon and onions.
+    let form =
+        [
+            "custname", "John Doe"
+            "custtel", "12345678"
+            "email", "john@example.com"
+            "size", "small"
+            "topping", "bacon"
+            "topping", "cheese"
         ]
-
-    /// Function to convert parameter list to Body.
-    let bodyFunc (acc:string) (tArg:KeyValuePair) = 
-        // Encode characters like spaces before transmitting.
-        let rName = tArg.Key |> HttpUtility.UrlEncode
-        let rValue = tArg.Value |> HttpUtility.UrlEncode
-
-        let mix = HttpUtility.UrlEncode rName + "=" + rValue
-        match acc with
-        | "" -> mix // Skip & for first one.
-        | _ -> acc + "&" + mix  // application/x-www-form-urlencoded
-    
-    // Create body.
-    // custname=John+Doe&custtel=123456789&custemail=example%40example.com&size=small&topping=bacon&topping=cheese&delivery=4%3a00&comments=
-    let body = bodyParams |> Seq.fold bodyFunc ""
+        |> List.map (fun (k, v) -> NameValue (k, v))
 
     // List of common html headers.
     // http://en.wikipedia.org/wiki/List_of_HTTP_header_fields
-    try
-        let request =
-            createRequest Post "http://httpbin.org/post"
-            |> withBody body
-            |> withHeader (Referer "https://github.com/relentless/Http.fs")
-            |> withHeader (UserAgent "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0")    
-            |> withHeader (Accept "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")       
-            |> withHeader (AcceptLanguage "Accept-Language: en-US")
-            |> withHeader (ContentType "application/x-www-form-urlencoded")    
-            |> withHeader (Custom {name="DNT"; value="1"}) // Custom header. Do Not Track Enabled 
-            |> withAutoDecompression (DecompressionScheme.GZip ||| DecompressionScheme.Deflate) // Accept both.
-            |> withResponseCharacterEncoding "utf-8"
-            |> withKeepAlive true
-    
-        let resp = request |> getResponse
-        printfn "StatusCode: %d" resp.StatusCode
-    with
-        // You may want to handle WebException. Happens often during debug because of Timeout.
-        | :? System.Net.WebException as ex -> 
-            printfn "%s" ex.Message
-            reraise()
-        | _ -> reraise()
+    let request =
+        Request.createUrl Post "http://httpbin.org/post"
+        |> Request.body (BodyForm form)
+        |> Request.setHeader (Referer "https://github.com/relentless/Http.fs")
+        |> Request.setHeader (UserAgent "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0")
+        |> Request.setHeader (Accept "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        |> Request.setHeader (AcceptLanguage "Accept-Language: en-US")
+        |> Request.setHeader (ContentType (ContentType.create("application", "x-www-form-urlencoded")))
+        |> Request.setHeader (Custom ("DNT", "1")) // Custom header. Do Not Track Enabled 
+        |> Request.autoDecompression (DecompressionScheme.GZip ||| DecompressionScheme.Deflate) // Accept both.
+        |> Request.responseCharacterEncoding Encoding.UTF8
+        |> Request.keepAlive true
 
-    0 // return an integer exit code
+    job {
+        use! resp = request |> HttpFs.Client.getResponse
+        printfn "StatusCode: %d" resp.statusCode
+        return if resp.statusCode = 200 then 0 else resp.statusCode
+    }
+    |> run // only use a single run per app
