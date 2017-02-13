@@ -172,7 +172,7 @@ Check out *HttpClient.SampleApplication*, which contains a program demonstrating
 the various functions of the library being used and (to a limited extent) unit
 tested.
 
-[SamplePostApplication](https://github.com/relentless/Http.fs/blob/master/HttpClient.SamplePostApplication/README.md)
+[SamplePostApplication](https://github.com/haf/Http.fs/blob/master/HttpFs.SamplePostApplication/README.md)
 shows how you can create a post with a body containing forms.
 
 ## Version History ##
