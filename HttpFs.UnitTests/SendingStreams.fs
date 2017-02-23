@@ -17,7 +17,7 @@ open Suave.Operators
 
 let app =
   choose
-    [ POST
+    [ choose [POST;PUT;PATCH]
       >=> choose [
           path "/gifs/echo"
               >=> Writers.setMimeType "image/gif"
@@ -39,28 +39,30 @@ let tests =
   let config = { defaultConfig with logger = Loggers.saneDefaultsFor LogLevel.Warn }
   let runWithConfig = runWith config
   let uriFor (res : string) = Uri (sprintf "http://localhost:8083/%s" (res.TrimStart('/')))
-  let postTo res = Request.create Post (uriFor res) |> Request.keepAlive false
+  let request ``method`` res = Request.create ``method`` (uriFor res) |> Request.keepAlive false
 
   testCase "can send/receive" <| fun _ ->
     job {
       let ctx = runWithConfig app
       try
-        use fs = File.OpenRead (pathOf "pix.gif")
-        let file = "pix.gif", ContentType.create("image", "gif"), StreamData fs
+        for ``method`` in [Post;Put;Patch] do
+          use fs = File.OpenRead (pathOf "pix.gif")
+          let file = "pix.gif", ContentType.create("image", "gif"), StreamData fs
+          
+          use ms = new MemoryStream()
+          //printfn "--- get response"
+          use! resp =
+            request ``method`` "gifs/echo"
+            |> Request.body (BodyForm [ FormFile ("img", file) ])
+            |> Request.setHeader (Custom ("Access-Code", "Super-Secret"))
+            |> getResponse
 
-        use ms = new MemoryStream()
-        //printfn "--- get response"
-        use! resp =
-          postTo "gifs/echo"
-          |> Request.body (BodyForm [ FormFile ("img", file) ])
-          |> Request.setHeader (Custom ("Access-Code", "Super-Secret"))
-          |> getResponse
+          do! Job.awaitUnitTask (resp.body.CopyToAsync ms)
 
-        do! Job.awaitUnitTask (resp.body.CopyToAsync ms)
+          fs.Seek(0L, SeekOrigin.Begin) |> ignore
+          ms.Seek(0L, SeekOrigin.Begin) |> ignore
 
-        fs.Seek(0L, SeekOrigin.Begin) |> ignore
-        ms.Seek(0L, SeekOrigin.Begin) |> ignore
-        Assert.StreamsEqual("the input should eq the echoed data", ms, fs)
+          Assert.StreamsEqual(sprintf "the input should eq the echoed %A data" ``method``, ms, fs)
 
       finally
         disposeContext ctx
