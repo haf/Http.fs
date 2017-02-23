@@ -706,7 +706,7 @@ module Client =
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
     let tryWriteBody (writers : seq<Stream -> Job<unit>>) (webRequest : HttpWebRequest) =
-      if webRequest.Method = "POST" || webRequest.Method = "PUT" then
+      if webRequest.Method = "POST" || webRequest.Method = "PUT" || webRequest.Method = "PATCH" then
         job {
           // Getting the request stream seems to be actually connecting
           use reqStream = webRequest.GetRequestStream()
