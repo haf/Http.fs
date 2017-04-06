@@ -6,7 +6,10 @@ open Fuchu
 open Hopac
 open HttpFs.Client
 
-let ValidUri = Uri "http://www"
+let url = "https://fsharpforfunandprofit.com"
+let resource = "hehe"
+let uriWithResource = Uri (sprintf "%s/%s" url resource)
+let ValidUri = Uri url
 let createValidRequest = Request.create Get ValidUri
 let utf8 = Encoding.UTF8
 
@@ -31,6 +34,18 @@ let apiUsage =
     testCase "withBodyEncoded sets the body encoding" <| fun _ ->
       Assert.Equal((createValidRequest |> Request.bodyStringEncoded "Hi Mum" utf8).bodyCharacterEncoding,
                    utf8)
+
+    testCase "with path set to url + resource" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.path resource).url,
+                   uriWithResource)
+
+    testCase "with resource add to request" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.resource resource).url,
+                   uriWithResource)
+
+    testCase "with method assign to 'method' property of request" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.assignMethod Get).``method``,
+                   Get)
   ]
 
 [<Tests>]

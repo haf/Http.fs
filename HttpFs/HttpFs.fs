@@ -973,6 +973,20 @@ module Client =
     let createUrl httpMethod url =
       create httpMethod (Uri url)
 
+    // Adds `resource` to `request` url
+    let path resource (request: Request) =
+      let ub = UriBuilder request.url
+      ub.Path <- resource
+      { request with url = ub.Uri}
+
+    /// Adds 'resourceToAdd' to an url of 'request'
+    let resource resourceToAssign request =
+      path resourceToAssign request
+
+    /// Sets 'methodToAssign' to a method of 'request'
+    let assignMethod methodToAssign request =
+      { request with ``method`` = methodToAssign}
+
     /// Disables cookies, which are enabled by default
     let cookiesDisabled request =
       { request with cookiesEnabled = false }
