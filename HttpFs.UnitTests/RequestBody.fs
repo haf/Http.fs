@@ -43,8 +43,8 @@ let apiUsage =
       Assert.Equal((createValidRequest |> Request.resource resource).url,
                    uriWithResource)
 
-    testCase "with method assign to 'method' property of request" <| fun _ ->
-      Assert.Equal((createValidRequest |> Request.assignMethod Get).``method``,
+    testCase "with method set to 'method' property of request" <| fun _ ->
+      Assert.Equal((createValidRequest |> Request.setMethod Get).``method``,
                    Get)
   ]
 

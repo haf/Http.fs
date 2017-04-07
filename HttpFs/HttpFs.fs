@@ -984,7 +984,7 @@ module Client =
       path resourceToAssign request
 
     /// Sets 'methodToAssign' to a method of 'request'
-    let assignMethod methodToAssign request =
+    let setMethod methodToAssign request =
       { request with ``method`` = methodToAssign}
 
     /// Disables cookies, which are enabled by default
