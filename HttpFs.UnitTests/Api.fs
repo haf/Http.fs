@@ -90,8 +90,8 @@ let api =
           |> queryStringItem "f2" "v2"
           |> fun r -> r.queryStringItems)
           [ "has two items", fun qs -> Assert.Equal(2, qs.Count)
-            "contains first item", fun qs -> Assert.Contains(qs, "v1")
-            "contains second item", fun qs -> Assert.Contains(qs, "v2")
+            "contains first item", fun qs -> Assert.Contains(qs, ["v1"])
+            "contains second item", fun qs -> Assert.Contains(qs, ["v2"])
           ]
 
         testCase "withCookie throws an exception if cookies are disabled" <| fun _ ->
