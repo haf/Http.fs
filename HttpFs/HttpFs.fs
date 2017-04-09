@@ -371,7 +371,7 @@ module Client =
       headers                   : Map<string, RequestHeader>
       body                      : RequestBody
       bodyCharacterEncoding     : Encoding
-      queryStringItems          : Map<QueryStringName, QueryStringValue>
+      queryStringItems          : Map<QueryStringName, QueryStringValue list>
       cookies                   : Map<CookieName, Cookie>
       responseCharacterEncoding : Encoding option
       proxy                     : Proxy option
@@ -464,7 +464,9 @@ module Client =
     let getQueryString byteEncoding request =
       if Map.isEmpty request.queryStringItems then ""
       else
-        let items = Map.toList request.queryStringItems
+        let items = 
+          Map.toList request.queryStringItems
+          |> List.collect (fun (k, vs) -> vs |> List.map (fun v -> k,v))
         String.Concat [ uriEncode byteEncoding items ]
 
     let basicAuthorz username password =
@@ -1031,10 +1033,12 @@ module Client =
       { request with body = BodyString body; bodyCharacterEncoding = characterEncoding }
 
     /// Adds the provided QueryString record onto the request URL.
-    /// Multiple items can be appended, but only the last appended key/value with
-    /// the same key as a previous key/value will be used.
+    /// Multiple items can be appended.
     let queryStringItem (name : QueryStringName) (value : QueryStringValue) request =
-      { request with queryStringItems = request.queryStringItems |> Map.put name value }
+      { request with queryStringItems = 
+                        match request.queryStringItems |> Map.tryFind name with
+                        | None -> request.queryStringItems |> Map.put name [value]
+                        | Some vs -> request.queryStringItems |> Map.put name (value::vs) }
 
     /// Adds a cookie to the request
     /// The domain will be taken from the URL, and the path set to '/'.
