@@ -155,6 +155,7 @@ module Client =
     | Refresh
     | RetryAfter
     | Server
+    | SetCookie
     | StrictTransportSecurity
     | Trailer
     | TransferEncoding
@@ -192,6 +193,7 @@ module Client =
       | Refresh -> "Refresh"
       | RetryAfter -> "Retry-After"
       | Server -> "Server"
+      | SetCookie -> "Set-Cookie"
       | StrictTransportSecurity -> "Strict-Transport-Security"
       | Trailer -> "Trailer"
       | TransferEncoding -> "Transfer-Encoding"
@@ -857,7 +859,7 @@ module Client =
       | "Refresh"                     -> Some(Refresh)
       | "Retry-After"                 -> Some(RetryAfter)
       | "Server"                      -> Some(Server)
-      | "Set-Cookie"                  -> None
+      | "Set-Cookie"                  -> Some(SetCookie)
       | "Strict-Transport-Security"   -> Some(StrictTransportSecurity)
       | "Trailer"                     -> Some(Trailer)
       | "Transfer-Encoding"           -> Some(TransferEncoding)

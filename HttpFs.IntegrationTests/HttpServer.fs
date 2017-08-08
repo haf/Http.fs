@@ -110,6 +110,7 @@ type FakeServer() as self =
                 response.Headers.Add("Content-MD5", "Q2hlY2sgSW50ZWdyaXR5IQ==")
                 response.Headers.Add("Content-Disposition", "attachment; filename=\"fname.ext\"")
                 response.Headers.Add("Content-Range", "bytes 21010-47021/47022")
+                response.Headers.Add("Set-Cookie", "test1=123;test2=456")
                 //response.Headers.Add("Date", "") // will be current date
                 response.Headers.Add("ETag", "737060cd8c284d8af7ad3082f209582d")
                 response.Headers.Add("Expires", "Thu, 01 Dec 1994 16:00:00 GMT")

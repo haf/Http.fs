@@ -255,6 +255,7 @@ type ``Integration tests`` ()=
     response.headers.[Refresh] |> should equal "5; url=http://www.w3.org/pub/WWW/People.html"
     response.headers.[RetryAfter] |> should equal "120"
     response.headers.[Server] |> should contain "HTTPAPI/"
+    response.headers.[SetCookie] |> should contain "test1=123;test2=456"
     response.headers.[StrictTransportSecurity] |> should equal "max-age=16070400; includeSubDomains"
     response.headers.[Trailer] |> should equal "Max-Forwards"
     response.headers.[TransferEncoding] |> should equal "identity"
