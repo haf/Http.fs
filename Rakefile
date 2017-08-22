@@ -37,7 +37,7 @@ task :paket_bootstrap do
 end
 
 task :paket_replace do
-  sh %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal HttpFs.YoLo')" paket-files/haf/YoLo/YoLo.fs}
+  sh %{ruby -pi.bak -e "gsub(/module YoLo/, 'module internal HttpFs.YoLo')" paket-files/haf/YoLo/YoLo.fs}
   sh %{ruby -pi.bak -e "gsub(/namespace Logary.Facade/, 'namespace HttpFs.Logging')" paket-files/logary/logary/src/Logary.Facade/Facade.fs}
 end
 

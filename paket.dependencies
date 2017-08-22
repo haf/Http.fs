@@ -1,18 +1,19 @@
-source https://www.nuget.org/api/v2
-framework: net45
+redirects: on
 
+source https://www.nuget.org/api/v2
+
+nuget Expecto ~> 4
 nuget Hopac
-nuget FAKE
-nuget FSharp.Core ~> 3
+nuget FSharp.Core ~> 4
 nuget FsUnit ~> 1.2
 nuget Nancy ~> 0.22
 nuget Nancy.Hosting.Self ~> 0.22
 nuget NUnit ~> 2.6.3
 nuget NUnit.Runners ~> 2.6.3
 nuget NuGet.CommandLine
-nuget OpenCover ~> 4.5
-nuget Suave
-nuget Suave.Testing
+nuget OpenCover ~> 4
+nuget Suave ~> 2
+nuget Suave.Testing ~> 2
 
 github haf/YoLo YoLo.fs
 github logary/logary src/Logary.Facade/Facade.fs
