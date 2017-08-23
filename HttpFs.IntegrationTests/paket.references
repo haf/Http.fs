@@ -1,7 +1,9 @@
+Expecto
 FsUnit
+FSharp.Core
+Hopac
 Nancy
 Nancy.Hosting.Self
 NUnit
-FSharp.Core
 Suave
-Hopac
+System.Text.Encoding.CodePages

@@ -14,6 +14,7 @@ nuget NuGet.CommandLine
 nuget OpenCover ~> 4
 nuget Suave ~> 2
 nuget Suave.Testing ~> 2
+nuget System.Text.Encoding.CodePages ~> 4
 
 github haf/YoLo YoLo.fs
 github logary/logary src/Logary.Facade/Facade.fs
