@@ -17,70 +17,54 @@ let app =
         recordedRequest <- Some r
         Successful.OK "")
 
-      Filters.path "/GoodStatusCode" >=> request (fun r ->
-        recordedRequest <- Some r
-        Successful.OK "")
+      Filters.path "/GoodStatusCode" >=> Successful.OK ""
 
-      Filters.path "/BadStatusCode" >=> request (fun r ->
-        recordedRequest <- Some r
-        RequestErrors.UNAUTHORIZED "")
+      Filters.path "/BadStatusCode" >=> RequestErrors.UNAUTHORIZED ""
 
-      Filters.path "/GotBody" >=> request (fun r ->
-        recordedRequest <- Some r
-        Successful.OK "Check out my sexy body")
+      Filters.path "/GotBody" >=> Successful.OK "Check out my sexy body"
 
-      Filters.path "/NoPage" >=> request (fun r ->
-        recordedRequest <- Some r
-        RequestErrors.NOT_FOUND "Not here!")
+      Filters.path "/NoPage" >=> RequestErrors.NOT_FOUND "Not here!"
 
       Filters.path "/AllTheThings"
         >=> Writers.setHeader "Content-Encoding" "gzip"
         >=> Writers.setHeader "X-New-Fangled-Header" "some value"
         >=> Cookie.setCookie (HttpCookie.createKV "cookie1" "chocolate chip")
         >=> Cookie.setCookie (HttpCookie.createKV "cookie2" "smarties")
-        >=> request (fun r ->
-            recordedRequest <- Some r
-            Successful.ACCEPTED "Some JSON or whatever")
+        >=> Successful.ACCEPTED "Some JSON or whatever"
 
       Filters.path "/MoonLanguageCorrectEncoding"
         >=> Writers.setHeader "Content-Type" "text/plain; charset=windows-1251"
-        >=> request (fun r ->
-            recordedRequest <- Some r
+        >=> warbler (fun _ ->
             Encoding.GetEncoding("windows-1251").GetBytes("яЏ§§їДЙ")
             |> Successful.ok)
 
       Filters.path "/MoonLanguageTextPlainNoEncoding"
         >=> Writers.setHeader "Content-Type" "text/plain"
-        >=> request (fun r ->
-            recordedRequest <- Some r
+        >=> warbler (fun _ ->
             Encoding.GetEncoding("windows-1251").GetBytes("яЏ§§їДЙ")
             |> Successful.ok)
 
       Filters.path "/MoonLanguageApplicationXmlNoEncoding"
         >=> Writers.setHeader "Content-Type" "application/xml"
-        >=> request (fun r ->
-            recordedRequest <- Some r
+        >=> warbler (fun _ ->
             Encoding.GetEncoding("windows-1251").GetBytes("яЏ§§їДЙ")
             |> Successful.ok)
 
       Filters.path "/MoonLanguageInvalidEncoding"
         >=> Writers.setHeader "Content-Type" "text/plain; charset=Ninky-Nonk"
-        >=> request (fun r ->
-          recordedRequest <- Some r
+        >=> warbler (fun _ ->
           Encoding.GetEncoding("windows-1251").GetBytes("яЏ§§їДЙ")
           |> Successful.ok)
 
       Filters.path "/utf8"
         >=> Writers.setHeader "Content-Type" "text/plain; charset=utf8"
-        >=> request (fun r ->
-          recordedRequest <- Some r
+        >=> warbler (fun _ ->
           Encoding.GetEncoding("utf-8").GetBytes("'Why do you hate me so much, Windows?!' - utf8")
           |> Successful.ok)
 
       Filters.path "/utf16"
         >=> Writers.setHeader "Content-type" "text/plain; charset=utf16"
-        >=> request (fun r ->
-          recordedRequest <- Some r
+        >=> warbler (fun _ ->
           Encoding.GetEncoding("utf-16").GetBytes("'Why are you so picky, Windows?!' - utf16")
           |> Successful.ok)
 
@@ -117,33 +101,22 @@ let app =
         >=> Writers.setHeader "Warning" "199 Miscellaneous warning"
         >=> Writers.setHeader "WWW-Authenticate" "Basic"
         >=> Writers.setHeader "X-New-Fangled-Header" "some value"
-        >=> request (fun r ->
-          recordedRequest <- Some r
-          Successful.OK "")
+        >=> Successful.OK ""
 
       Filters.path "/CookieRedirect"
         >=> Cookie.setCookie (HttpCookie.createKV "cookie1" "baboon")
         >=> Writers.setHeader "Location" "http://localhost:1234/NoCookies"
-        >=> (fun ctx -> async {
-          recordedRequest <- Some ctx.request
-          return! ctx |> succeed >>= Writers.setStatus HTTP_307 })
+        >=> Writers.setStatus HTTP_307
 
-      Filters.path "/NoCookies" >=> request (fun r ->
-        recordedRequest <- Some r
-        Successful.OK "body")
+      Filters.path "/NoCookies" >=> Successful.OK "body"
 
-      Filters.path "/Raw" >=> request (fun r ->
-        recordedRequest <- Some r
-        Successful.OK "body")
+      Filters.path "/Raw" >=> Successful.OK "body"
 
       Filters.path "/SlowResponse" >=> (fun ctx -> async {
-        recordedRequest <- Some ctx.request
         do! Async.Sleep(10000)
         return! Successful.OK "" ctx })
 
-      Filters.path "/Get" >=> request (fun r ->
-        recordedRequest <- Some r
-        Successful.OK "")
+      Filters.path "/Get" >=> Successful.OK ""
     ]
 
     Filters.POST >=> choose [
@@ -151,42 +124,29 @@ let app =
             recordedRequest <- Some r
             Successful.OK "")
 
-        Filters.path "/Post" >=> request (fun r ->
-          recordedRequest <- Some r
-          Successful.OK "")
+        Filters.path "/Post" >=> Successful.OK ""
 
         Filters.path "/Redirect"
           >=> Writers.setHeader "Location" "http://localhost:1234/GoodStatusCode"
-          >=> (fun ctx -> async {
-            recordedRequest <- Some ctx.request
-            return! ctx |> succeed >>= Writers.setStatus HTTP_303 })
+          >=> Writers.setStatus HTTP_303
 
         Filters.path "/filenames" >=> request (fun r ->
+          printfn "Here"
           r.files
           |> List.map (fun f -> f.fileName)
           |> String.concat "\n"
           |> Successful.OK)
     ]
 
-    Filters.HEAD >=> Filters.path "/Head" >=> request (fun r ->
-      recordedRequest <- Some r
-      Successful.OK "")
+    Filters.HEAD >=> Filters.path "/Head" >=> Successful.OK ""
 
-    Filters.OPTIONS >=> Filters.path "/Options" >=> request (fun r ->
-      recordedRequest <- Some r
-      Successful.OK "")
+    Filters.OPTIONS >=> Filters.path "/Options" >=> Successful.OK ""
 
-    Filters.DELETE >=> Filters.path "/Delete" >=> request (fun r ->
-      recordedRequest <- Some r
-      Successful.OK "")
+    Filters.DELETE >=> Filters.path "/Delete" >=> Successful.OK ""
 
-    Filters.PUT >=> Filters.path "/Put" >=> request (fun r ->
-      recordedRequest <- Some r
-      Successful.OK "")
+    Filters.PUT >=> Filters.path "/Put" >=> Successful.OK ""
 
-    Filters.PATCH >=> Filters.path "/Patch" >=> request (fun r ->
-      recordedRequest <- Some r
-      Successful.OK "")
+    Filters.PATCH >=> Filters.path "/Patch" >=> Successful.OK ""
   ]
 
 type SuaveTestServer() =

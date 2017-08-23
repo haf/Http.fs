@@ -2,14 +2,10 @@ redirects: on
 
 source https://www.nuget.org/api/v2
 
-nuget Expecto ~> 4
+nuget Expecto ~> 5
 nuget Hopac
 nuget FSharp.Core ~> 4
 nuget FsUnit ~> 1.2
-nuget Nancy ~> 0.22
-nuget Nancy.Hosting.Self ~> 0.22
-nuget NUnit ~> 2.6.3
-nuget NUnit.Runners ~> 2.6.3
 nuget NuGet.CommandLine
 nuget OpenCover ~> 4
 nuget Suave ~> 2
