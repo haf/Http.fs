@@ -22,19 +22,28 @@ asmver_files :assembly_info do |a|
                assembly_informational_version: ENV['BUILD_VERSION']
 end
 
+task :restore_dotnetcli do
+  system "dotnet", %W|restore|
+end  
+
 desc 'Perform fast build (warn: doesn\'t d/l deps)'
-build :quick_compile do |b|
-  b.prop 'Configuration', Configuration
-  b.logging = 'detailed'
-  b.sln     = 'Http.fs.sln'
-  if HttpFsStrongName
-    b.prop 'AssemblyStrongName', 'true'
-  end
+task :quick_compile do
+  system "dotnet", %W|build -c #{Configuration} --no-restore #{HttpFsStrongName ? "/p:AssemblyStrongName=true" : ""}|
 end
 
-task :paket_bootstrap do
-  system 'Tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'Tools/paket.exe'
-end
+# desc 'Perform fast build (warn: doesn\'t d/l deps)'
+# build :quick_compile do |b|
+#   b.prop 'Configuration', Configuration
+#   b.logging = 'detailed'
+#   b.sln     = 'Http.fs.sln'
+#   if HttpFsStrongName
+#     b.prop 'AssemblyStrongName', 'true'
+#   end
+# end
+
+# task :paket_bootstrap do
+#   system 'Tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'Tools/paket.exe'
+# end
 
 task :paket_replace do
   sh %{ruby -pi.bak -e "gsub(/module YoLo/, 'module internal HttpFs.YoLo')" paket-files/haf/YoLo/YoLo.fs}
@@ -42,11 +51,11 @@ task :paket_replace do
 end
 
 task :paket_restore do
-  system 'Tools/paket.exe', 'restore', clr_command: true
+  system './.paket/paket.exe', 'restore', clr_command: true
 end
 
-desc 'restore all nugets as per the packages.config files'
-task :restore => [:paket_bootstrap, :paket_restore, :paket_replace]
+desc 'restore all nuget packages files'
+task :restore => [:paket_restore, :paket_replace, :restore_dotnetcli]
 
 desc 'Perform full build'
 build :compile => [:versioning, :restore, :assembly_info] do |b|
@@ -76,12 +85,14 @@ end
 
 namespace :tests do
   task :integration do
-    system 'packages/NUnit.Runners/tools/nunit-console.exe', '--noshadow', %W|
-           HttpFs.IntegrationTests/bin/#{Configuration}/HttpFs.IntegrationTests.dll|,
-           clr_command: true
+    Dir.chdir("HttpFs.IntegrationTests") do
+      system "dotnet", %W|run -c #{Configuration} --no-restore --no-build|
+    end
   end
   task :unit do
-    system "HttpFs.UnitTests/bin/#{Configuration}/HttpFs.UnitTests.exe", clr_command: true
+    Dir.chdir("HttpFs.UnitTests") do
+      system "dotnet", %W|run -c #{Configuration} --no-restore --no-build|
+    end
   end
 end
 

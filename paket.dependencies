@@ -1,6 +1,6 @@
 redirects: on
 
-source https://www.nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 
 nuget Expecto ~> 5
 nuget Hopac
@@ -10,8 +10,14 @@ nuget Http.fs ~> 4
 nuget NuGet.CommandLine
 nuget OpenCover ~> 4
 nuget Suave ~> 2
-nuget Suave.Testing ~> 2
 nuget System.Text.Encoding.CodePages ~> 4
 
 github haf/YoLo YoLo.fs
 github logary/logary src/Logary.Facade/Facade.fs
+
+group UnitTests
+    source https://api.nuget.org/v3/index.json
+    nuget Hopac
+    nuget Expecto ~> 4
+    nuget FSharp.Core ~> 4
+    nuget Suave.Testing ~> 2
