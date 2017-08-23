@@ -6,6 +6,7 @@ nuget Expecto ~> 5
 nuget Hopac
 nuget FSharp.Core ~> 4
 nuget FsUnit ~> 1.2
+nuget Http.fs ~> 4
 nuget NuGet.CommandLine
 nuget OpenCover ~> 4
 nuget Suave ~> 2
