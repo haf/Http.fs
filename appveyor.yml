@@ -1,7 +1,11 @@
-build_script:
+image: Visual Studio 2017
+
+install:
   - cmd: gem sources -r https://rubygems.org/
   - cmd: gem install bundler --no-ri --no-rdoc --source https://rubygems.org/
   - cmd: bundle install
+
+build_script:
   - cmd: bundle exec rake
 
 artifacts:
@@ -10,5 +14,4 @@ artifacts:
 nuget:
   project_feed: true
 
-test: off  
-  
+test: off
