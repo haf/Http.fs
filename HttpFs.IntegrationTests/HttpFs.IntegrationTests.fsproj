@@ -4,7 +4,7 @@
     <Name>HttpFs.IntegrationTests</Name>
     <AssemblyName>HttpFs.IntegrationTests</AssemblyName>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
@@ -20,6 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HttpFs\HttpFs.fsproj" />
-  </ItemGroup>
+  </ItemGroup>  
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

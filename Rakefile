@@ -31,20 +31,6 @@ task :quick_compile do
   system "dotnet", %W|build -c #{Configuration} --no-restore #{HttpFsStrongName ? "/p:AssemblyStrongName=true" : ""}|
 end
 
-# desc 'Perform fast build (warn: doesn\'t d/l deps)'
-# build :quick_compile do |b|
-#   b.prop 'Configuration', Configuration
-#   b.logging = 'detailed'
-#   b.sln     = 'Http.fs.sln'
-#   if HttpFsStrongName
-#     b.prop 'AssemblyStrongName', 'true'
-#   end
-# end
-
-# task :paket_bootstrap do
-#   system 'Tools/paket.bootstrapper.exe', clr_command: true unless   File.exists? 'Tools/paket.exe'
-# end
-
 task :paket_replace do
   sh %{ruby -pi.bak -e "gsub(/module YoLo/, 'module internal HttpFs.YoLo')" paket-files/haf/YoLo/YoLo.fs}
   sh %{ruby -pi.bak -e "gsub(/namespace Logary.Facade/, 'namespace HttpFs.Logging')" paket-files/logary/logary/src/Logary.Facade/Facade.fs}
@@ -59,40 +45,23 @@ task :restore => [:paket_restore, :paket_replace, :restore_dotnetcli]
 
 desc 'Perform full build'
 build :compile => [:versioning, :restore, :assembly_info] do |b|
-  b.prop 'Configuration', Configuration
-  b.logging = 'normal'
-  b.sln = 'Http.fs.sln'
+  system "dotnet", %W|build -c #{Configuration} --no-restore|
 end
 
 directory 'build/pkg'
 
-desc 'package nugets - finds all projects and package them'
-nugets_pack :create_nugets => ['build/pkg', :versioning, :compile] do |p|
-  p.configuration = Configuration
-  p.files   = FileList['HttpFs/HttpFs.fsproj'].
-    exclude(/Tests/)
-  p.out     = 'build/pkg'
-  p.exe     = 'packages/NuGet.CommandLine/tools/NuGet.exe'
-  p.with_metadata do |m|
-    m.id          = 'Http.fs'
-    m.title       = 'Http.fs'
-    m.description = 'A simple, functional HTTP client library for F#'
-    m.authors     = 'Grant Crofton, Henrik Feldt'
-    m.project_url = 'https://github.com/relentless/Http.fs'
-    m.version     = ENV['NUGET_VERSION']
-  end
+desc 'package nugets'
+task :create_nugets do
+  system "dotnet", %W|pack Httpfs/Httpfs.fsproj --no-build --no-restore -c #{Configuration} -o ../build/pkg /p:Version=#{ENV['NUGET_VERSION']}|
 end
 
 namespace :tests do
   task :integration do
-    Dir.chdir("HttpFs.IntegrationTests") do
-      system "dotnet", %W|run -c #{Configuration} --no-restore --no-build|
-    end
+    system "dotnet", %W|run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework netcoreapp2.0|
+    system "HttpFs.IntegrationTests/bin/#{Configuration}/net461/HttpFs.IntegrationTests.exe", clr_command: true
   end
   task :unit do
-    Dir.chdir("HttpFs.UnitTests") do
-      system "dotnet", %W|run -c #{Configuration} --no-restore --no-build|
-    end
+    system "dotnet", %W|run -p HttpFs.UnitTests -c #{Configuration} --no-restore --no-build|
   end
 end
 

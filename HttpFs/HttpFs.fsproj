@@ -8,6 +8,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OtherFlags Condition="'$(AssemblyStrongName)' != ''">--keyfile:../Tools/HttpFs.snk</OtherFlags>
   </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>Http.fs</PackageId>
+    <Authors>Grant Crofton, Henrik Feldt</Authors>
+    <Description>A simple, functional HTTP client library for F#</Description>
+    <PackageProjectUrl>https://github.com/relentless/Http.fs</PackageProjectUrl>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\paket-files\haf\YoLo\YoLo.fs">
       <Paket>True</Paket>
