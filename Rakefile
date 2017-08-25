@@ -28,7 +28,7 @@ end
 
 desc 'Perform fast build (warn: doesn\'t d/l deps)'
 task :quick_compile do
-  system "dotnet", %W|build -c #{Configuration} --no-restore #{HttpFsStrongName ? "/p:AssemblyStrongName=true" : ""}|
+  system "msbuild", %W|/t:Build /p:Configuration=#{Configuration} #{HttpFsStrongName ? "/:AssemblyStrongName=true" : ""} /v:m|
 end
 
 task :paket_replace do
