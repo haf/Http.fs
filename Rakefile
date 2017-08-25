@@ -28,7 +28,7 @@ end
 
 desc 'Perform fast build (warn: doesn\'t d/l deps)'
 task :quick_compile do
-  system "dotnet", %W|build -c #{Configuration} #{HttpFsStrongName ? "/p:AssemblyStrongName=true" : ""}|
+  system "dotnet", %W|build -c #{Configuration} #{HttpFsStrongName ? "/p:AssemblyStrongName=true" : ""} --no-restore|
 end
 
 task :paket_replace do
@@ -45,7 +45,7 @@ task :restore => [:paket_restore, :paket_replace, :restore_dotnetcli]
 
 desc 'Perform full build'
 build :compile => [:versioning, :restore, :assembly_info] do |b|
-  system "dotnet", %W|build -c #{Configuration}|
+  system "dotnet", %W|build -c #{Configuration} --no-restore|
 end
 
 directory 'build/pkg'
