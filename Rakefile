@@ -23,12 +23,12 @@ asmver_files :assembly_info do |a|
 end
 
 task :restore_dotnetcli do
-  system("dotnet", %W|restore|)
+  system "dotnet", %W|restore|
 end  
 
 desc 'Perform fast build (warn: doesn\'t d/l deps)'
 task :quick_compile do
-  system("dotnet", %W|build -c #{Configuration} #{HttpFsStrongName ? "/p:AssemblyStrongName=true" : ""} --no-restore|)
+  system "dotnet", %W|build -c #{Configuration} #{HttpFsStrongName ? "/p:AssemblyStrongName=true" : ""} --no-restore|
 end
 
 task :paket_replace do
@@ -37,23 +37,26 @@ task :paket_replace do
 end
 
 task :paket_restore do
-  system('./.paket/paket.exe', 'restore', clr_command: true)
+  system './.paket/paket.exe', 'restore', clr_command: true
 end
 
 desc 'restore all nuget packages files'
 task :restore => [:paket_restore, :paket_replace, :restore_dotnetcli]
 
 desc 'Perform full build'
-build :compile => [:versioning, :restore, :assembly_info] do |b|
+task :compile => [:versioning, :restore, :assembly_info] do |b|
   # https://github.com/dotnet/sdk/issues/335
   # https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-1.0#known-issues
   if ENV["TRAVIS_OS_NAME"] == "linux" then
-    system({"FrameworkPathOverride" => "#{ENV["MONO_BASE_PATH"]}/4.5/"}, "dotnet build HttpFs -c #{Configuration} --no-restore --framework net45")
-    system("dotnet", %W|build HttpFs -c #{Configuration} --no-restore --framework netstandard2.0|)
-    system({"FrameworkPathOverride" => "#{ENV["MONO_BASE_PATH"]}/4.5/"}, "dotnet build HttpFs.IntegrationTests -c #{Configuration} --no-restore --framework net461")
-    system("dotnet", %W|build HttpFs.IntegrationTests -c #{Configuration} --no-restore --framework notecoreapp2.0|)
+    Kernel.system({"FrameworkPathOverride" => "#{ENV["MONO_BASE_PATH"]}/4.5/"},
+                    "dotnet build HttpFs -c #{Configuration} --no-restore --framework net45") or exit(1)
+    system "dotnet", %W|build HttpFs -c #{Configuration} --no-restore --framework netstandard2.0|
+    Kernel.system({"FrameworkPathOverride" => "#{ENV["MONO_BASE_PATH"]}/4.5/"},
+                    "dotnet build HttpFs.IntegrationTests -c #{Configuration} --no-restore --framework net461") or exit(1)
+    system "dotnet", %W|build HttpFs.UnitTests -c #{Configuration} --no-restore --framework netcoreapp2.0|
+    system "dotnet", %W|build HttpFs.IntegrationTests -c #{Configuration} --no-restore --framework netcoreapp2.0|
   else
-    system("dotnet", %W|build -c #{Configuration} --no-restore|)
+    system "dotnet", %W|build -c #{Configuration} --no-restore|
   end
 end
 
@@ -61,16 +64,16 @@ directory 'build/pkg'
 
 desc 'package nugets'
 task :create_nugets do
-  system("dotnet", %W|pack Httpfs/Httpfs.fsproj --no-build --no-restore -c #{Configuration} -o ../build/pkg /p:Version=#{ENV['NUGET_VERSION']}|)
+  system "dotnet", %W|pack Httpfs/Httpfs.fsproj --no-build --no-restore -c #{Configuration} -o ../build/pkg /p:Version=#{ENV['NUGET_VERSION']}|
 end
 
 namespace :tests do
   task :integration do
-    system("dotnet", %W|run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework netcoreapp2.0|)
-    system("HttpFs.IntegrationTests/bin/#{Configuration}/net461/HttpFs.IntegrationTests.exe", clr_command: true)
+    system "dotnet", %W|run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework netcoreapp2.0|
+    system "HttpFs.IntegrationTests/bin/#{Configuration}/net461/HttpFs.IntegrationTests.exe", clr_command: true
   end
   task :unit do
-    system("dotnet", %W|run -p HttpFs.UnitTests -c #{Configuration} --no-restore --no-build|)
+    system "dotnet", %W|run -p HttpFs.UnitTests -c #{Configuration} --no-restore --no-build|
   end
 end
 
