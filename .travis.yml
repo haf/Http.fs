@@ -15,7 +15,7 @@ notifications:
   email: false
 
 script:
-  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ bundle && bundle exec rake
+  - bundle && bundle exec rake
 
 matrix:
   allow_failures:
