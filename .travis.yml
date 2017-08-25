@@ -1,8 +1,9 @@
 language: csharp
 
+dist: trusty
+dotnet: 2.0.0
 mono:
-  - 4.2.3
-  - 4.4.1
+  - 5.0.1
   - latest # => "stable release"
   - weekly # => "latest commits"
 
