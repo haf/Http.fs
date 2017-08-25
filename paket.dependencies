@@ -1,5 +1,4 @@
 redirects: on
-
 source https://api.nuget.org/v3/index.json
 
 nuget Expecto ~> 5
@@ -16,8 +15,9 @@ github haf/YoLo YoLo.fs
 github logary/logary src/Logary.Facade/Facade.fs
 
 group UnitTests
+    redirects: on
     source https://api.nuget.org/v3/index.json
     nuget Hopac
-    nuget Expecto ~> 4
+    nuget Expecto ~> 5
     nuget FSharp.Core ~> 4
     nuget Suave.Testing ~> 2

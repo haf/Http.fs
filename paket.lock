@@ -5,17 +5,15 @@ NUGET
       FSharp.Core (>= 4.0.1.7-alpha) - restriction: == netstandard1.6
       NETStandard.Library (>= 1.6) - restriction: == netstandard1.6
       System.Xml.XDocument (>= 4.0.11) - restriction: == netstandard1.6
-    Expecto (5.0)
+    Expecto (5.0.1)
       Argu (>= 3.7)
-      Argu (>= 3.7) - restriction: == netstandard1.6
-      FSharp.Core (>= 4.1.12)
-      FSharp.Core (>= 4.1.17) - restriction: == netstandard1.6
+      FSharp.Core (>= 4.1.12) - restriction: < netstandard1.6
+      FSharp.Core (>= 4.1.18) - restriction: >= netstandard1.6
       Mono.Cecil (>= 0.10.0-beta5)
-      Mono.Cecil (>= 0.10.0-beta5) - restriction: == netstandard1.6
-      NETStandard.Library (>= 1.6.1) - restriction: == netstandard1.6
-      System.Diagnostics.FileVersionInfo (>= 4.3) - restriction: == netstandard1.6
-      System.Diagnostics.TraceSource (>= 4.3) - restriction: == netstandard1.6
-      System.Linq.Parallel (>= 4.3) - restriction: == netstandard1.6
+      NETStandard.Library (>= 1.6.1) - restriction: >= netstandard1.6
+      System.Diagnostics.FileVersionInfo (>= 4.3) - restriction: >= netstandard1.6
+      System.Diagnostics.TraceSource (>= 4.3) - restriction: >= netstandard1.6
+      System.Linq.Parallel (>= 4.3) - restriction: >= netstandard1.6
     FSharp.Core (4.2.3)
       System.Collections (>= 4.0.11) - restriction: == netstandard1.6
       System.Console (>= 4.0) - restriction: == netstandard1.6
@@ -50,7 +48,7 @@ NUGET
     Http.fs (4.1.2)
       FSharp.Core (>= 3.1.2.5)
       Hopac (>= 0.3.21)
-    Microsoft.NETCore.Platforms (2.0) - restriction: || (== netstandard1.3) (== netstandard1.6) (== netcoreapp2.0)
+    Microsoft.NETCore.Platforms (2.0) - restriction: || (== netstandard1.3) (>= netstandard1.6)
     Microsoft.NETCore.Targets (2.0) - restriction: == netstandard1.6
     Microsoft.Win32.Primitives (4.3) - restriction: == netstandard1.6
     Mono.Cecil (0.10.0-beta6)
@@ -62,11 +60,18 @@ NUGET
       System.Security.Cryptography.Algorithms (>= 4.2) - restriction: == netstandard1.3
       System.Security.Cryptography.Csp (>= 4.0) - restriction: == netstandard1.3
       System.Threading (>= 4.0.11) - restriction: == netstandard1.3
-    NETStandard.Library (2.0) - restriction: || (== netstandard1.3) (== netstandard1.6)
+    NETStandard.Library (2.0) - restriction: || (== netstandard1.3) (>= netstandard1.6)
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: >= portable-net45+win8+wp8+wpa81
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: >= portable-net45+win8+wpa81
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: >= portable-net451+win81+wpa81
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard1.6
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard2.0
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netcoreapp2.0
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == monotouch
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == xamarintvos
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == xamarinwatchos
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == xamarinios
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == xamarinmac
       Microsoft.Win32.Primitives (>= 4.3) - restriction: == netstandard1.6
       System.AppContext (>= 4.3) - restriction: == netstandard1.6
       System.Collections (>= 4.3) - restriction: == netstandard1.6
@@ -167,10 +172,10 @@ NUGET
     System.Data.Common (4.3) - restriction: == netstandard1.6
     System.Diagnostics.Debug (4.3) - restriction: == netstandard1.6
     System.Diagnostics.DiagnosticSource (4.4.1) - restriction: == netstandard1.6
-    System.Diagnostics.FileVersionInfo (4.3) - restriction: == netstandard1.6
+    System.Diagnostics.FileVersionInfo (4.3) - restriction: >= netstandard1.6
     System.Diagnostics.Process (4.3) - restriction: == netstandard1.6
     System.Diagnostics.Tools (4.3) - restriction: == netstandard1.6
-    System.Diagnostics.TraceSource (4.3) - restriction: == netstandard1.6
+    System.Diagnostics.TraceSource (4.3) - restriction: >= netstandard1.6
     System.Diagnostics.Tracing (4.3) - restriction: == netstandard1.6
     System.Globalization (4.3) - restriction: == netstandard1.6
     System.Globalization.Calendars (4.3) - restriction: == netstandard1.6
@@ -204,7 +209,7 @@ NUGET
       System.Runtime (>= 4.3) - restriction: == netstandard1.6
       System.Runtime.Extensions (>= 4.3) - restriction: == netstandard1.6
       System.Threading (>= 4.3) - restriction: == netstandard1.6
-    System.Linq.Parallel (4.3) - restriction: == netstandard1.6
+    System.Linq.Parallel (4.3) - restriction: >= netstandard1.6
     System.Linq.Queryable (4.3) - restriction: == netstandard1.6
     System.Net.Http (4.3.2) - restriction: == netstandard1.6
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard1.6
@@ -278,7 +283,7 @@ NUGET
     System.Runtime.Extensions (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Runtime.Handles (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Runtime.InteropServices (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
-    System.Runtime.InteropServices.RuntimeInformation (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
+    System.Runtime.InteropServices.RuntimeInformation (4.3) - restriction: || (== netstandard1.3) (>= netstandard1.6)
     System.Runtime.Numerics (4.3) - restriction: == netstandard1.6
     System.Runtime.Serialization.Json (4.3) - restriction: == netstandard1.6
     System.Security.Claims (4.3) - restriction: == netstandard1.6
@@ -390,16 +395,22 @@ GITHUB
   remote: logary/logary
     src/Logary.Facade/Facade.fs (2ae946d28a11fb5ed3bc9e4066c1ff8a6d40fc94)
 GROUP UnitTests
+REDIRECTS: ON
 NUGET
   remote: https://api.nuget.org/v3/index.json
     Argu (3.7)
       FSharp.Core (>= 4.0.1.7-alpha) - restriction: == netstandard1.6
       NETStandard.Library (>= 1.6) - restriction: == netstandard1.6
       System.Xml.XDocument (>= 4.0.11) - restriction: == netstandard1.6
-    Expecto (4.2.1)
+    Expecto (5.0.1)
       Argu (>= 3.7)
-      FSharp.Core (>= 4.1.12)
-      Mono.Cecil (>= 0.9.6.4)
+      FSharp.Core (>= 4.1.12) - restriction: < netstandard1.6
+      FSharp.Core (>= 4.1.18) - restriction: >= netstandard1.6
+      Mono.Cecil (>= 0.10.0-beta5)
+      NETStandard.Library (>= 1.6.1) - restriction: >= netstandard1.6
+      System.Diagnostics.FileVersionInfo (>= 4.3) - restriction: >= netstandard1.6
+      System.Diagnostics.TraceSource (>= 4.3) - restriction: >= netstandard1.6
+      System.Linq.Parallel (>= 4.3) - restriction: >= netstandard1.6
     FSharp.Core (4.2.3)
       System.Collections (>= 4.0.11) - restriction: == netstandard1.6
       System.Console (>= 4.0) - restriction: == netstandard1.6
@@ -428,15 +439,30 @@ NUGET
       FSharp.Core (>= 3.1.2.5)
       FSharp.Core (>= 4.0.1.7-alpha) - restriction: == netstandard1.6
       NETStandard.Library (>= 1.6) - restriction: == netstandard1.6
-    Microsoft.NETCore.Platforms (2.0) - restriction: == netstandard1.6
+    Microsoft.NETCore.Platforms (2.0) - restriction: || (== netstandard1.3) (>= netstandard1.6)
     Microsoft.NETCore.Targets (2.0) - restriction: == netstandard1.6
     Microsoft.Win32.Primitives (4.3) - restriction: == netstandard1.6
-    Mono.Cecil (0.9.6.4)
-    NETStandard.Library (2.0) - restriction: == netstandard1.6
+    Mono.Cecil (0.10.0-beta6)
+      System.Collections (>= 4.0.11) - restriction: == netstandard1.3
+      System.IO.FileSystem (>= 4.0.1) - restriction: == netstandard1.3
+      System.IO.FileSystem.Primitives (>= 4.0.1) - restriction: == netstandard1.3
+      System.Reflection (>= 4.1) - restriction: == netstandard1.3
+      System.Runtime.Extensions (>= 4.1) - restriction: == netstandard1.3
+      System.Security.Cryptography.Algorithms (>= 4.2) - restriction: == netstandard1.3
+      System.Security.Cryptography.Csp (>= 4.0) - restriction: == netstandard1.3
+      System.Threading (>= 4.0.11) - restriction: == netstandard1.3
+    NETStandard.Library (2.0) - restriction: >= netstandard1.6
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: >= portable-net45+win8+wp8+wpa81
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: >= portable-net45+win8+wpa81
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: >= portable-net451+win81+wpa81
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard1.6
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard2.0
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netcoreapp2.0
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == monotouch
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == xamarintvos
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == xamarinwatchos
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == xamarinios
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == xamarinmac
       Microsoft.Win32.Primitives (>= 4.3) - restriction: == netstandard1.6
       System.AppContext (>= 4.3) - restriction: == netstandard1.6
       System.Collections (>= 4.3) - restriction: == netstandard1.6
@@ -532,23 +558,25 @@ NUGET
       Suave (>= 2.2.1)
     System.AppContext (4.3) - restriction: == netstandard1.6
       System.Runtime (>= 4.3) - restriction: == netstandard1.6
-    System.Collections (4.3) - restriction: == netstandard1.6
+    System.Collections (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Collections.Concurrent (4.3) - restriction: == netstandard1.6
     System.Console (4.3) - restriction: == netstandard1.6
     System.Data.Common (4.3) - restriction: == netstandard1.6
     System.Diagnostics.Debug (4.3) - restriction: == netstandard1.6
     System.Diagnostics.DiagnosticSource (4.4.1) - restriction: == netstandard1.6
+    System.Diagnostics.FileVersionInfo (4.3) - restriction: >= netstandard1.6
     System.Diagnostics.Process (4.3) - restriction: == netstandard1.6
     System.Diagnostics.Tools (4.3) - restriction: == netstandard1.6
+    System.Diagnostics.TraceSource (4.3) - restriction: >= netstandard1.6
     System.Diagnostics.Tracing (4.3) - restriction: == netstandard1.6
     System.Globalization (4.3) - restriction: == netstandard1.6
     System.Globalization.Calendars (4.3) - restriction: == netstandard1.6
     System.Globalization.Extensions (4.3) - restriction: == netstandard1.6
-    System.IO (4.3) - restriction: == netstandard1.6
+    System.IO (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.IO.Compression (4.3) - restriction: == netstandard1.6
     System.IO.Compression.ZipFile (4.3) - restriction: == netstandard1.6
-    System.IO.FileSystem (4.3) - restriction: == netstandard1.6
-    System.IO.FileSystem.Primitives (4.3) - restriction: == netstandard1.6
+    System.IO.FileSystem (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
+    System.IO.FileSystem.Primitives (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Linq (4.3) - restriction: == netstandard1.6
       System.Collections (>= 4.3) - restriction: == netstandard1.6
       System.Diagnostics.Debug (>= 4.3) - restriction: == netstandard1.6
@@ -573,6 +601,7 @@ NUGET
       System.Runtime (>= 4.3) - restriction: == netstandard1.6
       System.Runtime.Extensions (>= 4.3) - restriction: == netstandard1.6
       System.Threading (>= 4.3) - restriction: == netstandard1.6
+    System.Linq.Parallel (4.3) - restriction: >= netstandard1.6
     System.Linq.Queryable (4.3) - restriction: == netstandard1.6
     System.Net.Http (4.3.2) - restriction: == netstandard1.6
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard1.6
@@ -634,23 +663,23 @@ NUGET
       System.Threading.ThreadPool (>= 4.3) - restriction: == netstandard1.6
     System.Net.Sockets (4.3) - restriction: == netstandard1.6
     System.ObjectModel (4.3) - restriction: == netstandard1.6
-    System.Reflection (4.3) - restriction: == netstandard1.6
+    System.Reflection (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Reflection.Emit (4.3) - restriction: == netstandard1.6
     System.Reflection.Emit.ILGeneration (4.3) - restriction: == netstandard1.6
     System.Reflection.Emit.Lightweight (4.3) - restriction: == netstandard1.6
     System.Reflection.Extensions (4.3) - restriction: == netstandard1.6
     System.Reflection.Primitives (4.3) - restriction: == netstandard1.6
     System.Reflection.TypeExtensions (4.4) - restriction: == netstandard1.6
-    System.Resources.ResourceManager (4.3) - restriction: == netstandard1.6
-    System.Runtime (4.3) - restriction: == netstandard1.6
-    System.Runtime.Extensions (4.3) - restriction: == netstandard1.6
-    System.Runtime.Handles (4.3) - restriction: == netstandard1.6
-    System.Runtime.InteropServices (4.3) - restriction: == netstandard1.6
-    System.Runtime.InteropServices.RuntimeInformation (4.3) - restriction: == netstandard1.6
+    System.Resources.ResourceManager (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
+    System.Runtime (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
+    System.Runtime.Extensions (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
+    System.Runtime.Handles (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
+    System.Runtime.InteropServices (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
+    System.Runtime.InteropServices.RuntimeInformation (4.3) - restriction: >= netstandard1.6
     System.Runtime.Numerics (4.3) - restriction: == netstandard1.6
     System.Runtime.Serialization.Json (4.3) - restriction: == netstandard1.6
     System.Security.Claims (4.3) - restriction: == netstandard1.6
-    System.Security.Cryptography.Algorithms (4.3) - restriction: == netstandard1.6
+    System.Security.Cryptography.Algorithms (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard1.6
       runtime.native.System.Security.Cryptography.Apple (>= 4.3) - restriction: == netstandard1.6
       runtime.native.System.Security.Cryptography.OpenSsl (>= 4.3) - restriction: == netstandard1.6
@@ -676,8 +705,21 @@ NUGET
       System.Security.Cryptography.Encoding (>= 4.3) - restriction: == netstandard1.6
       System.Security.Cryptography.Primitives (>= 4.3) - restriction: == netstandard1.6
       System.Text.Encoding (>= 4.3) - restriction: == netstandard1.6
-    System.Security.Cryptography.Csp (4.3) - restriction: == netstandard1.6
-    System.Security.Cryptography.Encoding (4.3) - restriction: == netstandard1.6
+    System.Security.Cryptography.Csp (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard1.3
+      System.IO (>= 4.3) - restriction: == netstandard1.3
+      System.Reflection (>= 4.3) - restriction: == netstandard1.3
+      System.Resources.ResourceManager (>= 4.3) - restriction: == netstandard1.3
+      System.Runtime (>= 4.3) - restriction: == netstandard1.3
+      System.Runtime.Extensions (>= 4.3) - restriction: == netstandard1.3
+      System.Runtime.Handles (>= 4.3) - restriction: == netstandard1.3
+      System.Runtime.InteropServices (>= 4.3) - restriction: == netstandard1.3
+      System.Security.Cryptography.Algorithms (>= 4.3) - restriction: == netstandard1.3
+      System.Security.Cryptography.Encoding (>= 4.3) - restriction: == netstandard1.3
+      System.Security.Cryptography.Primitives (>= 4.3) - restriction: == netstandard1.3
+      System.Text.Encoding (>= 4.3) - restriction: == netstandard1.3
+      System.Threading (>= 4.3) - restriction: == netstandard1.3
+    System.Security.Cryptography.Encoding (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Security.Cryptography.OpenSsl (4.4) - restriction: == netstandard1.6
       System.Collections (>= 4.3) - restriction: == netstandard1.6
       System.IO (>= 4.3) - restriction: == netstandard1.6
@@ -691,7 +733,7 @@ NUGET
       System.Security.Cryptography.Encoding (>= 4.3) - restriction: == netstandard1.6
       System.Security.Cryptography.Primitives (>= 4.3) - restriction: == netstandard1.6
       System.Text.Encoding (>= 4.3) - restriction: == netstandard1.6
-    System.Security.Cryptography.Primitives (4.3) - restriction: == netstandard1.6
+    System.Security.Cryptography.Primitives (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Security.Cryptography.X509Certificates (4.3) - restriction: == netstandard1.6
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: == netstandard1.6
       runtime.native.System (>= 4.3) - restriction: == netstandard1.6
@@ -719,7 +761,7 @@ NUGET
       System.Text.Encoding (>= 4.3) - restriction: == netstandard1.6
       System.Threading (>= 4.3) - restriction: == netstandard1.6
     System.Security.Principal (4.3) - restriction: == netstandard1.6
-    System.Text.Encoding (4.3) - restriction: == netstandard1.6
+    System.Text.Encoding (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Text.Encoding.Extensions (4.3) - restriction: == netstandard1.6
     System.Text.RegularExpressions (4.3) - restriction: == netstandard1.6
       System.Collections (>= 4.3) - restriction: == netstandard1.6
@@ -728,7 +770,7 @@ NUGET
       System.Runtime (>= 4.3) - restriction: == netstandard1.6
       System.Runtime.Extensions (>= 4.3) - restriction: == netstandard1.6
       System.Threading (>= 4.3) - restriction: == netstandard1.6
-    System.Threading (4.3) - restriction: == netstandard1.6
+    System.Threading (4.3) - restriction: || (== netstandard1.3) (== netstandard1.6)
     System.Threading.Tasks (4.3) - restriction: == netstandard1.6
     System.Threading.Tasks.Parallel (4.3) - restriction: == netstandard1.6
     System.Threading.Thread (4.3) - restriction: == netstandard1.6

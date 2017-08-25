@@ -7,7 +7,6 @@ open System.Text
 open Suave
 open Suave.Operators
 
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)
 let mutable recordedRequest = None
 
 let app =

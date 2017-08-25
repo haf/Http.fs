@@ -1,6 +1,7 @@
 ﻿module Program
 
 open Expecto
+open System.Text
 
 [<EntryPoint>]
 let main argv =
