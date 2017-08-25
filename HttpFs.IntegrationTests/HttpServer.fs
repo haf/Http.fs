@@ -156,9 +156,8 @@ type SuaveTestServer() =
       { defaultConfig with
           bindings = [ HttpBinding.create HTTP (IPAddress.Parse "0.0.0.0") 1234us ]
           cancellationToken = cts.Token }
-    let listening, server = startWebServerAsync config app
+    let _, server = startWebServerAsync config app
     Async.Start(server, cts.Token) |> ignore
-    Async.RunSynchronously listening |> ignore
     ()
 
   interface IDisposable with
