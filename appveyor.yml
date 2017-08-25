@@ -4,7 +4,6 @@ install:
   - cmd: set PATH=C:\Ruby22\bin;%PATH%
   - cmd: gem sources -r https://rubygems.org/
   - cmd: gem install bundler --no-ri --no-rdoc --source https://rubygems.org/
-  - cmd: rvm install 2.2.3
   - cmd: bundle install
 
 build_script:
