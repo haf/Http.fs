@@ -45,7 +45,7 @@ task :restore => [:paket_restore, :paket_replace, :restore_dotnetcli]
 
 desc 'Perform full build'
 build :compile => [:versioning, :restore, :assembly_info] do |b|
-  system "dotnet", %W|build -c #{Configuration} --no-restore|
+  system "msbuild"
 end
 
 directory 'build/pkg'
