@@ -8,4 +8,5 @@ open System.Text
 let main argv =
   Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)
 
+  use server = new SuaveTestServer()
   Tests.runTestsInAssembly defaultConfig argv

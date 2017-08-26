@@ -6,6 +6,7 @@ require 'albacore/tasks/versionizer'
 
 Configuration = ENV['CONFIGURATION'] || 'Release'
 HttpFsStrongName = ENV['HTTPFS_STRONG_NAME'] && true || false
+IsLinux = ENV["TRAVIS_OS_NAME"] == "linux"
 
 Albacore::Tasks::Versionizer.new :versioning
 
@@ -47,7 +48,7 @@ desc 'Perform full build'
 task :compile => [:versioning, :restore, :assembly_info] do |b|
   # https://github.com/dotnet/sdk/issues/335
   # https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-1.0#known-issues
-  if ENV["TRAVIS_OS_NAME"] == "linux" then
+  if IsLinux then
     Kernel.system({"FrameworkPathOverride" => "#{ENV["MONO_BASE_PATH"]}/4.5/"},
                     "dotnet build HttpFs -c #{Configuration} --no-restore --framework net45") or exit(1)
     system "dotnet", %W|build HttpFs -c #{Configuration} --no-restore --framework netstandard2.0|
@@ -70,6 +71,9 @@ end
 namespace :tests do
   task :integration do
     system "dotnet", %W|run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework netcoreapp2.0|
+    if IsLinux then
+      Kernel.system "timeout 20 bash -c \"while </dev/tcp/localhost/1234; do sleep 1; done\"" or abort("Port 1234 did not become available again")
+    end
     system "HttpFs.IntegrationTests/bin/#{Configuration}/net461/HttpFs.IntegrationTests.exe", clr_command: true
   end
   task :unit do
