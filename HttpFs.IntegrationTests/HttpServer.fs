@@ -130,7 +130,6 @@ let app =
           >=> Writers.setStatus HTTP_303
 
         Filters.path "/filenames" >=> request (fun r ->
-          printfn "Here"
           r.files
           |> List.map (fun f -> f.fileName)
           |> String.concat "\n"
@@ -156,8 +155,9 @@ type SuaveTestServer() =
       { defaultConfig with
           bindings = [ HttpBinding.create HTTP (IPAddress.Parse "0.0.0.0") 1234us ]
           cancellationToken = cts.Token }
-    let _, server = startWebServerAsync config app
+    let listening, server = startWebServerAsync config app
     Async.Start(server, cts.Token) |> ignore
+    Async.RunSynchronously listening |> ignore
     ()
 
   interface IDisposable with
