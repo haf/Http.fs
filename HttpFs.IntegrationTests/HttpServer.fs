@@ -9,6 +9,17 @@ open Suave.Operators
 
 let mutable recordedRequest = None
 
+let port =
+  match Environment.GetEnvironmentVariable "TEST_PORT" with
+  | x when String.IsNullOrEmpty x -> 1234us
+  | x -> uint16 x
+
+let uriStringFor path =
+  sprintf "http://localhost:%i%s" port path
+
+let uriFor path =
+  uriStringFor path |> Uri
+
 let app =
   choose [
     Filters.GET >=> choose [
@@ -104,7 +115,7 @@ let app =
 
       Filters.path "/CookieRedirect"
         >=> Cookie.setCookie (HttpCookie.createKV "cookie1" "baboon")
-        >=> Writers.setHeader "Location" "http://localhost:1234/NoCookies"
+        >=> Writers.setHeader "Location" (uriStringFor "/NoCookies")
         >=> Writers.setStatus HTTP_307
 
       Filters.path "/NoCookies" >=> Successful.OK "body"
@@ -126,7 +137,7 @@ let app =
         Filters.path "/Post" >=> Successful.OK ""
 
         Filters.path "/Redirect"
-          >=> Writers.setHeader "Location" "http://localhost:1234/GoodStatusCode"
+          >=> Writers.setHeader "Location" (uriStringFor "/GoodStatusCode")
           >=> Writers.setStatus HTTP_303
 
         Filters.path "/filenames" >=> request (fun r ->
@@ -153,7 +164,7 @@ type SuaveTestServer() =
   do
     let config =
       { defaultConfig with
-          bindings = [ HttpBinding.create HTTP (IPAddress.Parse "0.0.0.0") 1234us ]
+          bindings = [ HttpBinding.create HTTP (IPAddress.Parse "0.0.0.0") port ]
           cancellationToken = cts.Token }
     let listening, server = startWebServerAsync config app
     Async.Start(server, cts.Token) |> ignore

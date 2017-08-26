@@ -10,9 +10,6 @@ open Hopac
 open HttpFs.Client
 open HttpServer
 
-let uriFor path =
-  (Uri ("http://localhost:1234" + path))
-
 let runIgnore =
   getResponse
   >> Hopac.run
@@ -421,7 +418,7 @@ let tests =
 
       use resp = request |> getResponse |> run
       Expect.equal resp.statusCode 200 "statusCode should be equal"
-      Expect.equal (resp.responseUri.ToString()) "http://localhost:1234/GoodStatusCode" "responseUri should be equal"
+      Expect.equal (resp.responseUri.ToString()) (uriStringFor "/GoodStatusCode") "responseUri should be equal"
 
     testCase "returns the uploaded file names" <| fun _ ->
       let firstCt, secondCt =

@@ -70,10 +70,7 @@ end
 
 namespace :tests do
   task :integration do
-    system "dotnet", %W|run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework netcoreapp2.0|
-    if IsLinux then
-      Kernel.system "timeout 20 bash -c \"while </dev/tcp/localhost/1234; do sleep 1; done\"" or abort("Port 1234 did not become available again")
-    end
+    Kernel.system({"TEST_PORT" => "2345"}, "dotnet run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework netcoreapp2.0")
     system "HttpFs.IntegrationTests/bin/#{Configuration}/net461/HttpFs.IntegrationTests.exe", clr_command: true
   end
   task :unit do
