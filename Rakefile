@@ -65,7 +65,7 @@ directory 'build/pkg'
 
 desc 'package nugets'
 task :create_nugets do
-  system "dotnet", %W|pack Httpfs/Httpfs.fsproj --no-build --no-restore -c #{Configuration} -o ../build/pkg /p:Version=#{ENV['NUGET_VERSION']}|
+  system "dotnet", %W|pack HttpFs/HttpFs.fsproj --no-build --no-restore -c #{Configuration} -o ../build/pkg /p:Version=#{ENV['NUGET_VERSION']}|
 end
 
 namespace :tests do
