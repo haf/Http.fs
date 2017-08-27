@@ -1,33 +1,33 @@
 # encoding: UTF-8
-require 'bundler/setup'
-require 'albacore'
-require 'albacore/tasks/release'
-require 'albacore/tasks/versionizer'
+require "bundler/setup"
+require "albacore"
+require "albacore/tasks/release"
+require "albacore/tasks/versionizer"
 
-Configuration = ENV['CONFIGURATION'] || 'Release'
-HttpFsStrongName = ENV['HTTPFS_STRONG_NAME'] && true || false
+Configuration = ENV["CONFIGURATION"] || "Release"
+HttpFsStrongName = ENV["HTTPFS_STRONG_NAME"] && true || false
 IsLinux = ENV["TRAVIS_OS_NAME"] == "linux"
 
 Albacore::Tasks::Versionizer.new :versioning
 
-desc 'create assembly infos'
+desc "create assembly infos"
 asmver_files :assembly_info do |a|
-  a.files = FileList['**/*proj'] # optional, will find all projects recursively by default
+  a.files = FileList["**/*proj"] # optional, will find all projects recursively by default
 
-  a.attributes assembly_description: 'A simple, functional HTTP client library for F#',
+  a.attributes assembly_description: "A simple, functional HTTP client library for F#",
                assembly_configuration: Configuration,
-               assembly_company: 'None',
-               assembly_copyright: 'Contributors',
-               assembly_version: ENV['LONG_VERSION'],
-               assembly_file_version: ENV['LONG_VERSION'],
-               assembly_informational_version: ENV['BUILD_VERSION']
+               assembly_company: "None",
+               assembly_copyright: "Contributors",
+               assembly_version: ENV["LONG_VERSION"],
+               assembly_file_version: ENV["LONG_VERSION"],
+               assembly_informational_version: ENV["BUILD_VERSION"]
 end
 
 task :restore_dotnetcli do
   system "dotnet", %W|restore|
 end  
 
-desc 'Perform fast build (warn: doesn\'t d/l deps)'
+desc "Perform fast build (warn: doesn\"t d/l deps)"
 task :quick_compile do
   system "dotnet", %W|build -c #{Configuration} #{HttpFsStrongName ? "/p:AssemblyStrongName=true" : ""} --no-restore|
 end
@@ -38,13 +38,13 @@ task :paket_replace do
 end
 
 task :paket_restore do
-  system './.paket/paket.exe', 'restore', clr_command: true
+  system "./.paket/paket.exe", "restore", clr_command: true
 end
 
-desc 'restore all nuget packages files'
+desc "restore all nuget packages files"
 task :restore => [:paket_restore, :paket_replace, :restore_dotnetcli]
 
-desc 'Perform full build'
+desc "Perform full build"
 task :compile => [:versioning, :restore, :assembly_info] do |b|
   # https://github.com/dotnet/sdk/issues/335
   # https://github.com/dotnet/netcorecli-fsc/wiki/.NET-Core-SDK-1.0#known-issues
@@ -61,11 +61,11 @@ task :compile => [:versioning, :restore, :assembly_info] do |b|
   end
 end
 
-directory 'build/pkg'
+directory "build/pkg"
 
-desc 'package nugets'
+desc "package nugets"
 task :create_nugets do
-  system "msbuild", %W|HttpFs/HttpFs.fsproj /t:Pack /p:NoBuild=true /p:Configuration=#{Configuration} /p:PackageOutputPath=../build/pkg /p:Version=#{ENV['NUGET_VERSION']} /v:m|
+  system "./.paket/paket.exe", %W|pack build/pkg --version #{ENV["NUGET_VERSION"]}|, clr_command: true
 end
 
 namespace :tests do
@@ -78,16 +78,16 @@ namespace :tests do
   end
 end
 
-task :tests => [:compile, :'tests:unit', :'tests:integration']
+task :tests => [:compile, :"tests:unit", :"tests:integration"]
 
 task :default => [:tests, :create_nugets]
 
 task :ensure_nuget_key do
-  raise 'missing env NUGET_KEY value' unless ENV['NUGET_KEY']
+  raise "missing env NUGET_KEY value" unless ENV["NUGET_KEY"]
 end
 
 Albacore::Tasks::Release.new :release,
-                             pkg_dir: 'build/pkg',
+                             pkg_dir: "build/pkg",
                              depend_on: [:tests, :create_nugets, :ensure_nuget_key],
-                             nuget_exe: 'packages/NuGet.CommandLine/tools/NuGet.exe',
-                             api_key: ENV['NUGET_KEY']
+                             nuget_exe: "packages/NuGet.CommandLine/tools/NuGet.exe",
+                             api_key: ENV["NUGET_KEY"]
