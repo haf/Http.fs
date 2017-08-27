@@ -1,20 +1,21 @@
 language: csharp
-
+dist: trusty
+env: MONO_BASE_PATH=/usr/lib/mono/
+dotnet: 2.0.0
 mono:
-  - 4.2.3
-  - 4.4.1
+  - 5.2.0
   - latest # => "stable release"
   - weekly # => "latest commits"
 
 install:
- - rvm install 2.2.3
- - gem install bundler
+  - rvm install 2.2.3
+  - gem install bundler
 
 notifications:
   email: false
 
 script:
- - bundle && bundle exec rake
+  - bundle && bundle exec rake
 
 matrix:
   allow_failures:

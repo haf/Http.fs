@@ -1,18 +1,23 @@
 ﻿module HttpFs.SampleApplication.PageDownloaderTests
 
 open System
-open NUnit.Framework
-open FsUnit
+open Expecto
 open Hopac
 open HttpFs
 open HttpFs.SampleApplication
 
-[<Test>]
-let ``countWordInstances counts the number of times a word is repeated at a given URL`` () =
-    let fakeGetResponseBodyFunction request =
-      Job.result "hi world hi hi hello hi ciao hi"
+[<Tests>]
+let tests =
+  testList "page downloader" [
+    testCase "countWordInstances counts the number of times a word is repeated at a given URL" <| fun _ ->
+      let fakeGetResponseBodyFunction request =
+        Job.result "hi world hi hi hello hi ciao hi"
 
-    let downloader = new PageDownloader( fakeGetResponseBodyFunction )
-    downloader.countWordInstances "hi" (Uri "https://www")
-    |> Hopac.run
-    |> should equal 5
+      let downloader = new PageDownloader( fakeGetResponseBodyFunction )
+
+      let count =
+        downloader.countWordInstances "hi" (Uri "https://www")
+        |> Hopac.run
+      
+      Expect.equal count 5 "count should be equal"
+  ]

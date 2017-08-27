@@ -1,12 +1,12 @@
 module HttpFs.UnitTests.SendingStreams
 
-open HttpFs
-open HttpFs.Client
-open Fuchu
 open System
 open System.IO
 open System.Reflection
+open Expecto
 open Hopac
+open HttpFs
+open HttpFs.Client
 open Suave
 open Suave.Logging
 open Suave.Filters
@@ -36,23 +36,22 @@ let pathOf relativePath =
 
 [<Tests>]
 let tests =
-  let config = { defaultConfig with logger = Loggers.saneDefaultsFor LogLevel.Warn }
-  let runWithConfig = runWith config
-  let uriFor (res : string) = Uri (sprintf "http://localhost:8083/%s" (res.TrimStart('/')))
-  let request ``method`` res = Request.create ``method`` (uriFor res) |> Request.keepAlive false
+  let runWithConfig = runWith defaultConfig
+  let uriFor (res : string) = Uri (sprintf "http://localhost:8080/%s" (res.TrimStart('/')))
+  let request method res = Request.create ``method`` (uriFor res) |> Request.keepAlive false
 
   testCase "can send/receive" <| fun _ ->
     job {
       let ctx = runWithConfig app
       try
-        for ``method`` in [Post;Put;Patch] do
+        for method in [Post;Put;Patch] do
           use fs = File.OpenRead (pathOf "pix.gif")
           let file = "pix.gif", ContentType.create("image", "gif"), StreamData fs
           
           use ms = new MemoryStream()
           //printfn "--- get response"
           use! resp =
-            request ``method`` "gifs/echo"
+            request method "gifs/echo"
             |> Request.body (BodyForm [ FormFile ("img", file) ])
             |> Request.setHeader (Custom ("Access-Code", "Super-Secret"))
             |> getResponse
@@ -62,8 +61,7 @@ let tests =
           fs.Seek(0L, SeekOrigin.Begin) |> ignore
           ms.Seek(0L, SeekOrigin.Begin) |> ignore
 
-          Assert.StreamsEqual(sprintf "the input should eq the echoed %A data" ``method``, ms, fs)
-
+          Expect.streamsEqual fs ms <| sprintf "the input should eq the echoed %A data" method
       finally
         disposeContext ctx
         ()

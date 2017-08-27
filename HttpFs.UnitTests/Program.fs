@@ -1,7 +1,8 @@
 ﻿module Program
 
-open Fuchu
+open Expecto
+open System.Text
 
 [<EntryPoint>]
 let main argv =
-  Tests.defaultMainThisAssembly argv
+  Tests.runTestsInAssembly defaultConfig argv

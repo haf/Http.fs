@@ -1,0 +1,20 @@
+type file
+id Http.fs
+
+authors Grant Crofton, Henrik Feldt
+description A simple, functional HTTP client library for F#
+projectUrl https://github.com/relentless/Http.fs
+
+dependencies
+  framework: net45
+    FSharp.Core >= LOCKEDVERSION
+    Hopac >= LOCKEDVERSION
+  framework: netstandard2.0
+    FSharp.Core >= LOCKEDVERSION
+    Hopac >= LOCKEDVERSION
+
+files
+  bin/Release/netstandard2.0/HttpFs.dll ==> lib/netstandard2.0
+  bin/Release/netstandard2.0/HttpFs.xml ==> lib/netstandard2.0
+  bin/Release/net45/HttpFs.dll ==> lib/net45
+  bin/Release/net45/HttpFs.xml ==> lib/net45

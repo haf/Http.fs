@@ -1,7 +1,5 @@
-FsUnit
-Nancy
-Nancy.Hosting.Self
-NUnit
+Expecto
 FSharp.Core
-Suave
 Hopac
+Suave
+System.Text.Encoding.CodePages

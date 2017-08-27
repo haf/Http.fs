@@ -32,7 +32,6 @@ module Client =
   open System.IO
   open System.Net
   open System.Text
-  open System.Web
   open System.Security.Cryptography
   open Microsoft.FSharp.Control
   open Microsoft.FSharp.Control.CommonExtensions
@@ -448,42 +447,37 @@ module Client =
       | Patch   -> "PATCH"
 
     /// URI encoding: for each byte in the byte-representation of the string,
-    /// as seen after encoding with a given `byteEncoding`, print the %xx character
-    /// as an ASCII character, for transfer.
-    ///
-    /// Pass the byteEncoding -- this is equivalent of the
-    /// `accept-charset` attribute on the form-element in HTML. If you don't
-    /// know what to do: pass UTF8 and it will 'just work'.
-    let uriEncode byteEncoding : _ -> string =
+    /// print the %xx character as an ASCII character, for transfer.
+    let uriEncode : _ -> string =
       List.map (fun kv ->
         String.Concat [
-          HttpUtility.UrlEncode (fst kv, byteEncoding)
+          WebUtility.UrlEncode (fst kv)
           "="
-          HttpUtility.UrlEncode (snd kv, byteEncoding)
+          WebUtility.UrlEncode (snd kv)
         ])
       >> String.concat "&"
 
-    let getQueryString byteEncoding request =
+    let getQueryString request =
       if Map.isEmpty request.queryStringItems then ""
       else
         let items = 
           Map.toList request.queryStringItems
           |> List.collect (fun (k, vs) -> vs |> List.map (fun v -> k,v))
-        String.Concat [ uriEncode byteEncoding items ]
+        String.Concat [ uriEncode items ]
 
     let basicAuthorz username password =
       String.Concat [ username; ":"; password ]
       |> DefaultBodyEncoding.GetBytes
       |> Convert.ToBase64String
       |> fun base64 -> "Basic " + base64
-      |> fun headerValue -> Authorization headerValue
+      |> Authorization
 
     let generateBoundary =
       let boundaryChars = "abcdefghijklmnopqrstuvwxyz_-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
       let boundaryLen = 30
       fun clientState ->
           let rnd = clientState.random
-          let sb = new StringBuilder(boundaryLen)
+          let sb = StringBuilder(boundaryLen)
           for i in 0 .. boundaryLen - 1 do
               sb.Append (boundaryChars.[rnd.Next(boundaryChars.Length)]) |> ignore
           sb.ToString()
@@ -596,12 +590,12 @@ module Client =
       ]
       generateFormDataInner boundary formData false
 
-    let private formatBodyUrlencoded bodyEncoding formData =
+    let private formatBodyUrlencoded formData =
       [ formData
         |> List.map (function
             | NameValue (k, v) -> k, v
             | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
-        |> uriEncode bodyEncoding
+        |> uriEncode
         // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
         // and none-the-less; they will map 1-1 with the UTF8 set if the server
         // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
@@ -628,7 +622,7 @@ module Client =
 
         if onlyNameValues then
           ContentType.parse "application/x-www-form-urlencoded",
-          formatBodyUrlencoded encoding formData
+          formatBodyUrlencoded formData
         else
           let boundary = generateBoundary clientState
           ContentType.create("multipart", "form-data", boundary=boundary) |> Some,
@@ -728,7 +722,7 @@ module Client =
         ServicePointManager.Expect100Continue <- false
 
     let setHeader (request : Request) (header : RequestHeader) =
-      { request with headers = request.headers |> Map.put header.Key header }
+      { request with headers = request.headers |> Map.add header.Key header }
 
     /// The nasty business of turning a Request into an HttpWebRequest
     let toHttpWebRequest state (request : Request) =
@@ -747,7 +741,7 @@ module Client =
       let url =
         let b = UriBuilder request.url
         match b.Query with
-        | "" | null -> b.Query <- getQueryString contentEncoding request
+        | "" | null -> b.Query <- getQueryString request
         | _ -> ()
         b.Uri
 
@@ -867,7 +861,7 @@ module Client =
       | "Via"                         -> Some(ResponseHeader.ViaResponse)
       | "Warning"                     -> Some(ResponseHeader.WarningResponse)
       | "WWW-Authenticate"            -> Some(WWWAuthenticate)
-      | _ as name                     -> Some(NonStandard name)
+      | name                          -> Some(NonStandard name)
 
     /// Gets the headers from the passed response as a map of ResponseHeader and string.
     let getHeadersAsMap (response:HttpWebResponse) =
@@ -1003,7 +997,7 @@ module Client =
     /// The current implementation doesn't allow you to add a single header multiple
     /// times. File an issue if this is a limitation for you.
     let setHeader (header : RequestHeader) (request : Request) =
-      { request with headers = request.headers |> Map.put header.Key header }
+      { request with headers = request.headers |> Map.add header.Key header }
 
     /// Adds an HTTP Basic Authentication header, which includes the username and password encoded as a base-64 string
     let basicAuthentication username password =
@@ -1039,8 +1033,8 @@ module Client =
     let queryStringItem (name : QueryStringName) (value : QueryStringValue) request =
       { request with queryStringItems = 
                         match request.queryStringItems |> Map.tryFind name with
-                        | None -> request.queryStringItems |> Map.put name [value]
-                        | Some vs -> request.queryStringItems |> Map.put name (value::vs) }
+                        | None -> request.queryStringItems |> Map.add name [value]
+                        | Some vs -> request.queryStringItems |> Map.add name (value::vs) }
 
     /// Adds a cookie to the request
     /// The domain will be taken from the URL, and the path set to '/'.
@@ -1049,7 +1043,7 @@ module Client =
     /// which (by default) will be followed automatically, but cookies will not be re-sent.
     let cookie cookie request =
       if not request.cookiesEnabled then failwithf "Cannot add cookie %A - cookies disabled" cookie.name
-      { request with cookies = request.cookies |> Map.put cookie.name cookie }
+      { request with cookies = request.cookies |> Map.add cookie.name cookie }
 
     /// Decodes the response using the specified encoding, regardless of what the response specifies.
     ///
