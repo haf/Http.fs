@@ -1,6 +1,0 @@
-type project
-id Http.fs
-title Http.fs
-description A simple, functional HTTP client library for F#
-authors Grant Crofton, Henrik Feldt
-projectUrl https://github.com/relentless/Http.fs
