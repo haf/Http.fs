@@ -9,6 +9,7 @@ nuget Http.fs ~> 4
 nuget NuGet.CommandLine
 nuget OpenCover ~> 4
 nuget Suave ~> 2
+nuget System.Net.Http ~> 4
 nuget System.Text.Encoding.CodePages ~> 4
 
 github haf/YoLo YoLo.fs

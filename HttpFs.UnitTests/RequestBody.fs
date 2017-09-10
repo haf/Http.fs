@@ -1,6 +1,7 @@
 ﻿module HttpFs.Tests.RequestBody
 
 open System
+open System.Net.Http
 open System.Text
 open Expecto
 open Hopac
@@ -59,18 +60,16 @@ let contentType =
 let bodyFormatting =
   let testSeed = 1234567765
 
-  let bodyToBytes body =
-    use stream = new IO.MemoryStream()
-    for writer in body do
-      do writer stream |> Hopac.run
-    stream.Seek(0L, IO.SeekOrigin.Begin) |> ignore
-    stream.ToArray()
+  let contentToBytes (content: HttpContent) =
+    content.ReadAsByteArrayAsync()
+    |> Async.AwaitTask
+    |> Async.RunSynchronously
 
   testList "formatting different sorts of body" [
     testCase "can format raw" <| fun _ ->
       let clientState = { HttpFsState.empty with random = Random testSeed }
-      let newCt, body = Impl.formatBody clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
-      let bytes = bodyToBytes body
+      let newCt, httpContent = Impl.createHttpContent clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
+      let bytes = httpContent |> contentToBytes
 
       Expect.equal bytes [|1uy; 2uy; 3uy|] "body should be sequence of stream writers"
       Expect.equal newCt None "no new content type for byte body"
@@ -87,24 +86,24 @@ let bodyFormatting =
             FormFile ("files", ("file1.txt", fileCt, Plain fileContents)) ]
 
       let newCt, subject =
-        Impl.formatBody clientState (None, utf8, BodyForm form)
-        |> fun (newCt, body) ->
-          let bytes = bodyToBytes body
+        Impl.createHttpContent clientState (None, utf8, BodyForm form)
+        |> fun (newCt, httpContent) ->
+          let bytes = httpContent |> contentToBytes
           newCt, bytes |> utf8.GetString
 
-      let expectedBoundary = "nLWsTCFurKCiU_PjC/cCmmU-tnJHHa"
+      let expectedBoundary = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
 
       let expected = [ sprintf "--%s" expectedBoundary
+                       "Content-Type: text/plain; charset=utf-8"
                        "Content-Disposition: form-data; name=\"submit-name\""
                        ""
                        "Larry"
                        sprintf "--%s" expectedBoundary
-                       "Content-Disposition: form-data; name=\"files\"; filename=\"file1.txt\""
                        "Content-Type: text/plain"
+                       "Content-Disposition: form-data; name=\"files\"; filename=\"file1.txt\""
                        ""
                        "Hello World"
                        sprintf "--%s--" expectedBoundary
-                       ""
                        "" ]
                      |> String.concat "\r\n"
 
@@ -139,16 +138,17 @@ let bodyFormatting =
         ]
 
       let newCt, subject =
-        Impl.formatBody clientState (None, utf8, BodyForm form)
-        |> fun (newCt, body) ->
-          let bytes = bodyToBytes body
+        Impl.createHttpContent clientState (None, utf8, BodyForm form)
+        |> fun (newCt, httpContent) ->
+          let bytes = httpContent |> contentToBytes
           newCt, bytes |> utf8.GetString
 
-      let expectedBoundary1 = "nLWsTCFurKCiU_PjC/cCmmU-tnJHHa"
-      let expectedBoundary2 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
+      let expectedBoundary1 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
+      let expectedBoundary2 = "TYHqj_uqWKBHGwtogjeH-_oyB_JTR/"
 
       let expected =
           [ sprintf "--%s" expectedBoundary1
+            "Content-Type: text/plain; charset=utf-8"
             "Content-Disposition: form-data; name=\"submit-name\""
             ""
             "Larry"
@@ -157,34 +157,34 @@ let bodyFormatting =
             "Content-Disposition: form-data; name=\"files\""
             ""
             sprintf "--%s" expectedBoundary2
-            "Content-Disposition: file; filename=\"file1.txt\""
             "Content-Type: text/plain"
+            "Content-Disposition: file; filename=\"file1.txt\""
             ""
             "Hello World"
             sprintf "--%s" expectedBoundary2
-            "Content-Disposition: file; filename=\"file2.gif\""
             "Content-Type: text/plain"
+            "Content-Disposition: file; filename=\"file2.gif\""
             ""
             "...contents of file2.gif..."
             sprintf "--%s" expectedBoundary2
-            "Content-Disposition: file; filename=\"file3.json\""
             "Content-Type: application/json"
+            "Content-Disposition: file; filename=\"file3.json\""
             ""
             "Hello World"
             sprintf "--%s" expectedBoundary2
-            "Content-Disposition: file; filename=\"file4.rss\""
             "Content-Type: application/atom+xml"
+            "Content-Disposition: file; filename=\"file4.rss\""
             ""
             "Hello World"
             sprintf "--%s" expectedBoundary2
-            "Content-Disposition: file; filename=\"file5.wad\""
             "Content-Type: application/x-doom"
             "Content-Transfer-Encoding: base64"
+            "Content-Disposition: file; filename=\"file5.wad\""
             ""
             "SGVsbG8gV29ybGQ="
             sprintf "--%s--" expectedBoundary2
-            sprintf "--%s--" expectedBoundary1
             ""
+            sprintf "--%s--" expectedBoundary1
             "" ]
           |> String.concat "\r\n"
       
@@ -213,10 +213,10 @@ let bodyFormatting =
             NameValue ("user_name", "Åsa den Röde")
             NameValue ("user_pass", "Bović")
         ]
-        |> fun form -> Impl.formatBody clientState (None, utf8, BodyForm form)
-        |> fun (newCt, body) ->
-          let bodyToString = body |> bodyToBytes |> utf8.GetString
-          Expect.equal bodyToString "submit=Join+Now!&user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "body should be equal"
+        |> fun form -> Impl.createHttpContent clientState (None, utf8, BodyForm form)
+        |> fun (newCt, message) ->
+          let bodyToString = message.ReadAsStringAsync() |> Async.AwaitTask |> Async.RunSynchronously
+          Expect.equal bodyToString "submit=Join+Now%21&user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "body should be equal"
           Expect.equal newCt (ContentType.parse "application/x-www-form-urlencoded") "should have new ct"
   ]
 
@@ -224,8 +224,8 @@ let bodyFormatting =
 let internals =
   testCase "http web request url" <| fun _ ->
     let hfsReq = Request.create Get (Uri "http://localhost/") |> Request.queryStringItem "a" "1"
-    let netReq, _ = DotNetWrapper.toHttpWebRequest HttpFsState.empty hfsReq
-    Expect.equal (string netReq.RequestUri) "http://localhost/?a=1" "uri should be equal"
+    let reqMessage = DotNetWrapper.toHttpRequestMessage HttpFsState.empty hfsReq
+    Expect.equal (string reqMessage.RequestUri) "http://localhost/?a=1" "uri should be equal"
 
 [<Tests>]
 let textEncodingTest =

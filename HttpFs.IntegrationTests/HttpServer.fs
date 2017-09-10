@@ -22,11 +22,11 @@ let uriFor path =
 
 let app =
   choose [
-    Filters.GET >=> choose [
-      Filters.path "/RecordRequest" >=> request (fun r ->
-        recordedRequest <- Some r
-        Successful.OK "")
+    Filters.path "/RecordRequest" >=> request (fun r ->
+      recordedRequest <- Some r
+      Successful.OK "")
 
+    Filters.GET >=> choose [
       Filters.path "/GoodStatusCode" >=> Successful.OK ""
 
       Filters.path "/BadStatusCode" >=> RequestErrors.UNAUTHORIZED ""

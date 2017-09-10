@@ -29,12 +29,8 @@ let getHeader name (httpRequest: Suave.Http.HttpRequest) =
 [<Tests>]
 let recorded =
   testSequenced <| testList "integration recorded" [
-    // FEEDBACK: This test does not pass, Keep-Alive is still present in the second requests headers
-    // a bug?
-
-    // testCase "if KeepAlive is true, Connection set to 'Keep-Alive' on the first request, but not subsequent ones" <| fun _ ->
-    //   use server = new SuaveTestServer()
-
+    // HttpClient sets Keep-Alive on every request unless explicitly set to "Close"
+    // testCase "connection set to 'Keep-Alive' on the first request, but not subsequent ones" <| fun _ ->
     //   Request.create Get (uriFor "/RecordRequest") |> runIgnore
     //   let req = HttpServer.recordedRequest
     //   Expect.isSome req "request should not be none"
@@ -46,14 +42,14 @@ let recorded =
     //   Expect.isSome req "request should not be none"
     //   Expect.equal (req.Value |> getHeader "connection") "" "header should be empty"
 
-    testCase "if KeepAlive is false, Connection set to 'Close' on every request" <| fun _ ->
-      Request.create Get (uriFor "/RecordRequest") |> Request.keepAlive false |> runIgnore
+    testCase "Connection set to 'Close' on every request" <| fun _ ->
+      Request.create Get (uriFor "/RecordRequest") |> Request.setHeader (Connection "Close") |> runIgnore
       let req = HttpServer.recordedRequest
       Expect.isSome req "request should not be none"
       Expect.equal ((req.Value |> getHeader "connection").ToLowerInvariant()) "close" "connection should be set to close"
 
       HttpServer.recordedRequest <- None
-      Request.create Get (uriFor "/RecordRequest") |> Request.keepAlive false |> runIgnore
+      Request.create Get (uriFor "/RecordRequest") |> Request.setHeader (Connection "Close") |> runIgnore
       let req = HttpServer.recordedRequest
       Expect.isSome req "request should not be none"
       Expect.equal ((req.Value |> getHeader "connection").ToLowerInvariant()) "close" "connection should be set to close"
@@ -72,38 +68,40 @@ let recorded =
       Expect.equal (req.Value |> getQueryParam "search") "jeebus" "should be equal"
       Expect.equal (req.Value |> getQueryParam "qs2") "hi mum" "should be equal"
       Expect.stringContains (req.Value |> getHeader "accept") "application/xml" "should contain accept"
-      Expect.equal (req.Value |> getHeader "cookie") "SESSIONID=1234" "should be equal"
+      Expect.stringContains (req.Value |> getHeader "cookie") "SESSIONID=1234" "should contain cookie"
       
       let body = Encoding.UTF8.GetString(req.Value.rawForm)
       Expect.equal body "some XML or whatever" "body should be equal"
 
     testCase "all of the manually-set request headers get sent to the server" <| fun _ ->
-      Request.create Get (uriFor "/RecordRequest")
-      |> Request.keepAlive false
+      Request.create Post (uriFor "/RecordRequest")
+      // |> Request.keepAlive false
       |> Request.setHeader (Accept "application/xml,text/html;q=0.3")
-      |> Request.setHeader (AcceptCharset "utf-8, utf-16;q=0.5" )
-      |> Request.setHeader (AcceptDatetime "Thu, 31 May 2007 20:35:00 GMT" )
-      |> Request.setHeader (AcceptLanguage "en-GB, en-US;q=0.1" )
-      |> Request.setHeader (Authorization  "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
-      |> Request.setHeader (Connection "conn1" )
-      |> Request.setHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==" )
+      |> Request.setHeader (AcceptCharset "utf-8, utf-16;q=0.5")
+      |> Request.setHeader (AcceptDatetime "Thu, 31 May 2007 20:35:00 GMT")
+      |> Request.setHeader (AcceptLanguage "en-GB, en-US;q=0.1")
+      |> Request.setHeader (Authorization  "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==")
+      // HttpClient discards any connection header value that is not Keep-Alive/Close
+      // and overrides it with "Keep-Alive"
+      |> Request.setHeader (Connection "close")
+      |> Request.setHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==")
       |> Request.setHeader (ContentType (ContentType.create("application", "json")))
       |> Request.setHeader (Date (DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
       |> Request.setHeader (From "user@example.com" )
-      |> Request.setHeader (IfMatch "737060cd8c284d8af7ad3082f209582d" )
+      |> Request.setHeader (IfMatch "\"737060cd8c284d8af7ad3082f209582d\"")
       |> Request.setHeader (IfModifiedSince (DateTime(2000, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
-      |> Request.setHeader (IfNoneMatch "737060cd8c284d8af7ad3082f209582d" )
-      |> Request.setHeader (IfRange "737060cd8c284d8af7ad3082f209582d" )
-      |> Request.setHeader (MaxForwards 5 )
-      |> Request.setHeader (Origin "http://www.mybot.com" )
+      |> Request.setHeader (IfNoneMatch "\"737060cd8c284d8af7ad3082f209582d\"")
+      |> Request.setHeader (IfRange "\"737060cd8c284d8af7ad3082f209582d\"")
+      |> Request.setHeader (MaxForwards 5)
+      |> Request.setHeader (Origin "http://www.mybot.com")
       |> Request.setHeader (RequestHeader.Pragma "no-cache" )
-      |> Request.setHeader (ProxyAuthorization "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
-      |> Request.setHeader (Range {start=0L; finish=500L} )
+      |> Request.setHeader (ProxyAuthorization "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
+      |> Request.setHeader (Range {start= Some 0L; finish= Some 500L} )
       |> Request.setHeader (Referer "http://en.wikipedia.org/" )
       |> Request.setHeader (Upgrade "HTTP/2.0, SHTTP/1.3" )
-      |> Request.setHeader (UserAgent "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0" )
-      |> Request.setHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)" )
-      |> Request.setHeader (Warning "199 Miscellaneous warning" )
+      |> Request.setHeader (UserAgent "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0")
+      |> Request.setHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)")
+      |> Request.setHeader (Warning "199 - \"Miscellaneous warning\"")
       |> Request.setHeader (Custom ("X-Greeting", "Happy Birthday"))
       |> runIgnore
 
@@ -116,21 +114,20 @@ let recorded =
       Expect.equal (req.Value |> getHeader "accept-datetime") "Thu, 31 May 2007 20:35:00 GMT" "accept-datetime should be equal"
       Expect.stringContains (req.Value |> getHeader "accept-language") "en-GB" "accept-language should be set"
       Expect.stringContains (req.Value |> getHeader "accept-language") "en-US" "accept-language should be set"
-      Expect.equal (req.Value |> getHeader "authorization") "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" "authorization should be equal"
-      // difference in behaviour between .NET/Core and mono. mono repos connection as "close"
-      // Expect.stringContains (req.Value |> getHeader "connection") "conn1" "connection should be set"
+      Expect.equal (req.Value |> getHeader "authorization") "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" "authorization should be equal"
+      Expect.stringContains ((req.Value |> getHeader "connection").ToLowerInvariant()) "close" "connection should be set"
       Expect.equal (req.Value |> getHeader "content-md5") "Q2hlY2sgSW50ZWdyaXR5IQ==" "content-md5 should be equal"
       Expect.equal (req.Value |> getHeader "content-type") "application/json" "content-type should be equal"
       Expect.equal (req.Value |> getHeader "date") "Fri, 31 Dec 1999 11:59:59 GMT" "date should be equal"
       Expect.equal (req.Value |> getHeader "from") "user@example.com" "from should be equal"
-      Expect.equal (req.Value |> getHeader "if-match") "737060cd8c284d8af7ad3082f209582d" "if-match should be equal"
+      Expect.equal (req.Value |> getHeader "if-match") "\"737060cd8c284d8af7ad3082f209582d\"" "if-match should be equal"
       Expect.equal (req.Value |> getHeader "if-modified-since") "Sun, 31 Dec 2000 11:59:59 GMT" "if-modified-since should be equal"
-      Expect.equal (req.Value |> getHeader "if-none-match") "737060cd8c284d8af7ad3082f209582d" "if-none-match should be equal"
-      Expect.equal (req.Value |> getHeader "if-range") "737060cd8c284d8af7ad3082f209582d" "if-range should match"
+      Expect.equal (req.Value |> getHeader "if-none-match") "\"737060cd8c284d8af7ad3082f209582d\"" "if-none-match should be equal"
+      Expect.equal (req.Value |> getHeader "if-range") "\"737060cd8c284d8af7ad3082f209582d\"""if-range should match"
       Expect.equal (req.Value |> getHeader "max-forwards") "5" "max-forwards should be equal"
       Expect.equal (req.Value |> getHeader "origin") "http://www.mybot.com" "origin should be equal"
       Expect.equal (req.Value |> getHeader "pragma") "no-cache" "pragma should be equal"
-      Expect.equal (req.Value |> getHeader "proxy-authorization") "QWxhZGRpbjpvcGVuIHNlc2FtZQ==" "proxy-authorization should be equal"
+      Expect.equal (req.Value |> getHeader "proxy-authorization") "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" "proxy-authorization should be equal"
       Expect.equal (req.Value |> getHeader "range") "bytes=0-500" "range should be equal"
       Expect.equal (req.Value |> getHeader "referer") "http://en.wikipedia.org/" "referer should be equal"
       Expect.stringContains (req.Value |> getHeader "upgrade") "HTTP/2.0" "upgrade should be set"
@@ -138,7 +135,7 @@ let recorded =
       Expect.equal (req.Value |> getHeader "user-agent") "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0" "user-agent should be equal"
       Expect.stringContains (req.Value |> getHeader "via") "1.0 fred" "via should be set"
       Expect.stringContains (req.Value |> getHeader "via") "1.1 example.com (Apache/1.1)" "via should be set"
-      Expect.equal (req.Value |> getHeader "warning") "199 Miscellaneous warning" "warning should be equal"
+      Expect.equal (req.Value |> getHeader "warning") "199 - \"Miscellaneous warning\"" "warning should be equal"
       Expect.equal (req.Value |> getHeader "x-greeting") "Happy Birthday" "x-greeting should be equal"
 
     testCase "Content-Length header is set automatically for Posts with a body" <| fun _ ->
@@ -150,15 +147,16 @@ let recorded =
       Expect.isSome req "request should be some"
       Expect.equal (req.Value |> getHeader "content-length") "6" "content-length should be equal"
 
-    testCase "accept-encoding header is set automatically when decompression scheme is set" <| fun _ ->
-      Request.create Get (uriFor "/RecordRequest")
-      |> Request.autoDecompression (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
-      |> runIgnore
+    // automatic decompression needs to be set at the HttpMessageHandler level
+    // testCase "accept-encoding header is set automatically when decompression scheme is set" <| fun _ ->
+    //   Request.create Get (uriFor "/RecordRequest")
+    //   |> Request.autoDecompression (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
+    //   |> runIgnore
 
-      let req = HttpServer.recordedRequest
-      Expect.isSome req "request should be some"
-      Expect.stringContains (req.Value |> getHeader "accept-encoding") "gzip" "accept-encoding should be set"
-      Expect.stringContains (req.Value |> getHeader "accept-encoding") "deflate" "accept-encoding should be set"
+    //   let req = HttpServer.recordedRequest
+    //   Expect.isSome req "request should be some"
+    //   Expect.stringContains (req.Value |> getHeader "accept-encoding") "gzip" "accept-encoding should be set"
+    //   Expect.stringContains (req.Value |> getHeader "accept-encoding") "deflate" "accept-encoding should be set"
 
     testCase "if body character encoding is specified, encodes the request body with it" <| fun _ ->
       Request.create Post (uriFor "/RecordRequest")
@@ -197,7 +195,7 @@ let tests =
       Expect.equal response.statusCode 202 "statusCode should be equal"
       let body = Response.readBodyAsString response |> run
       Expect.equal body "Some JSON or whatever" "body should be equal"
-      Expect.equal response.contentLength 21L "contentLength should be equal"
+      Expect.equal response.contentLength (Some 21L) "contentLength should be equal"
       Expect.equal response.cookies.["cookie1"] "chocolate chip" "cookie should be equal"
       Expect.equal response.cookies.["cookie2"] "smarties" "cookie should be equal"
       Expect.equal response.headers.[ContentEncoding] "gzip" "contentEncoding should be equal"
@@ -312,18 +310,15 @@ let tests =
 
       Expect.equal str "'Why are you so picky, Windows?!' - utf16" "body should be equal"
 
-    // FEEDBACK: I changed this to checking for the presence of the cookie.
-    // It seems in my investigation the it is normal behaviour to preserve cookies on redirects
-    // FURTHER: It seems the behaviour differs between full .NET and .NETStandard.
-    // In full .NET the cookies are lost, in .NETStandard, they are kept
-    // testCase "cookies are kept during an automatic redirect" <| fun _ ->
-    //   use response =
-    //     Request.create Get (uriFor "/CookieRedirect")
-    //     |> getResponse
-    //     |> run
+    testCase "cookies are not kept during an automatic redirect" <| fun _ ->
+      use response =
+        Request.create Get (uriFor "/CookieRedirect")
+        |> getResponse
+        |> run
 
-    //   Expect.equal response.statusCode 200 "statusCode should be equal"
-    //   Expect.equal (response.cookies.ContainsKey "cookie1") true "cookies should contain key"
+      printfn "Cookies: %A" response.cookies
+      Expect.equal response.statusCode 200 "statusCode should be equal"
+      Expect.equal (response.cookies.ContainsKey "cookie1") false "cookies should not contain key"
 
     testCase "reading the body as bytes works properly" <| fun _ ->
       use response =

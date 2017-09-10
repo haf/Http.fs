@@ -26,6 +26,7 @@ let app =
                   //printfn "||| in suave, handing over to sendFile, file %s len %d"
                   //        file.tempFilePath (FileInfo(file.tempFilePath).Length)
                   Files.sendFile file.tempFilePath false)
+          
           NOT_FOUND "Nope."
       ]
     ]
@@ -38,7 +39,7 @@ let pathOf relativePath =
 let tests =
   let runWithConfig = runWith defaultConfig
   let uriFor (res : string) = Uri (sprintf "http://localhost:8080/%s" (res.TrimStart('/')))
-  let request method res = Request.create ``method`` (uriFor res) |> Request.keepAlive false
+  let request method res = Request.create ``method`` (uriFor res)
 
   testCase "can send/receive" <| fun _ ->
     job {
