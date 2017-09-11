@@ -739,7 +739,8 @@ module Client =
                 | AcceptLanguage value             -> add "Accept-Language" value
                 | Authorization value              -> add "Authorization" value
                 | RequestHeader.Connection value   -> add "Connection" value
-                | RequestHeader.ContentMD5 value   -> addContent (fun c -> c.Headers.Add("Content-MD5", value))
+                | RequestHeader.ContentMD5 value   -> // a mono bug results in "System.Byte[]" getting sent in the content-md5 header if added to the headers manually....
+                                                      addContent (fun c -> c.Headers.ContentMD5 <- Encoding.UTF8.GetBytes(value))
                 | RequestHeader.ContentType value  -> addContent (fun c ->
                                                         c.Headers.Remove("Content-Type") |> ignore
                                                         c.Headers.TryAddWithoutValidation("Content-Type", value.ToString()) |> ignore)

@@ -61,20 +61,19 @@ let bodyFormatting =
   let testSeed = 1234567765
 
   let contentToBytes (content: HttpContent) =
-    content.ReadAsByteArrayAsync()
-    |> Async.AwaitTask
-    |> Async.RunSynchronously
+    content.ReadAsByteArrayAsync() |> Async.AwaitTask
 
   testList "formatting different sorts of body" [
-    testCase "can format raw" <| fun _ ->
+    testAsync "can format raw" {
       let clientState = { HttpFsState.empty with random = Random testSeed }
       let newCt, httpContent = Impl.createHttpContent clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
-      let bytes = httpContent |> contentToBytes
+      let! bytes = httpContent |> contentToBytes
 
       Expect.equal bytes [|1uy; 2uy; 3uy|] "body should be sequence of stream writers"
       Expect.equal newCt None "no new content type for byte body"
+    }
 
-    testCase "ordinary multipart/form-data" <| fun _ ->
+    testAsync "ordinary multipart/form-data" {
       /// can't lift outside, because test cases may run in parallel
       let clientState = { HttpFsState.empty with random = Random testSeed }
 
@@ -85,11 +84,9 @@ let bodyFormatting =
         [   NameValue ("submit-name", "Larry")
             FormFile ("files", ("file1.txt", fileCt, Plain fileContents)) ]
 
-      let newCt, subject =
-        Impl.createHttpContent clientState (None, utf8, BodyForm form)
-        |> fun (newCt, httpContent) ->
-          let bytes = httpContent |> contentToBytes
-          newCt, bytes |> utf8.GetString
+      let ct, content = Impl.createHttpContent clientState (None, utf8, BodyForm form)
+      let! bytes = content |> contentToBytes
+      let subject = bytes |> utf8.GetString
 
       let expectedBoundary = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
 
@@ -108,9 +105,10 @@ let bodyFormatting =
                      |> String.concat "\r\n"
 
       Expect.equal subject expected "should have correct body"
-      Expect.equal (newCt |> Option.get) (ContentType.create("multipart", "form-data", boundary=expectedBoundary)) "should have new ct"
+      Expect.equal (ct |> Option.get) (ContentType.create("multipart", "form-data", boundary=expectedBoundary)) "should have new ct"
+    }
 
-    testCase "multipart/form-data with multipart/mixed" <| fun _ ->
+    testAsync "multipart/form-data with multipart/mixed" {
       /// can't lift outside, because test cases may run in parallel
       let clientState = { HttpFsState.empty with random = Random testSeed }
 
@@ -137,11 +135,9 @@ let bodyFormatting =
               ])
         ]
 
-      let newCt, subject =
-        Impl.createHttpContent clientState (None, utf8, BodyForm form)
-        |> fun (newCt, httpContent) ->
-          let bytes = httpContent |> contentToBytes
-          newCt, bytes |> utf8.GetString
+      let ct, content = Impl.createHttpContent clientState (None, utf8, BodyForm form)
+      let! bytes = content |> contentToBytes
+      let subject = bytes |> utf8.GetString
 
       let expectedBoundary1 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
       let expectedBoundary2 = "TYHqj_uqWKBHGwtogjeH-_oyB_JTR/"
@@ -189,6 +185,7 @@ let bodyFormatting =
           |> String.concat "\r\n"
       
       Expect.equal subject expected "should have correct body"
+    }
 
     testCase "can format urlencoded data" <| fun _ ->
       // http://www.url-encode-decode.com/
@@ -206,18 +203,20 @@ let bodyFormatting =
       
       Expect.equal encoded "user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "Should encode Swedish properly"
 
-    testCase "can format urlencoded form" <| fun _ ->
-        let clientState = { HttpFsState.empty with random = Random testSeed }
-        // example from http://www.w3.org/TR/html401/interact/forms.html
+    testAsync "can format urlencoded form" {
+      let clientState = { HttpFsState.empty with random = Random testSeed }
+      // example from http://www.w3.org/TR/html401/interact/forms.html
+      let ct, content =
         [   NameValue ("submit", "Join Now!")
             NameValue ("user_name", "Åsa den Röde")
             NameValue ("user_pass", "Bović")
         ]
         |> fun form -> Impl.createHttpContent clientState (None, utf8, BodyForm form)
-        |> fun (newCt, message) ->
-          let bodyToString = message.ReadAsStringAsync() |> Async.AwaitTask |> Async.RunSynchronously
-          Expect.equal bodyToString "submit=Join+Now%21&user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "body should be equal"
-          Expect.equal newCt (ContentType.parse "application/x-www-form-urlencoded") "should have new ct"
+
+      let! bodyToString = content.ReadAsStringAsync() |> Async.AwaitTask
+      Expect.equal bodyToString "submit=Join+Now%21&user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "body should be equal"
+      Expect.equal ct (ContentType.parse "application/x-www-form-urlencoded") "should have new ct"
+    }
   ]
 
 [<Tests>]
