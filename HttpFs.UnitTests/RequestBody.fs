@@ -140,7 +140,7 @@ let bodyFormatting =
       let subject = bytes |> utf8.GetString
 
       let expectedBoundary1 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
-      let expectedBoundary2 = "TYHqj_uqWKBHGwtogjeH-_oyB_JTR/"
+      let expectedBoundary2 = "TYHqj+uqWKBHGwtogjeH-+oyB+JTR/"
 
       let expected =
           [ sprintf "--%s" expectedBoundary1
