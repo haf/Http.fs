@@ -75,7 +75,6 @@ let recorded =
 
     testCase "all of the manually-set request headers get sent to the server" <| fun _ ->
       Request.create Post (uriFor "/RecordRequest")
-      // |> Request.keepAlive false
       |> Request.setHeader (Accept "application/xml,text/html;q=0.3")
       |> Request.setHeader (AcceptCharset "utf-8, utf-16;q=0.5")
       |> Request.setHeader (AcceptDatetime "Thu, 31 May 2007 20:35:00 GMT")
@@ -316,7 +315,6 @@ let tests =
         |> getResponse
         |> run
 
-      printfn "Cookies: %A" response.cookies
       Expect.equal response.statusCode 200 "statusCode should be equal"
       Expect.equal (response.cookies.ContainsKey "cookie1") false "cookies should not contain key"
 

@@ -369,8 +369,6 @@ module Client =
     { url                       : Uri
       ``method``                : HttpMethod
       cookiesEnabled            : bool
-      // autoFollowRedirects       : bool
-      // autoDecompression         : DecompressionScheme
       headers                   : Map<string, RequestHeader>
       body                      : RequestBody
       bodyCharacterEncoding     : Encoding
@@ -378,9 +376,6 @@ module Client =
       cookies                   : Map<CookieName, Cookie>
       responseCharacterEncoding : Encoding option
       proxy                     : Proxy option
-      // keepAlive                 : bool
-      // timeout                   : int<ms>
-      // networkCredentials        : Credentials option
       httpClient                : HttpClient }
 
   type CharacterSet = string
@@ -729,7 +724,7 @@ module Client =
     /// Mutates HttpRequestMessage.
     let setHeaders (headers : RequestHeader list) (request : HttpRequestMessage) =
       let add (k : string) (v: string) = request.Headers.Add (k, v)
-      // in .NET full, HttpRequestMessage cannot have the Content property set on HttpMethods that do not support content, or it fails with an exception,
+      // in .NET full, HttpRequestMessage cannot have the Content property with HttpMethods that do not support content, or it fails with an exception,
       // so request.Content can be null. this is acutally NOT the case in .NET Core, where it does not throw an exception when content is set with a GET method
       let addContent (add: HttpContent -> unit) = if not <| isNull request.Content then add request.Content
       List.iter (function
@@ -739,8 +734,13 @@ module Client =
                 | AcceptLanguage value             -> add "Accept-Language" value
                 | Authorization value              -> add "Authorization" value
                 | RequestHeader.Connection value   -> add "Connection" value
-                | RequestHeader.ContentMD5 value   -> // a mono bug results in "System.Byte[]" getting sent in the content-md5 header if added to the headers manually....
-                                                      addContent (fun c -> c.Headers.ContentMD5 <- Encoding.UTF8.GetBytes(value))
+                | RequestHeader.ContentMD5 value   -> addContent (fun c ->
+                                                        // this is to work around a mono bug.
+                                                        // when setting "content-md5" manually, mono writes "Sytem.Byte[]" as the value.
+                                                        // setting the ContentMD5 property works the same across frameworks, however it will
+                                                        // convert the provided value to a base64 string automagically
+                                                        let bytes = Convert.FromBase64String(value)
+                                                        c.Headers.ContentMD5 <- bytes)
                 | RequestHeader.ContentType value  -> addContent (fun c ->
                                                         c.Headers.Remove("Content-Type") |> ignore
                                                         c.Headers.TryAddWithoutValidation("Content-Type", value.ToString()) |> ignore)
@@ -776,35 +776,6 @@ module Client =
 
       if (cookieStr.Length > 0) then
         requestMessage.Headers.Add("Cookie", cookieStr)
-
-    /// Sets proxy on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    // let setProxy proxy (handler : HttpClientHandler) =
-    //   proxy |> Option.iter (fun proxy ->
-    //     let webProxy = WebProxy(proxy.Address, proxy.Port)
-
-    //     match proxy.Credentials with
-    //     | Credentials.Custom { username = name; password = pwd} ->
-    //         webProxy.Credentials <- NetworkCredential(name, pwd)
-    //     | Credentials.Default -> webProxy.UseDefaultCredentials <- true
-    //     | Credentials.None -> webProxy.Credentials <- null
-
-    //     handler.Proxy <- webProxy)
-
-    /// Sets NetworkCredentials on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    // let setNetworkCredentials credentials (handler : HttpClientHandler) =
-    //   credentials |> Option.iter (fun credentials ->
-
-    //     match credentials with
-    //     | Credentials.Custom { username = name; password = pwd} ->
-    //         let last n xs = Array.toSeq xs |> Seq.skip (xs.Length - n) |> Seq.toArray
-    //         match (last 2 (name.Split [|'\\'|])) with
-    //         | [| domain ; user |] -> handler.Credentials <- NetworkCredential(user, pwd, domain)
-    //         | _ -> raise (System.Exception("User name is not in form domain\\user"))
-
-    //     | Credentials.Default -> handler.UseDefaultCredentials <- true
-    //     | Credentials.None -> handler.Credentials <- null)
 
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
@@ -869,42 +840,6 @@ module Client =
 
       message |> setHeaders (request.headers |> Map.toList |> List.map snd)
       message
-      // handler |> setProxy request.proxy
-      // handler |> setNetworkCredentials request.networkCredentials
-
-      // let webRequest =
-      //   HttpWebRequest.Create(url) :?> HttpWebRequest
-
-      // let newContentType, body =
-      //   formatBody state (contentType, contentEncoding, request.body)
-
-      // let request =
-      //   // if we have a new content type, from using BodyForm, then this
-      //   // updates the request value with that header
-      //   newContentType
-      //   |> Option.map RequestHeader.ContentType
-      //   |> Option.fold setHeader request
-
-      // webRequest.Method <- getMethodAsString request
-      // webRequest.ProtocolVersion <- HttpVersion.Version11
-
-      // if request.cookiesEnabled then
-      //   webRequest.CookieContainer <- CookieContainer()
-
-      // webRequest.AllowAutoRedirect <- request.autoFollowRedirects
-
-      // // this relies on the DecompressionScheme enum values being the same as those in System.Net.DecompressionMethods
-      // webRequest.AutomaticDecompression <- enum<DecompressionMethods> <| int request.autoDecompression
-
-      // webRequest |> setHeaders (request.headers |> Map.toList |> List.map snd)
-      // webRequest |> setCookies (request.cookies |> Map.toList |> List.map snd) request.url
-      // webRequest |> setProxy request.proxy
-      // webRequest |> setNetworkCredentials request.networkCredentials
-
-      // webRequest.KeepAlive <- request.keepAlive
-      // webRequest.Timeout <- (int)request.timeout
-
-      // webRequest, webRequest |> tryWriteBody body
 
     /// For debugging purposes only
     /// Converts the Request body to a format suitable for HttpRequestMessage and returns this raw body as a string.
@@ -936,28 +871,6 @@ module Client =
       let get = Alt.fromTask (fun cts -> httpClient.SendAsync(request, cts))
       Alt.tryIn get (Choice1Of2 >> Job.result) (Choice2Of2 >> Job.result)
       
-      // (fun () -> job {
-      //   try
-      //     let! response = Alt.fromTask 
-      //     return Choice1Of2 response
-      //   with
-      //   | ex -> return Choice2Of2 ex
-      // }) |> Alt.prepareJob
-
-
-      // let inline succeed (wr : HttpResponseMessage) : Choice<HttpResponseMessage,exn> = downcast wr |> Choice1Of2
-      // let inline failure (ex : exn) : Choice<HttpResponseMessage,exn> = Choice2Of2 ex
-
-      // let tryEndGetResponse ar =
-      //   try
-      //     httpClient.
-      //     request.EndGetResponse ar
-      //     |> succeed
-      //   with
-      //   | :? WebException as wex when wex.Response <> null -> succeed wex.Response
-      //   | ex -> failure ex
-      // Alt.fromBeginEnd request.BeginGetResponse tryEndGetResponse (fun _ -> request.Abort())
-
     let getCookiesAsMap (response: HttpResponseMessage) =
       let uri = response.RequestMessage.RequestUri
       let container = new System.Net.CookieContainer()
@@ -1066,7 +979,7 @@ module Client =
   let getResponse request =
     let getResponseOrFail = function
       | Choice1Of2 resp -> resp
-      | Choice2Of2 exn -> raise exn
+      | Choice2Of2 exn -> raise <| new Exception("Failed to get response", exn)
     tryGetResponse request
     |> Alt.afterFun getResponseOrFail
 
@@ -1110,8 +1023,6 @@ module Client =
       { url                       = url
         ``method``                = httpMethod
         cookiesEnabled            = true
-        // autoFollowRedirects       = true
-        // autoDecompression         = DecompressionScheme.None
         headers                   = Map.empty
         body                      = BodyRaw [||]
         bodyCharacterEncoding     = DefaultBodyEncoding
@@ -1119,11 +1030,6 @@ module Client =
         cookies                   = Map.empty
         responseCharacterEncoding = None
         proxy                     = None
-        // keepAlive                 = true
-        /// The default value is 100,000 milliseconds (100 seconds).
-        /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
-        // timeout                   = 100000<ms>
-        // networkCredentials        = None
         httpClient                = defaultHttpClient }
 
     let createWithClient client method url =
@@ -1150,10 +1056,6 @@ module Client =
     let cookiesDisabled request =
       { request with cookiesEnabled = false }
 
-    /// Disables automatic following of redirects, which is enabled by default
-    // let autoFollowRedirectsDisabled request =
-    //   { request with autoFollowRedirects = false }
-
     /// Adds a header, defined as a RequestHeader
     /// The current implementation doesn't allow you to add a single header multiple
     /// times. File an issue if this is a limitation for you.
@@ -1163,17 +1065,6 @@ module Client =
     /// Adds an HTTP Basic Authentication header, which includes the username and password encoded as a base-64 string
     let basicAuthentication username password =
       setHeader (basicAuthorz username password)
-
-    /// Adds a credential cache to support NTLM authentication
-    // let withNTLMAuthentication username password (request : Request) =
-    //   {request with networkCredentials = Some (Credentials.Custom { username = username; password = password}) }
-
-    /// Sets the accept-encoding request header to accept the decompression methods selected,
-    /// and automatically decompresses the responses.
-    ///
-    /// Multiple schemes can be OR'd together, e.g. (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
-    // let autoDecompression decompressionSchemes request =
-    //   { request with autoDecompression = decompressionSchemes}
 
     /// Lets you set your own body - use the RequestBody type to build it up.
     let body body (request : Request) =
@@ -1221,19 +1112,6 @@ module Client =
     /// If this is no set, the proxy settings from IE will be used, if available.
     let proxy proxy request =
       {request with proxy = Some proxy }
-
-    /// Sets the keep-alive header.  Defaults to true.
-    ///
-    /// If true, Connection header also set to 'Keep-Alive'
-    /// If false, Connection header also set to 'Close'
-    ///
-    /// NOTE: If true, headers only sent on first request.
-    // let keepAlive value request =
-    //   { request with keepAlive = value }
-
-    /// TODO: use as filter instead (composition)
-    // let timeout timeout request =
-    //   { request with timeout = timeout }
 
     /// Note: this sends the request, reads the response, disposes it and its stream
     let responseAsString req = job {
