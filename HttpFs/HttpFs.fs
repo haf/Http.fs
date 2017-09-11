@@ -473,7 +473,7 @@ module Client =
       |> Authorization
 
     let generateBoundary =
-      let boundaryChars = "abcdefghijklmnopqrstuvwxyz_-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      let boundaryChars = "abcdefghiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\\()+,-./:=?"
       let boundaryLen = 30
       fun clientState ->
           let rnd = clientState.random
