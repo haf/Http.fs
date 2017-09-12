@@ -41,7 +41,7 @@ let tests =
   let uriFor (res : string) = Uri (sprintf "http://localhost.fiddler:8080/%s" (res.TrimStart('/')))
   let request method res = Request.create ``method`` (uriFor res)
 
-  ftestCase "can send/receive" <| fun _ ->
+  testCase "can send/receive" <| fun _ ->
     job {
       let ctx = runWithConfig app
       try

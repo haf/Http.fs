@@ -561,7 +561,6 @@ module Client =
         match values with
         | [] ->
           yield writeLineAscii (sprintf "--%s--" boundary)
-          if not isMultiFile then yield writeLineAscii ""
         | h :: rest ->
           yield writeLineAscii (sprintf "--%s" boundary)
           match h with
@@ -704,12 +703,10 @@ module Client =
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
     let tryWriteBody (method: HttpMethod) (writers : seq<Stream -> Job<unit>>) (contentStream : Stream) =
-      if method = Post || method = Put || method = Patch then
-        job {
-          for writer in writers do
-            do! writer contentStream
-        }
-      else Job.result ()
+      job {
+        for writer in writers do
+          do! writer contentStream
+      }
 
     let matchCtHeader k = function
       | RequestHeader.ContentType ct -> Some ct
@@ -747,7 +744,7 @@ module Client =
       let method = new Net.Http.HttpMethod(methodStr)
       let message = new HttpRequestMessage(method, url, Version = HttpVersion.Version11)
 
-      let newContentType, body =
+      let newContentType, writers =
         formatBody state (contentType, contentEncoding, request.body)
 
       let request =
@@ -757,13 +754,18 @@ module Client =
         |> Option.map RequestHeader.ContentType
         |> Option.fold setHeader request
 
-      if request.method = Post || request.method = Put || request.method = Patch then
-        message.Content <- new StreamContent(contentStream)
-      if (request.cookiesEnabled) then
-        message |> setCookies (request.cookies |> Map.toList |> List.map snd) request.url
+      job {
+        if request.method = Post || request.method = Put || request.method = Patch then
+          do! contentStream |> tryWriteBody request.method writers
+          contentStream.Position <- 0L
+          message.Content <- new StreamContent(contentStream)
 
-      message |> setHeaders (request.headers |> Map.toList |> List.map snd)
-      message, contentStream |> tryWriteBody request.method body
+        if (request.cookiesEnabled) then
+          message |> setCookies (request.cookies |> Map.toList |> List.map snd) request.url
+
+        message |> setHeaders (request.headers |> Map.toList |> List.map snd)
+        return message
+      }
 
     /// For debugging purposes only
     /// Converts the Request body to a format suitable for HttpRequestMessage and returns this raw body as a string.
@@ -886,10 +888,7 @@ module Client =
   let tryGetResponse request =
     let prepare = job {
       use ms = new MemoryStream()
-      let requestMessage, writeContent = request |> toHttpRequestMessage HttpFsState.empty ms
-      do! writeContent
-      ms.Position <- 0L
-
+      let! requestMessage = request |> toHttpRequestMessage HttpFsState.empty ms
       let! response = requestMessage |> getResponseNoException request.httpClient
 
       match response with

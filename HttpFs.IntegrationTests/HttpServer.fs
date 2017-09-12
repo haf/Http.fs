@@ -145,6 +145,22 @@ let app =
           |> List.map (fun f -> f.fileName)
           |> String.concat "\n"
           |> Successful.OK)
+
+        Filters.path "/multipart" >=> request (fun r ->
+          let formStr =
+            r.multiPartFields
+            |> List.map (fun (x, y) -> sprintf "%s: %s" x y)
+            |> String.concat "\n"
+
+          let filesStr =
+            r.files
+            |> List.map (fun x -> x.fileName)
+            |> String.concat "\n"
+
+          [ formStr; filesStr ]
+          |> String.concat "\n"
+          |> Successful.OK)
+
     ]
 
     Filters.HEAD >=> Filters.path "/Head" >=> Successful.OK ""

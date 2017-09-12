@@ -105,7 +105,6 @@ let bodyFormatting =
                        ""
                        "Hello World"
                        sprintf "--%s--" expectedBoundary
-                       ""
                        "" ]
                      |> String.concat "\r\n"
 
@@ -185,7 +184,6 @@ let bodyFormatting =
             "SGVsbG8gV29ybGQ="
             sprintf "--%s--" expectedBoundary2
             sprintf "--%s--" expectedBoundary1
-            ""
             "" ]
           |> String.concat "\r\n"
       
@@ -229,7 +227,7 @@ let internals =
   testCase "http web request url" <| fun _ ->
     use ms = new IO.MemoryStream()
     let hfsReq = Request.create Get (Uri "http://localhost/") |> Request.queryStringItem "a" "1"
-    let reqMessage, _ = DotNetWrapper.toHttpRequestMessage HttpFsState.empty ms hfsReq
+    let reqMessage = DotNetWrapper.toHttpRequestMessage HttpFsState.empty ms hfsReq |> Hopac.run
     Expect.equal (string reqMessage.RequestUri) "http://localhost/?a=1" "uri should be equal"
 
 [<Tests>]
