@@ -51,12 +51,11 @@ let tests =
           
           use ms = new MemoryStream()
           //printfn "--- get response"
-          let req =
+          use! resp =
             request method "gifs/echo"
             |> Request.body (BodyForm [ FormFile ("img", file) ])
             |> Request.setHeader (Custom ("Access-Code", "Super-Secret"))
-
-          use! resp = req |> getResponse
+            |> getResponse
 
           do! Job.awaitUnitTask (resp.body.CopyToAsync ms)
 

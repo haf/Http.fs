@@ -17,8 +17,6 @@ let api =
       let r = Request.createUrl Get "http://www.google.com"
       Expect.equal (r.url.ToString()) "http://www.google.com/" "has same url"
       Expect.equal r.method Get "has get method"
-      // Expect.equal r.autoDecompression DecompressionScheme.None "has no decompression scheme"
-      // Expect.isTrue r.autoFollowRedirects "should follow redirects"
       Expect.equal r.body (BodyRaw [||]) "has empty body"
       Expect.equal r.bodyCharacterEncoding Encoding.UTF8 "has UTF8 body character encoding"
       Expect.isEmpty r.cookies "has no cookies"
@@ -27,15 +25,6 @@ let api =
       Expect.isEmpty r.queryStringItems "has no query string"
       Expect.isNone r.responseCharacterEncoding "has no response char encoding"
       Expect.isNone r.proxy "has no proxy configured"
-      // Expect.isTrue r.keepAlive "user keep-alive"
-
-    // testCase "withAutoDecompression enables the specified decompression methods" <| fun _ ->
-    //   let createdRequest =
-    //     validRequest
-    //     |> autoDecompression (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
-
-    //   Expect.equal DecompressionScheme.Deflate (createdRequest.autoDecompression &&& DecompressionScheme.Deflate) "deflate"
-    //   Expect.equal DecompressionScheme.GZip (createdRequest.autoDecompression &&& DecompressionScheme.GZip) "gzip"
 
     testCase "withClient uses specified client" <| fun _ ->
       let client = new HttpClient()
@@ -126,9 +115,6 @@ let api =
       Expect.canPick c (Cookie.create("c1", "v1")) "should have first cookie"
       Expect.canPick c (Cookie.create("c2", "v2")) "should have second cookie"
 
-    // testCase "withAutoFollowRedirectsDisabled turns auto-follow off" <| fun _ ->
-    //   Expect.isFalse (validRequest |> autoFollowRedirectsDisabled).autoFollowRedirects "should be disabled"
-
     testCase "withResponseCharacterEncoding sets the response character encoding" <| fun _ ->
       let createdRequest =
         createUrl Get "http://www.google.com/"
@@ -168,7 +154,4 @@ let api =
         |> proxy { Address = ""; Port = 0; Credentials = Credentials.None }
 
       Expect.equal request.proxy.Value.Credentials Credentials.None "credentials should be none"
-
-    // testCase "withKeepAlive sets KeepAlive" <| fun _ ->
-    //   Expect.isFalse (validRequest |> keepAlive false).keepAlive "keepAlive should be false"
   ]
