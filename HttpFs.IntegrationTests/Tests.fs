@@ -435,7 +435,7 @@ let tests =
       for fileName in [ "file1.txt"; "file2.gif" ] do
         Expect.stringContains response fileName "response should contain filename"
 
-    ftestCase "multipart/mixed returns form values" <| fun _ ->
+    testCase "multipart/mixed returns form values" <| fun _ ->
       let firstCt, secondCt, thirdCt, fourthCt, fifthCt, fileContents =
         ContentType.parse "text/plain" |> Option.get,
         ContentType.parse "text/plain" |> Option.get,
