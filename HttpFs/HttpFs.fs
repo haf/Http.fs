@@ -523,186 +523,110 @@ module Client =
 
     open StreamWriters
 
-    let createFileHttpContent (encoding : Encoding) contentType (contentDisposition: string) contents : HttpContent =
-      // match contentType, contents with
-      // | { typ = "text"; subtype = _ }, Plain text ->
-      //   yield writeLineAscii ""
-      //   yield writeLineUtf8 text
+    let generateFileData (encoding : Encoding) contentType contents = seq {
+      match contentType, contents with
+      | { typ = "text"; subtype = _ }, Plain text ->
+        yield writeLineAscii ""
+        yield writeLineUtf8 text
 
-      // | { typ = "application"; subtype = subtype }, Plain text
-      //   when List.exists ((=) (subtype.Split('+') |> Seq.last)) ["json"; "xml"] ->
-      //   yield writeLineAscii ""
-      //   yield writeLineUtf8 text
+      | { typ = "application"; subtype = subtype }, Plain text 
+        when List.exists ((=) (subtype.Split('+') |> Seq.last)) ["json"; "xml"] ->
+        yield writeLineAscii ""
+        yield writeLineUtf8 text
 
-      // | _, Plain text ->
-      //   yield writeLineAscii "Content-Transfer-Encoding: base64"
-      //   yield writeLineAscii ""
-      //   yield writeLineAscii (text |> encoding.GetBytes |> Convert.ToBase64String)
+      | _, Plain text ->
+        yield writeLineAscii "Content-Transfer-Encoding: base64"
+        yield writeLineAscii ""
+        yield writeLineAscii (text |> encoding.GetBytes |> Convert.ToBase64String)
 
-      // | _, Binary bytes ->
-      //   yield writeLineAscii "Content-Transfer-Encoding: binary"
-      //   yield writeLineAscii ""
-      //   yield writeBytesLine bytes
+      | _, Binary bytes ->
+        yield writeLineAscii "Content-Transfer-Encoding: binary"
+        yield writeLineAscii ""
+        yield writeBytesLine bytes
 
-      // | _, StreamData stream ->
-      //   yield writeLineAscii "Content-Transfer-Encoding: binary"
-      //   yield writeLineAscii ""
-      //   yield writeStreamLine stream
-      let content =
-        match contentType, contents with
-        | { typ = "text"; subtype = _ }, Plain text ->
-          new StringContent(text, Encoding.UTF8) :> HttpContent
-
-        | { typ = "application"; subtype = subtype }, Plain text
-          when List.exists((=) (subtype.Split('+') |> Seq.last)) ["json"; "xml"] ->
-          new StringContent(text, Encoding.UTF8) :> HttpContent
-
-        | _, Plain text ->
-          let cnt = new StringContent(text |> encoding.GetBytes |> Convert.ToBase64String, Encoding.ASCII)
-          cnt.Headers.Add("Content-Transfer-Encoding", "base64")
-          cnt :> HttpContent
-
-        | _, Binary bytes ->
-          let cnt = new ByteArrayContent(bytes)
-          cnt.Headers.Add("Content-Transfer-Encoding", "binary")
-          cnt :> HttpContent
-
-        | _, StreamData stream ->
-          let cnt = new StreamContent(stream)
-          cnt.Headers.Add("Content-Transfer-Encoding", "binary")
-          cnt :> HttpContent
-
-      content.Headers.Add("Content-Disposition", contentDisposition)
-      content.Headers.ContentType <- new Headers.MediaTypeHeaderValue(sprintf "%O" contentType)
-      content
+      | _, StreamData stream ->
+        yield writeLineAscii "Content-Transfer-Encoding: binary"
+        yield writeLineAscii ""
+        yield writeStreamLine stream
+    }
 
     let generateContentDispos value (kvs : (string * string) list) =
-        // let formatKv = function
-        //     | k, v -> (sprintf "%s=\"%s\"" k (escapeQuotes v))
-        // String.concat "; " [ yield sprintf "Content-Disposition: %s" value
-        //                      yield! (kvs |> List.map formatKv) ]
-        let formatKv =
-            function
+        let formatKv = function
             | k, v -> (sprintf "%s=\"%s\"" k (escapeQuotes v))
-        [ yield sprintf "%s" value
-          yield! (kvs |> List.map formatKv) ]
-        |> String.concat "; "
+        String.concat "; " [ yield sprintf "Content-Disposition: %s" value
+                             yield! (kvs |> List.map formatKv) ]
 
-    let createMultipartHttpContent state (encoding : Encoding) formData=
-      // let rec generateFormDataInner values isMultiFile = [
-      //   match values with
-      //   | [] ->
-      //     yield writeLineAscii (sprintf "--%s--" boundary)
-      //     if not isMultiFile then yield writeLineAscii ""
-      //   | h :: rest ->
-      //     yield writeLineAscii (sprintf "--%s" boundary)
-      //     match h with
-      //     | FormFile (name, (fileName, contentType, contents)) ->
-      //       let dispos = if isMultiFile then "file" else "form-data"
-      //       yield writeLineUtf8 (generateContentDispos dispos
-      //                             [ if not isMultiFile then yield "name", name
-      //                               yield "filename", fileName ])
-      //       yield writeLineUtf8 (sprintf "Content-Type: %O" contentType)
-      //       yield! generateFileData encoding contentType contents
-
-      //     | MultipartMixed (name, files) ->
-      //       let boundary' = generateBoundary state
-      //       yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=\"%s\"" boundary')
-      //       yield writeLineUtf8 (generateContentDispos "form-data" [ "name", name ])
-      //       yield writeLineUtf8 ""
-      //       // remap the multi-files to single files and recursively call myself
-      //       let files' = files |> List.map (fun f -> FormFile (name, f))
-      //       yield! generateFormDataInner boundary' files' true
-
-      //     | NameValue (name, value) ->
-      //       yield writeLineAscii (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
-      //       yield writeLineAscii ""
-      //       yield writeLineUtf8 value
-      //     yield! generateFormDataInner boundary rest isMultiFile
-      // ]
-      let rec createContents contents isMultiFile values =
+    let generateFormData state (encoding : Encoding) boundary formData =
+      let rec generateFormDataInner boundary values isMultiFile = [
         match values with
-        | [] -> contents
-        | x::xs ->
-          match x with
-          | FormFile (name, (fileName, contentType, fileData)) ->
+        | [] ->
+          yield writeLineAscii (sprintf "--%s--" boundary)
+          if not isMultiFile then yield writeLineAscii ""
+        | h :: rest ->
+          yield writeLineAscii (sprintf "--%s" boundary)
+          match h with
+          | FormFile (name, (fileName, contentType, contents)) ->
             let dispos = if isMultiFile then "file" else "form-data"
-            let contentDispos =
-              generateContentDispos dispos [ if not isMultiFile then yield "name", name
-                                             yield "filename", fileName ]
-            let content = fileData |> createFileHttpContent encoding contentType contentDispos
+            yield writeLineUtf8 (generateContentDispos dispos
+                                  [ if not isMultiFile then yield "name", name
+                                    yield "filename", fileName ])
+            yield writeLineUtf8 (sprintf "Content-Type: %O" contentType)
+            yield! generateFileData encoding contentType contents
 
-            xs |> createContents (content::contents) isMultiFile
           | MultipartMixed (name, files) ->
-            let contentDispos = generateContentDispos "form-data" [ "name", name ]
-            let content = new MultipartContent("mixed", generateBoundary state)
-            content.Headers.Add("Content-Disposition", contentDispos)
+            let boundary' = generateBoundary state
+            yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=\"%s\"" boundary')
+            yield writeLineUtf8 (generateContentDispos "form-data" [ "name", name ])
+            yield writeLineUtf8 ""
+            // remap the multi-files to single files and recursively call myself
+            let files' = files |> List.map (fun f -> FormFile (name, f))
+            yield! generateFormDataInner boundary' files' true
 
-            // map to FormFile and recurse createContents
-            files
-            |> List.map (fun f -> FormFile (name, f))
-            |> createContents [] true
-            |> List.rev
-            |> List.iter(content.Add)
-
-            xs |> createContents (content :> HttpContent::contents) isMultiFile
           | NameValue (name, value) ->
-            let content = new StringContent(value, Encoding.UTF8) :> HttpContent
-            content.Headers.Add("Content-Disposition", sprintf "form-data; name=\"%s\"" (escapeQuotes name))
+            yield writeLineAscii (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
+            yield writeLineAscii ""
+            yield writeLineUtf8 value
+          yield! generateFormDataInner boundary rest isMultiFile
+      ]
+      generateFormDataInner boundary formData false
 
-            xs |> createContents (content::contents) isMultiFile
+    let private formatBodyUrlencoded formData =
+      [ formData
+        |> List.map (function
+            | NameValue (k, v) -> k, v
+            | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
+        |> uriEncode
+        // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
+        // and none-the-less; they will map 1-1 with the UTF8 set if the server
+        // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
+        |> ISOLatin1.GetBytes
+        |> writeBytes
+      ]
 
-      let boundary = generateBoundary state
-      let multipartContents = new MultipartFormDataContent(boundary)
-
-      formData
-      |> createContents [] false
-      |> List.rev
-      |> List.iter (multipartContents.Add)
-      ContentType.create("multipart", "form-data", boundary=boundary), multipartContents
-
-    // let private formatBodyUrlencoded formData =
-    //   [ formData
-    //     |> List.map (function
-    //         | NameValue (k, v) -> k, v
-    //         | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
-    //     |> uriEncode
-    //     // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
-    //     // and none-the-less; they will map 1-1 with the UTF8 set if the server
-    //     // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
-    //     |> ISOLatin1.GetBytes
-    //     |> writeBytes
-    //   ]
-
-    let createHttpContent (clientState : HttpFsState) =
+    let formatBody (clientState : HttpFsState) =
       // we may actually change the content type if it's wrong
       //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
       function
       | userCt, _, BodyRaw raw ->
-        userCt, new ByteArrayContent(raw) :> HttpContent
+        userCt, [ writeBytes raw ]
 
       | userCt, _, BodyString str ->
-        userCt, new StringContent(str, Encoding.UTF8) :> HttpContent
+        userCt, [ writeUtf8 str ]
 
       | userCt, _, BodyForm [] ->
-        userCt, new ByteArrayContent([||]) :> HttpContent
+        userCt, [ writeBytes [||] ]
 
       | userCt, encoding, BodyForm formData ->
         let onlyNameValues =
           formData |> List.forall (function | NameValue _ -> true | _ -> false)
 
         if onlyNameValues then
-          let content =
-            formData
-            |> List.choose(function
-              | NameValue (k, v) -> Some (new KeyValuePair<string, string>(k, v))
-              | _ -> None)
           ContentType.parse "application/x-www-form-urlencoded",
-          new FormUrlEncodedContent(content) :> HttpContent
+          formatBodyUrlencoded formData
         else
           let boundary = generateBoundary clientState
-          let ct, content = createMultipartHttpContent clientState encoding formData
-          Some ct, content :> HttpContent
+          ContentType.create("multipart", "form-data", boundary=boundary) |> Some,
+          generateFormData clientState encoding boundary formData
 
   open Impl
 
@@ -779,13 +703,13 @@ module Client =
 
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
-    // let tryWriteBody (method: HttpMethod) (writers : seq<Stream -> Job<unit>>) (contentStream : Stream) =
-    //   if method = Post || method = Put || method = Patch then
-    //     job {
-    //       for writer in writers do
-    //         do! writer contentStream
-    //     }
-    //   else Job.result ()
+    let tryWriteBody (method: HttpMethod) (writers : seq<Stream -> Job<unit>>) (contentStream : Stream) =
+      if method = Post || method = Put || method = Patch then
+        job {
+          for writer in writers do
+            do! writer contentStream
+        }
+      else Job.result ()
 
     let matchCtHeader k = function
       | RequestHeader.ContentType ct -> Some ct
@@ -799,7 +723,7 @@ module Client =
       { request with headers = request.headers |> Map.add header.Key header }
 
     /// The nasty business of turning a Request into an HttpRequestMessage
-    let toHttpRequestMessage state (request : Request) =
+    let toHttpRequestMessage state (contentStream: Stream) (request : Request) =
       ensureNo100Continue ()
 
       let contentType = request.headers |> Map.tryPick matchCtHeader
@@ -823,8 +747,8 @@ module Client =
       let method = new Net.Http.HttpMethod(methodStr)
       let message = new HttpRequestMessage(method, url, Version = HttpVersion.Version11)
 
-      let newContentType, httpContent =
-        createHttpContent state (contentType, contentEncoding, request.body)
+      let newContentType, body =
+        formatBody state (contentType, contentEncoding, request.body)
 
       let request =
         // if we have a new content type, from using createContent, then this
@@ -833,13 +757,13 @@ module Client =
         |> Option.map RequestHeader.ContentType
         |> Option.fold setHeader request
 
-      if methodStr = "POST" || methodStr = "PUT" || methodStr = "PATCH" then
-        message.Content <- httpContent
+      if request.method = Post || request.method = Put || request.method = Patch then
+        message.Content <- new StreamContent(contentStream)
       if (request.cookiesEnabled) then
         message |> setCookies (request.cookies |> Map.toList |> List.map snd) request.url
 
       message |> setHeaders (request.headers |> Map.toList |> List.map snd)
-      message
+      message, contentStream |> tryWriteBody request.method body
 
     /// For debugging purposes only
     /// Converts the Request body to a format suitable for HttpRequestMessage and returns this raw body as a string.
@@ -853,13 +777,14 @@ module Client =
         | _ -> None
         |> Option.fold (fun s t -> t) request.bodyCharacterEncoding
 
-      let newContentType, httpContent =
-        createHttpContent state (contentType, contentEncoding, request.body)
+      let newContentType, body =
+        formatBody state (contentType, contentEncoding, request.body)
 
       use dataStream = new IO.MemoryStream()
       job {
-          do! Job.awaitUnitTask <| httpContent.CopyToAsync dataStream
-      } |> Hopac.run
+          for writer in body do
+            do! writer dataStream
+        } |> Hopac.run
 
       dataStream.Position <- 0L // Reset stream position before reading
       use reader = new IO.StreamReader(dataStream)
@@ -959,21 +884,23 @@ module Client =
       }
 
   let tryGetResponse request =
-    let prepare req = job {
-      let requestMessage = toHttpRequestMessage HttpFsState.empty req
-      return getResponseNoException req.httpClient requestMessage
-    }
+    let prepare = job {
+      use ms = new MemoryStream()
+      let requestMessage, writeContent = request |> toHttpRequestMessage HttpFsState.empty ms
+      do! writeContent
+      ms.Position <- 0L
 
-    let wrap (r: Choice<HttpResponseMessage,exn>) : Job<Choice<Response,exn>> = job {
-      match r with
+      let! response = requestMessage |> getResponseNoException request.httpClient
+
+      match response with
       | Choice1Of2 x ->
         let! resp = Response.ofHttpResponseMessage x
-        return Choice1Of2 { resp with expectedEncoding = request.responseCharacterEncoding }
-      | Choice2Of2 x -> return Choice2Of2 x
+        return Alt.once <| Choice1Of2 { resp with expectedEncoding = request.responseCharacterEncoding }
+      | Choice2Of2 x -> return Alt.once <| Choice2Of2 x
     }
-
-    Alt.prepareJob (fun () -> prepare request)
-    |> Alt.afterJob (wrap)
+    
+    Alt.prepare prepare
+    // |> Alt.afterJob wrap
 
   /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
   let getResponse request =

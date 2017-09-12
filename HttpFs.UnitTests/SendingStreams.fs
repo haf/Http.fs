@@ -38,10 +38,10 @@ let pathOf relativePath =
 [<Tests>]
 let tests =
   let runWithConfig = runWith defaultConfig
-  let uriFor (res : string) = Uri (sprintf "http://localhost:8080/%s" (res.TrimStart('/')))
+  let uriFor (res : string) = Uri (sprintf "http://localhost.fiddler:8080/%s" (res.TrimStart('/')))
   let request method res = Request.create ``method`` (uriFor res)
 
-  testCase "can send/receive" <| fun _ ->
+  ftestCase "can send/receive" <| fun _ ->
     job {
       let ctx = runWithConfig app
       try
@@ -51,11 +51,12 @@ let tests =
           
           use ms = new MemoryStream()
           //printfn "--- get response"
-          use! resp =
+          let req =
             request method "gifs/echo"
             |> Request.body (BodyForm [ FormFile ("img", file) ])
             |> Request.setHeader (Custom ("Access-Code", "Super-Secret"))
-            |> getResponse
+
+          use! resp = req |> getResponse
 
           do! Job.awaitUnitTask (resp.body.CopyToAsync ms)
 

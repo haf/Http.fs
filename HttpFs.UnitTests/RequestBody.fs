@@ -60,20 +60,23 @@ let contentType =
 let bodyFormatting =
   let testSeed = 1234567765
 
-  let contentToBytes (content: HttpContent) =
-    content.ReadAsByteArrayAsync() |> Async.AwaitTask
+  let bodyToBytes body =
+    use stream = new IO.MemoryStream()
+    for writer in body do
+      do writer stream |> Hopac.run
+    stream.Seek(0L, IO.SeekOrigin.Begin) |> ignore
+    stream.ToArray()
 
   testList "formatting different sorts of body" [
-    testAsync "can format raw" {
+    testCase "can format raw" <| fun _ ->
       let clientState = { HttpFsState.empty with random = Random testSeed }
-      let newCt, httpContent = Impl.createHttpContent clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
-      let! bytes = httpContent |> contentToBytes
+      let newCt, body = Impl.formatBody clientState (None, utf8, BodyRaw [|1uy; 2uy; 3uy|])
+      let bytes = bodyToBytes body
 
       Expect.equal bytes [|1uy; 2uy; 3uy|] "body should be sequence of stream writers"
       Expect.equal newCt None "no new content type for byte body"
-    }
 
-    testAsync "ordinary multipart/form-data" {
+    testCase "ordinary multipart/form-data" <| fun _ ->
       /// can't lift outside, because test cases may run in parallel
       let clientState = { HttpFsState.empty with random = Random testSeed }
 
@@ -84,31 +87,32 @@ let bodyFormatting =
         [   NameValue ("submit-name", "Larry")
             FormFile ("files", ("file1.txt", fileCt, Plain fileContents)) ]
 
-      let ct, content = Impl.createHttpContent clientState (None, utf8, BodyForm form)
-      let! bytes = content |> contentToBytes
-      let subject = bytes |> utf8.GetString
+      let newCt, subject =
+        Impl.formatBody clientState (None, utf8, BodyForm form)
+        |> fun (newCt, body) ->
+          let bytes = bodyToBytes body
+          newCt, bytes |> utf8.GetString
 
-      let expectedBoundary = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
+      let expectedBoundary = "nLWsTCFurKCiU+PjC/cCmmU-tnJHHa"
 
       let expected = [ sprintf "--%s" expectedBoundary
-                       "Content-Type: text/plain; charset=utf-8"
                        "Content-Disposition: form-data; name=\"submit-name\""
                        ""
                        "Larry"
                        sprintf "--%s" expectedBoundary
-                       "Content-Type: text/plain"
                        "Content-Disposition: form-data; name=\"files\"; filename=\"file1.txt\""
+                       "Content-Type: text/plain"
                        ""
                        "Hello World"
                        sprintf "--%s--" expectedBoundary
+                       ""
                        "" ]
                      |> String.concat "\r\n"
 
       Expect.equal subject expected "should have correct body"
-      Expect.equal (ct |> Option.get) (ContentType.create("multipart", "form-data", boundary=expectedBoundary)) "should have new ct"
-    }
+      Expect.equal (newCt |> Option.get) (ContentType.create("multipart", "form-data", boundary=expectedBoundary)) "should have new ct"
 
-    testAsync "multipart/form-data with multipart/mixed" {
+    testCase "multipart/form-data with multipart/mixed" <| fun _ ->
       /// can't lift outside, because test cases may run in parallel
       let clientState = { HttpFsState.empty with random = Random testSeed }
 
@@ -135,16 +139,17 @@ let bodyFormatting =
               ])
         ]
 
-      let ct, content = Impl.createHttpContent clientState (None, utf8, BodyForm form)
-      let! bytes = content |> contentToBytes
-      let subject = bytes |> utf8.GetString
+      let newCt, subject =
+        Impl.formatBody clientState (None, utf8, BodyForm form)
+        |> fun (newCt, body) ->
+          let bytes = bodyToBytes body
+          newCt, bytes |> utf8.GetString
 
-      let expectedBoundary1 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
-      let expectedBoundary2 = "TYHqj+uqWKBHGwtogjeH-+oyB+JTR/"
+      let expectedBoundary1 = "nLWsTCFurKCiU+PjC/cCmmU-tnJHHa"
+      let expectedBoundary2 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
 
       let expected =
           [ sprintf "--%s" expectedBoundary1
-            "Content-Type: text/plain; charset=utf-8"
             "Content-Disposition: form-data; name=\"submit-name\""
             ""
             "Larry"
@@ -153,39 +158,38 @@ let bodyFormatting =
             "Content-Disposition: form-data; name=\"files\""
             ""
             sprintf "--%s" expectedBoundary2
-            "Content-Type: text/plain"
             "Content-Disposition: file; filename=\"file1.txt\""
+            "Content-Type: text/plain"
             ""
             "Hello World"
             sprintf "--%s" expectedBoundary2
-            "Content-Type: text/plain"
             "Content-Disposition: file; filename=\"file2.gif\""
+            "Content-Type: text/plain"
             ""
             "...contents of file2.gif..."
             sprintf "--%s" expectedBoundary2
-            "Content-Type: application/json"
             "Content-Disposition: file; filename=\"file3.json\""
+            "Content-Type: application/json"
             ""
             "Hello World"
             sprintf "--%s" expectedBoundary2
-            "Content-Type: application/atom+xml"
             "Content-Disposition: file; filename=\"file4.rss\""
+            "Content-Type: application/atom+xml"
             ""
             "Hello World"
             sprintf "--%s" expectedBoundary2
+            "Content-Disposition: file; filename=\"file5.wad\""
             "Content-Type: application/x-doom"
             "Content-Transfer-Encoding: base64"
-            "Content-Disposition: file; filename=\"file5.wad\""
             ""
             "SGVsbG8gV29ybGQ="
             sprintf "--%s--" expectedBoundary2
-            ""
             sprintf "--%s--" expectedBoundary1
+            ""
             "" ]
           |> String.concat "\r\n"
       
       Expect.equal subject expected "should have correct body"
-    }
 
     testCase "can format urlencoded data" <| fun _ ->
       // http://www.url-encode-decode.com/
@@ -203,27 +207,29 @@ let bodyFormatting =
       
       Expect.equal encoded "user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "Should encode Swedish properly"
 
-    testAsync "can format urlencoded form" {
-      let clientState = { HttpFsState.empty with random = Random testSeed }
-      // example from http://www.w3.org/TR/html401/interact/forms.html
-      let ct, content =
-        [   NameValue ("submit", "Join Now!")
-            NameValue ("user_name", "Åsa den Röde")
-            NameValue ("user_pass", "Bović")
+    testCase "can format urlencoded data" <| fun _ ->
+      // http://www.url-encode-decode.com/
+      // https://unspecified.wordpress.com/2008/07/08/browser-uri-encoding-the-best-we-can-do/
+      // http://stackoverflow.com/questions/912811/what-is-the-proper-way-to-url-encode-unicode-characters
+      // https://www.ietf.org/rfc/rfc1738.txt
+      // http://www.w3.org/TR/html401/interact/forms.html
+      // http://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+      let encoded =
+        [
+          ("user_name", "Åsa den Röde")
+          ("user_pass", "Bović")
         ]
-        |> fun form -> Impl.createHttpContent clientState (None, utf8, BodyForm form)
-
-      let! bodyToString = content.ReadAsStringAsync() |> Async.AwaitTask
-      Expect.equal bodyToString "submit=Join+Now%21&user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "body should be equal"
-      Expect.equal ct (ContentType.parse "application/x-www-form-urlencoded") "should have new ct"
-    }
+        |> Impl.uriEncode
+      
+      Expect.equal encoded "user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "Should encode Swedish properly"
   ]
 
 [<Tests>]
 let internals =
   testCase "http web request url" <| fun _ ->
+    use ms = new IO.MemoryStream()
     let hfsReq = Request.create Get (Uri "http://localhost/") |> Request.queryStringItem "a" "1"
-    let reqMessage = DotNetWrapper.toHttpRequestMessage HttpFsState.empty hfsReq
+    let reqMessage, _ = DotNetWrapper.toHttpRequestMessage HttpFsState.empty ms hfsReq
     Expect.equal (string reqMessage.RequestUri) "http://localhost/?a=1" "uri should be equal"
 
 [<Tests>]
