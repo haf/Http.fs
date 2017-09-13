@@ -3,6 +3,7 @@ namespace HttpFs
 open System
 open System.Diagnostics
 open System.IO
+open System.Net.Http
 open System.Text
 open System.Runtime.CompilerServices
 open Hopac
@@ -59,8 +60,8 @@ module Client =
     | Deflate = 2
 
   type ContentRange =
-    { start  : int64
-      finish : int64 }
+    { start  : int64 option
+      finish : int64 option }
 
   [<CustomComparison; CustomEquality>]
   type ContentType =
@@ -202,7 +203,7 @@ module Client =
       | WWWAuthenticate -> "WWW-Authenticate"
       | NonStandard str -> str
 
-  // some headers can't be set with HttpWebRequest, or are set automatically, so are not included.
+  // some headers can't be set with HttpClient, or are set automatically, so are not included.
   // others, such as transfer-encoding, just haven't been implemented.
   type RequestHeader =
     | Accept of string
@@ -253,8 +254,9 @@ module Client =
       | Origin x -> "Origin", x
       | Pragma x -> "Pragma", x
       | ProxyAuthorization x -> "Proxy-Authorization", x
-      | Range { start = s; finish = f } when f <= 0L -> "Range", "bytes=" + string s
-      | Range { start = s; finish = f } -> "Range", sprintf "bytes=%d-%d" s f
+      | Range { start = Some s; finish = None } -> "Range", "bytes=" + string s
+      | Range { start = Some s; finish = Some f } -> "Range", sprintf "bytes=%d-%d" s f
+      | Range { start = _; finish = _ } -> "Range", ""
       | Referer x -> "Referer", x
       | Upgrade x -> "Upgrade", x
       | UserAgent x -> "User-Agent", x
@@ -367,8 +369,6 @@ module Client =
     { url                       : Uri
       ``method``                : HttpMethod
       cookiesEnabled            : bool
-      autoFollowRedirects       : bool
-      autoDecompression         : DecompressionScheme
       headers                   : Map<string, RequestHeader>
       body                      : RequestBody
       bodyCharacterEncoding     : Encoding
@@ -376,15 +376,13 @@ module Client =
       cookies                   : Map<CookieName, Cookie>
       responseCharacterEncoding : Encoding option
       proxy                     : Proxy option
-      keepAlive                 : bool
-      timeout                   : int<ms>
-      networkCredentials        : Credentials option }
+      httpClient                : HttpClient }
 
   type CharacterSet = string
 
   type Response =
     { statusCode       : int
-      contentLength    : int64
+      contentLength    : int64 option
       characterSet     : CharacterSet
       cookies          : Map<string, string>
       headers          : Map<ResponseHeader, string>
@@ -429,6 +427,8 @@ module Client =
   exception DuplicateHeader of RequestHeader
 
   module internal Impl =
+    open System.Collections.Generic
+
     [<Literal>]
     let CRLF = "\r\n"
 
@@ -473,7 +473,7 @@ module Client =
       |> Authorization
 
     let generateBoundary =
-      let boundaryChars = "abcdefghijklmnopqrstuvwxyz_-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      let boundaryChars = "abcdefghijklmnopqrstuvwxyz+-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
       let boundaryLen = 30
       fun clientState ->
           let rnd = clientState.random
@@ -561,7 +561,6 @@ module Client =
         match values with
         | [] ->
           yield writeLineAscii (sprintf "--%s--" boundary)
-          if not isMultiFile then yield writeLineAscii ""
         | h :: rest ->
           yield writeLineAscii (sprintf "--%s" boundary)
           match h with
@@ -604,8 +603,8 @@ module Client =
       ]
 
     let formatBody (clientState : HttpFsState) =
-                 // we may actually change the content type if it's wrong
-                 //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
+      // we may actually change the content type if it's wrong
+      //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
       function
       | userCt, _, BodyRaw raw ->
         userCt, [ writeBytes raw ]
@@ -631,87 +630,83 @@ module Client =
   open Impl
 
   module internal DotNetWrapper =
-    /// Sets headers on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    let setHeaders (headers : RequestHeader list) (webRequest : HttpWebRequest) =
-      let add (k : string) v = webRequest.Headers.Add (k, v)
+    open System.Collections.Generic
+    let defaultHttpClient =
+      // the handler cannot be changed after the first request (you get an exception).
+      // kept internal
+
+      // UseCookies = false stops the handler from using it's own CookieContainer.
+      // this stops it from stripping "Cookie" headers we set out of requests and will stop
+      // cookies being implicitly shared across requests
+      let handler = new HttpClientHandler(UseCookies = false)
+      let client = new HttpClient(handler)
+      client.DefaultRequestHeaders.Clear()
+      client
+
+    /// Sets headers on HttpRequestMessage.
+    /// Mutates HttpRequestMessage.
+    let setHeaders (headers : RequestHeader list) (request : HttpRequestMessage) =
+      let add (k : string) (v: string) = request.Headers.Add (k, v)
+      // in .NET full, HttpRequestMessage cannot have the Content property with HttpMethods that do not support content, or it fails with an exception,
+      // so request.Content can be null. this is acutally NOT the case in .NET Core, where it does not throw an exception when content is set with a GET method
+      let addContent (add: HttpContent -> unit) = if not <| isNull request.Content then add request.Content
       List.iter (function
-                | Accept value                     -> webRequest.Accept <- value
+                | Accept value                     -> add "Accept" value
                 | AcceptCharset value              -> add "Accept-Charset" value
                 | AcceptDatetime value             -> add "Accept-Datetime" value
                 | AcceptLanguage value             -> add "Accept-Language" value
                 | Authorization value              -> add "Authorization" value
-                | RequestHeader.Connection value   -> webRequest.Connection <- value
-                | RequestHeader.ContentMD5 value   -> add "Content-MD5" value
-                | RequestHeader.ContentType value  -> webRequest.ContentType <- value.ToString()
-                | RequestHeader.Date value         -> webRequest.Date <- value
-                | Expect value                     -> webRequest.Expect <- value.ToString()
+                | RequestHeader.Connection value   -> add "Connection" value
+                | RequestHeader.ContentMD5 value   -> addContent (fun c ->
+                                                        // this is to work around a mono bug.
+                                                        // when setting "content-md5" manually, mono writes "Sytem.Byte[]" as the value.
+                                                        // setting the ContentMD5 property works the same across frameworks, however it will
+                                                        // convert the provided value to a base64 string automagically
+                                                        let bytes = Convert.FromBase64String(value)
+                                                        c.Headers.ContentMD5 <- bytes)
+                | RequestHeader.ContentType value  -> addContent (fun c ->
+                                                        c.Headers.Remove("Content-Type") |> ignore
+                                                        c.Headers.TryAddWithoutValidation("Content-Type", value.ToString()) |> ignore)
+                | RequestHeader.Date value         -> add "Date" <| value.ToUniversalTime().ToString("r")
+                | Expect value                     -> add "Expect" <| value.ToString()
                 | From value                       -> add "From" value
                 | IfMatch value                    -> add "If-Match" value
-                | IfModifiedSince value            -> webRequest.IfModifiedSince <- value
+                | IfModifiedSince value            -> add "If-Modified-Since" <| value.ToUniversalTime().ToString("r")
                 | IfNoneMatch value                -> add "If-None-Match" value
                 | IfRange value                    -> add "If-Range" value
-                | MaxForwards value                -> add "Max-Forwards" (value.ToString())
+                | MaxForwards value                -> add "Max-Forwards" <| value.ToString()
                 | Origin value                     -> add "Origin" value
                 | RequestHeader.Pragma value       -> add "Pragma" value
                 | ProxyAuthorization value         -> add "Proxy-Authorization" value
-                | Range value                      -> webRequest.AddRange(value.start, value.finish)
-                | Referer value                    -> webRequest.Referer <- value
+                | Range value                      -> let range = new Headers.RangeHeaderValue(Option.toNullable value.start, Option.toNullable value.finish)
+                                                      request.Headers.Range <- range
+                | Referer value                    -> add "Referer" value
                 | Upgrade value                    -> add "Upgrade" value
-                | UserAgent value                  -> webRequest.UserAgent <- value
+                | UserAgent value                  -> add "User-Agent" value
                 | RequestHeader.Via value          -> add "Via" value
                 | RequestHeader.Warning value      -> add "Warning" value
                 | Custom (customName, customValue) -> add customName customValue)
                 headers
 
-    /// Sets cookies on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    let setCookies (cookies : Cookie list) (url : Uri) (webRequest : HttpWebRequest) =
+    // Sets cookies on HttpRequestMessage.
+    // Mutates HttpRequestMessage.
+    let setCookies (cookies : Cookie list) (url : Uri) (requestMessage: HttpRequestMessage) =
       let mapDomain c = { c with domain = Some url.Host }
-      cookies
-      |> List.map (mapDomain >> Cookie.toSystem)
-      |> List.iter (webRequest.CookieContainer.Add)
+      let cookieStr =
+        cookies
+        |> List.map ((mapDomain >> Cookie.toSystem) >> (fun c -> sprintf "%s=%s" c.Name c.Value))
+        |> String.concat "; "
 
-    /// Sets proxy on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    let setProxy proxy (webRequest : HttpWebRequest) =
-      proxy |> Option.iter (fun proxy ->
-        let webProxy = WebProxy(proxy.Address, proxy.Port)
-
-        match proxy.Credentials with
-        | Credentials.Custom { username = name; password = pwd} ->
-            webProxy.Credentials <- NetworkCredential(name, pwd)
-        | Credentials.Default -> webProxy.UseDefaultCredentials <- true
-        | Credentials.None -> webProxy.Credentials <- null
-
-        webRequest.Proxy <- webProxy)
-
-    /// Sets NetworkCredentials on HttpWebRequest.
-    /// Mutates HttpWebRequest.
-    let setNetworkCredentials credentials (webRequest : HttpWebRequest) =
-      credentials |> Option.iter (fun credentials ->
-
-        match credentials with
-        | Credentials.Custom { username = name; password = pwd} ->
-            let last n xs = Array.toSeq xs |> Seq.skip (xs.Length - n) |> Seq.toArray
-            match (last 2 (name.Split [|'\\'|])) with
-            | [| domain ; user |] -> webRequest.Credentials <- NetworkCredential(user, pwd, domain)
-            | _ -> raise (System.Exception("User name is not in form domain\\user"))
-
-        | Credentials.Default -> webRequest.UseDefaultCredentials <- true
-        | Credentials.None -> webRequest.Credentials <- null)
+      if (cookieStr.Length > 0) then
+        requestMessage.Headers.Add("Cookie", cookieStr)
 
     /// Sets body on HttpWebRequest.
     /// Mutates HttpWebRequest.
-    let tryWriteBody (writers : seq<Stream -> Job<unit>>) (webRequest : HttpWebRequest) =
-      if webRequest.Method = "POST" || webRequest.Method = "PUT" || webRequest.Method = "PATCH" then
-        job {
-          // Getting the request stream seems to be actually connecting
-          use reqStream = webRequest.GetRequestStream()
-          for writer in writers do
-            do! writer reqStream
-        }
-      else Job.result ()
+    let tryWriteBody (method: HttpMethod) (writers : seq<Stream -> Job<unit>>) (contentStream : Stream) =
+      job {
+        for writer in writers do
+          do! writer contentStream
+      }
 
     let matchCtHeader k = function
       | RequestHeader.ContentType ct -> Some ct
@@ -724,8 +719,8 @@ module Client =
     let setHeader (request : Request) (header : RequestHeader) =
       { request with headers = request.headers |> Map.add header.Key header }
 
-    /// The nasty business of turning a Request into an HttpWebRequest
-    let toHttpWebRequest state (request : Request) =
+    /// The nasty business of turning a Request into an HttpRequestMessage
+    let toHttpRequestMessage state (contentStream: Stream) (request : Request) =
       ensureNo100Continue ()
 
       let contentType = request.headers |> Map.tryPick matchCtHeader
@@ -745,42 +740,35 @@ module Client =
         | _ -> ()
         b.Uri
 
-      let webRequest =
-        HttpWebRequest.Create(url) :?> HttpWebRequest
+      let methodStr = getMethodAsString request
+      let method = new Net.Http.HttpMethod(methodStr)
+      let message = new HttpRequestMessage(method, url, Version = HttpVersion.Version11)
 
-      let newContentType, body =
+      let newContentType, writers =
         formatBody state (contentType, contentEncoding, request.body)
 
       let request =
-        // if we have a new content type, from using BodyForm, then this
+        // if we have a new content type, from using createContent, then this
         // updates the request value with that header
         newContentType
         |> Option.map RequestHeader.ContentType
         |> Option.fold setHeader request
 
-      webRequest.Method <- getMethodAsString request
-      webRequest.ProtocolVersion <- HttpVersion.Version11
+      job {
+        if request.method = Post || request.method = Put || request.method = Patch then
+          do! contentStream |> tryWriteBody request.method writers
+          contentStream.Position <- 0L
+          message.Content <- new StreamContent(contentStream)
 
-      if request.cookiesEnabled then
-        webRequest.CookieContainer <- CookieContainer()
+        if (request.cookiesEnabled) then
+          message |> setCookies (request.cookies |> Map.toList |> List.map snd) request.url
 
-      webRequest.AllowAutoRedirect <- request.autoFollowRedirects
-
-      // this relies on the DecompressionScheme enum values being the same as those in System.Net.DecompressionMethods
-      webRequest.AutomaticDecompression <- enum<DecompressionMethods> <| int request.autoDecompression
-
-      webRequest |> setHeaders (request.headers |> Map.toList |> List.map snd)
-      webRequest |> setCookies (request.cookies |> Map.toList |> List.map snd) request.url
-      webRequest |> setProxy request.proxy
-      webRequest |> setNetworkCredentials request.networkCredentials
-
-      webRequest.KeepAlive <- request.keepAlive
-      webRequest.Timeout <- (int)request.timeout
-
-      webRequest, webRequest |> tryWriteBody body
+        message |> setHeaders (request.headers |> Map.toList |> List.map snd)
+        return message
+      }
 
     /// For debugging purposes only
-    /// Converts the Request body to a format suitable for HttpWebRequest and returns this raw body as a string.
+    /// Converts the Request body to a format suitable for HttpRequestMessage and returns this raw body as a string.
     let getRawRequestBodyString (state : HttpFsState) (request : Request) =
       let contentType = request.headers |> Map.tryPick matchCtHeader
       let contentEncoding =
@@ -804,25 +792,28 @@ module Client =
       use reader = new IO.StreamReader(dataStream)
       reader.ReadToEnd()
 
-    /// Uses the HttpWebRequest to get the response.
-    /// HttpWebRequest throws an exception on anything but a 200-level response,
-    /// so we handle such exceptions and return the response.
-    let getResponseNoException (request : HttpWebRequest) : Alt<Choice<HttpWebResponse,exn>> =
-      let inline succeed (wr : WebResponse) : Choice<HttpWebResponse,exn> = downcast wr |> Choice1Of2
-      let inline failure (ex : exn) : Choice<HttpWebResponse,exn> = Choice2Of2 ex
-      let tryEndGetResponse ar =
-        try
-          request.EndGetResponse ar
-          |> succeed
-        with
-        | :? WebException as wex when wex.Response <> null -> succeed wex.Response
-        | ex -> failure ex
-      Alt.fromBeginEnd request.BeginGetResponse tryEndGetResponse (fun _ -> request.Abort())
+    /// Uses the HttpClient to send the HttpRequestMessage and get the response.
 
-    let getCookiesAsMap (response:HttpWebResponse) =
-      let cookieArray = Array.zeroCreate response.Cookies.Count
-      response.Cookies.CopyTo(cookieArray, 0)
-      cookieArray |> Array.fold (fun map cookie -> map |> Map.add cookie.Name cookie.Value) Map.empty
+    let getResponseNoException (httpClient: HttpClient) (request : HttpRequestMessage) : Alt<Choice<HttpResponseMessage,exn>> =
+      let get = Alt.fromTask (fun cts -> httpClient.SendAsync(request, cts))
+      Alt.tryIn get (Choice1Of2 >> Job.result) (Choice2Of2 >> Job.result)
+      
+    let getCookiesAsMap (response: HttpResponseMessage) =
+      let uri = response.RequestMessage.RequestUri
+      let container = new System.Net.CookieContainer()
+
+      let tryCookies = ref (new List<string>() :> IEnumerable<string>)
+      if response.Headers.TryGetValues("Set-Cookie", tryCookies) then
+        tryCookies.Value
+        |> Seq.iter(fun c -> container.SetCookies(response.RequestMessage.RequestUri, c))
+
+        let cookies = container.GetCookies(uri)
+        let cookieArray = Array.zeroCreate cookies.Count
+        cookies.CopyTo(cookieArray, 0)
+
+        cookieArray |> Array.fold (fun map cookie -> map |> Map.add cookie.Name cookie.Value) Map.empty
+      else
+        Map.empty
 
     /// Get the header as a ResponseHeader option. Is an option because there are some headers we don't want to set.
     let getResponseHeader = function
@@ -835,7 +826,7 @@ module Client =
       | "Connection"                  -> Some(ResponseHeader.Connection)
       | "Content-Encoding"            -> Some(ContentEncoding)
       | "Content-Language"            -> Some(ContentLanguage)
-      | "Content-Length"              -> None
+      | "Content-Length"              -> Some(ContentLength)
       | "Content-Location"            -> Some(ContentLocation)
       | "Content-MD5"                 -> Some(ResponseHeader.ContentMD5Response)
       | "Content-Disposition"         -> Some(ContentDisposition)
@@ -864,14 +855,11 @@ module Client =
       | name                          -> Some(NonStandard name)
 
     /// Gets the headers from the passed response as a map of ResponseHeader and string.
-    let getHeadersAsMap (response:HttpWebResponse) =
-      response.Headers.Keys
-      |> Seq.cast<string>
-      |> List.ofSeq
-      |> List.map (fun wcKey -> wcKey, getResponseHeader wcKey)
-      |> List.map (fun (wcKey, httpfsKey) -> httpfsKey, response.Headers.Item(wcKey))
-      |> List.filter (fst >> Option.isSome)
-      |> List.map (fun (k, v) -> Option.get k, v)
+    let getHeadersAsMap (response: HttpResponseMessage) =
+      (response.Content.Headers |> List.ofSeq) @ (response.Headers |> List.ofSeq)
+      |> List.choose (fun header ->
+        getResponseHeader header.Key
+        |> Option.map (fun h -> (h, header.Value |> String.concat ", ")))
       |> Map.ofList
 
     let mapEncoding = String.toLowerInvariant >> function
@@ -882,34 +870,42 @@ module Client =
   open DotNetWrapper
 
   type Response with
-    static member internal ofHttpResponse (response : HttpWebResponse) =
-      { statusCode       = int (response.StatusCode)
-        characterSet     = response.CharacterSet
-        contentLength    = response.ContentLength
-        cookies          = getCookiesAsMap response
-        headers          = getHeadersAsMap response
-        responseUri      = response.ResponseUri
-        expectedEncoding = None
-        body             = response.GetResponseStream()
-        luggage          = Some (upcast response) }
+    static member internal ofHttpResponseMessage (response : HttpResponseMessage) =
+      job {
+        let! bodyStream = Job.fromTask response.Content.ReadAsStreamAsync
+        return
+          { statusCode       = int (response.StatusCode)
+            characterSet     = response.Content.Headers.ContentType.CharSet
+            contentLength    = Option.ofNullable response.Content.Headers.ContentLength
+            cookies          = getCookiesAsMap response
+            headers          = getHeadersAsMap response
+            responseUri      = response.RequestMessage.RequestUri
+            expectedEncoding = None
+            body             = bodyStream
+            luggage          = Some (upcast response) }
+      }
 
   let tryGetResponse request =
-    let prepare req = job {
-      let webRequest, exec = toHttpWebRequest HttpFsState.empty req
-      do! exec
-      return getResponseNoException webRequest
+    let prepare = job {
+      use ms = new MemoryStream()
+      let! requestMessage = request |> toHttpRequestMessage HttpFsState.empty ms
+      let! response = requestMessage |> getResponseNoException request.httpClient
+
+      match response with
+      | Choice1Of2 x ->
+        let! resp = Response.ofHttpResponseMessage x
+        return Alt.once <| Choice1Of2 { resp with expectedEncoding = request.responseCharacterEncoding }
+      | Choice2Of2 x -> return Alt.once <| Choice2Of2 x
     }
-    let wrap resp =
-      { Response.ofHttpResponse resp with
-          expectedEncoding = request.responseCharacterEncoding }
-    Alt.prepareJob (fun () -> prepare request)
-    |> Alt.afterFun (Choice.map wrap)
+    
+    Alt.prepare prepare
+    // |> Alt.afterJob wrap
 
   /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
   let getResponse request =
     let getResponseOrFail = function
       | Choice1Of2 resp -> resp
-      | Choice2Of2 exn -> raise exn
+      | Choice2Of2 exn -> raise <| new Exception("Failed to get response", exn)
     tryGetResponse request
     |> Alt.afterFun getResponseOrFail
 
@@ -953,8 +949,6 @@ module Client =
       { url                       = url
         ``method``                = httpMethod
         cookiesEnabled            = true
-        autoFollowRedirects       = true
-        autoDecompression         = DecompressionScheme.None
         headers                   = Map.empty
         body                      = BodyRaw [||]
         bodyCharacterEncoding     = DefaultBodyEncoding
@@ -962,11 +956,10 @@ module Client =
         cookies                   = Map.empty
         responseCharacterEncoding = None
         proxy                     = None
-        keepAlive                 = true
-        /// The default value is 100,000 milliseconds (100 seconds).
-        /// <see cref="https://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.timeout%28v=vs.110%29.aspx"/>.
-        timeout                   = 100000<ms>
-        networkCredentials        = None }
+        httpClient                = defaultHttpClient }
+
+    let createWithClient client method url =
+      { create method url with httpClient = client }
 
     let createUrl httpMethod url =
       create httpMethod (Uri url)
@@ -989,10 +982,6 @@ module Client =
     let cookiesDisabled request =
       { request with cookiesEnabled = false }
 
-    /// Disables automatic following of redirects, which is enabled by default
-    let autoFollowRedirectsDisabled request =
-      { request with autoFollowRedirects = false }
-
     /// Adds a header, defined as a RequestHeader
     /// The current implementation doesn't allow you to add a single header multiple
     /// times. File an issue if this is a limitation for you.
@@ -1002,17 +991,6 @@ module Client =
     /// Adds an HTTP Basic Authentication header, which includes the username and password encoded as a base-64 string
     let basicAuthentication username password =
       setHeader (basicAuthorz username password)
-
-    /// Adds a credential cache to support NTLM authentication
-    let withNTLMAuthentication username password (request : Request) =
-      {request with networkCredentials = Some (Credentials.Custom { username = username; password = password}) }
-
-    /// Sets the accept-encoding request header to accept the decompression methods selected,
-    /// and automatically decompresses the responses.
-    ///
-    /// Multiple schemes can be OR'd together, e.g. (DecompressionScheme.Deflate ||| DecompressionScheme.GZip)
-    let autoDecompression decompressionSchemes request =
-      { request with autoDecompression = decompressionSchemes}
 
     /// Lets you set your own body - use the RequestBody type to build it up.
     let body body (request : Request) =
@@ -1060,19 +1038,6 @@ module Client =
     /// If this is no set, the proxy settings from IE will be used, if available.
     let proxy proxy request =
       {request with proxy = Some proxy }
-
-    /// Sets the keep-alive header.  Defaults to true.
-    ///
-    /// If true, Connection header also set to 'Keep-Alive'
-    /// If false, Connection header also set to 'Close'
-    ///
-    /// NOTE: If true, headers only sent on first request.
-    let keepAlive value request =
-      { request with keepAlive = value }
-
-    /// TODO: use as filter instead (composition)
-    let timeout timeout request =
-      { request with timeout = timeout }
 
     /// Note: this sends the request, reads the response, disposes it and its stream
     let responseAsString req = job {

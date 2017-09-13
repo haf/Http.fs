@@ -1,6 +1,7 @@
 ﻿module HttpFs.Tests.RequestBody
 
 open System
+open System.Net.Http
 open System.Text
 open Expecto
 open Hopac
@@ -92,7 +93,7 @@ let bodyFormatting =
           let bytes = bodyToBytes body
           newCt, bytes |> utf8.GetString
 
-      let expectedBoundary = "nLWsTCFurKCiU_PjC/cCmmU-tnJHHa"
+      let expectedBoundary = "nLWsTCFurKCiU+PjC/cCmmU-tnJHHa"
 
       let expected = [ sprintf "--%s" expectedBoundary
                        "Content-Disposition: form-data; name=\"submit-name\""
@@ -104,7 +105,6 @@ let bodyFormatting =
                        ""
                        "Hello World"
                        sprintf "--%s--" expectedBoundary
-                       ""
                        "" ]
                      |> String.concat "\r\n"
 
@@ -144,7 +144,7 @@ let bodyFormatting =
           let bytes = bodyToBytes body
           newCt, bytes |> utf8.GetString
 
-      let expectedBoundary1 = "nLWsTCFurKCiU_PjC/cCmmU-tnJHHa"
+      let expectedBoundary1 = "nLWsTCFurKCiU+PjC/cCmmU-tnJHHa"
       let expectedBoundary2 = "BgOE:fCUQGnYfKwGMnxoyfwVMbRzZF"
 
       let expected =
@@ -184,7 +184,6 @@ let bodyFormatting =
             "SGVsbG8gV29ybGQ="
             sprintf "--%s--" expectedBoundary2
             sprintf "--%s--" expectedBoundary1
-            ""
             "" ]
           |> String.concat "\r\n"
       
@@ -206,26 +205,30 @@ let bodyFormatting =
       
       Expect.equal encoded "user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "Should encode Swedish properly"
 
-    testCase "can format urlencoded form" <| fun _ ->
-        let clientState = { HttpFsState.empty with random = Random testSeed }
-        // example from http://www.w3.org/TR/html401/interact/forms.html
-        [   NameValue ("submit", "Join Now!")
-            NameValue ("user_name", "Åsa den Röde")
-            NameValue ("user_pass", "Bović")
+    testCase "can format urlencoded data" <| fun _ ->
+      // http://www.url-encode-decode.com/
+      // https://unspecified.wordpress.com/2008/07/08/browser-uri-encoding-the-best-we-can-do/
+      // http://stackoverflow.com/questions/912811/what-is-the-proper-way-to-url-encode-unicode-characters
+      // https://www.ietf.org/rfc/rfc1738.txt
+      // http://www.w3.org/TR/html401/interact/forms.html
+      // http://stackoverflow.com/questions/4007969/application-x-www-form-urlencoded-or-multipart-form-data
+      let encoded =
+        [
+          ("user_name", "Åsa den Röde")
+          ("user_pass", "Bović")
         ]
-        |> fun form -> Impl.formatBody clientState (None, utf8, BodyForm form)
-        |> fun (newCt, body) ->
-          let bodyToString = body |> bodyToBytes |> utf8.GetString
-          Expect.equal bodyToString "submit=Join+Now!&user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "body should be equal"
-          Expect.equal newCt (ContentType.parse "application/x-www-form-urlencoded") "should have new ct"
+        |> Impl.uriEncode
+      
+      Expect.equal encoded "user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "Should encode Swedish properly"
   ]
 
 [<Tests>]
 let internals =
   testCase "http web request url" <| fun _ ->
+    use ms = new IO.MemoryStream()
     let hfsReq = Request.create Get (Uri "http://localhost/") |> Request.queryStringItem "a" "1"
-    let netReq, _ = DotNetWrapper.toHttpWebRequest HttpFsState.empty hfsReq
-    Expect.equal (string netReq.RequestUri) "http://localhost/?a=1" "uri should be equal"
+    let reqMessage = DotNetWrapper.toHttpRequestMessage HttpFsState.empty ms hfsReq |> Hopac.run
+    Expect.equal (string reqMessage.RequestUri) "http://localhost/?a=1" "uri should be equal"
 
 [<Tests>]
 let textEncodingTest =

@@ -28,5 +28,8 @@
     <Compile Include="AssemblyVersionInfo.fs" />
     <Compile Include="HttpFs.fs" />
   </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework) == 'net45'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

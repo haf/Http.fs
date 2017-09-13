@@ -14,7 +14,9 @@
     <Compile Include="RequestBody.fs" />
     <Compile Include="SendingStreams.fs" />
     <Compile Include="Program.fs" />
-    <None Include="app.config" />
+    <None Include="app.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="paket.references" />
     <None Include="pix.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

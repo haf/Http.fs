@@ -66,8 +66,6 @@ let complexRequest() = job {
   let request =
     Request.create Get (Uri "http://www.google.com/search")
     |> Request.queryStringItem "q" "gibbons"
-    |> Request.autoDecompression DecompressionScheme.GZip
-    |> Request.autoFollowRedirectsDisabled
     |> Request.cookie (Cookie.create("ignoreMe", "hi mum"))
     |> Request.setHeader (Accept "text/html")
     |> Request.setHeader (UserAgent "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36")

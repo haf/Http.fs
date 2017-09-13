@@ -9,6 +9,7 @@ dependencies
   framework: net45
     FSharp.Core >= LOCKEDVERSION
     Hopac >= LOCKEDVERSION
+    System.Net.Http >= LOCKEDVERSION
   framework: netstandard2.0
     FSharp.Core >= LOCKEDVERSION
     Hopac >= LOCKEDVERSION
