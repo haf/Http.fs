@@ -383,7 +383,7 @@ module Client =
   type Response =
     { statusCode       : int
       contentLength    : int64 option
-      characterSet     : CharacterSet
+      characterSet     : CharacterSet option
       cookies          : Map<string, string>
       headers          : Map<ResponseHeader, string>
       /// A Uri that contains the URI of the Internet resource that responded to the request.
@@ -867,15 +867,22 @@ module Client =
       | "utf16" -> "utf-16"
       | other -> other
 
+    let getCharacterSet (response: HttpResponseMessage) =
+      let ct = response.Content.Headers.ContentType
+      match ct with
+      | null -> None
+      | _ when String.IsNullOrEmpty ct.CharSet -> None
+      | _ -> Some ct.CharSet
+
   open DotNetWrapper
 
   type Response with
-    static member internal ofHttpResponseMessage (response : HttpResponseMessage) =
+    static member internal ofHttpResponseMessage (response: HttpResponseMessage) =
       job {
         let! bodyStream = Job.fromTask response.Content.ReadAsStreamAsync
         return
           { statusCode       = int (response.StatusCode)
-            characterSet     = response.Content.Headers.ContentType.CharSet
+            characterSet     = getCharacterSet response
             contentLength    = Option.ofNullable response.Content.Headers.ContentLength
             cookies          = getCookiesAsMap response
             headers          = getHeadersAsMap response
@@ -888,7 +895,7 @@ module Client =
   let tryGetResponse request =
     let prepare = job {
       use ms = new MemoryStream()
-      let! requestMessage = request |> toHttpRequestMessage HttpFsState.empty ms
+      use! requestMessage = request |> toHttpRequestMessage HttpFsState.empty ms
       let! response = requestMessage |> getResponseNoException request.httpClient
 
       match response with
@@ -899,7 +906,6 @@ module Client =
     }
     
     Alt.prepare prepare
-    // |> Alt.afterJob wrap
 
   /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
   let getResponse request =
@@ -917,9 +923,9 @@ module Client =
           match response.expectedEncoding with
           | None ->
             match response.characterSet with
-            | null | "" ->
+            | None ->
               ISOLatin1 // TODO: change to UTF-8
-            | responseCharset ->
+            | Some responseCharset ->
               try Encoding.GetEncoding(mapEncoding responseCharset)
               with _ -> Encoding.UTF8
 

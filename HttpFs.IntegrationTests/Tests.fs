@@ -10,10 +10,14 @@ open Hopac
 open HttpFs.Client
 open HttpServer
 
-let runIgnore =
-  getResponse
-  >> Hopac.run
-  >> (fun (r : HttpFs.Client.Response) -> (r :> IDisposable).Dispose())
+let runIgnore req = async {
+  use! asyncRec =
+    req
+    |> getResponse
+    |> Alt.toAsync
+
+  ()
+}
 
 let fstChoiceOf2 =
   function
@@ -42,26 +46,28 @@ let recorded =
     //   Expect.isSome req "request should not be none"
     //   Expect.equal (req.Value |> getHeader "connection") "" "header should be empty"
 
-    testCase "Connection set to 'Close' on every request" <| fun _ ->
-      Request.create Get (uriFor "/RecordRequest") |> Request.setHeader (Connection "Close") |> runIgnore
+    testCaseAsync "Connection set to 'Close' on every request" <| async {
+      do! Request.create Get (uriFor "/RecordRequest") |> Request.setHeader (Connection "Close") |> runIgnore
       let req = HttpServer.recordedRequest
       Expect.isSome req "request should not be none"
       Expect.equal ((req.Value |> getHeader "connection").ToLowerInvariant()) "close" "connection should be set to close"
 
       HttpServer.recordedRequest <- None
-      Request.create Get (uriFor "/RecordRequest") |> Request.setHeader (Connection "Close") |> runIgnore
+      do! Request.create Get (uriFor "/RecordRequest") |> Request.setHeader (Connection "Close") |> runIgnore
       let req = HttpServer.recordedRequest
       Expect.isSome req "request should not be none"
       Expect.equal ((req.Value |> getHeader "connection").ToLowerInvariant()) "close" "connection should be set to close"
+    }
 
-    testCase "createRequest should set everything correctly in the HTTP request" <| fun _ ->
-      Request.create Post (uriFor "/RecordRequest")
-      |> Request.queryStringItem "search" "jeebus"
-      |> Request.queryStringItem "qs2" "hi mum"
-      |> Request.setHeader (Accept "application/xml")
-      |> Request.cookie (Cookie.create("SESSIONID", "1234"))
-      |> Request.bodyString "some XML or whatever"
-      |> runIgnore
+    testCaseAsync "createRequest should set everything correctly in the HTTP request" <| async {
+      do!
+        Request.create Post (uriFor "/RecordRequest")
+        |> Request.queryStringItem "search" "jeebus"
+        |> Request.queryStringItem "qs2" "hi mum"
+        |> Request.setHeader (Accept "application/xml")
+        |> Request.cookie (Cookie.create("SESSIONID", "1234"))
+        |> Request.bodyString "some XML or whatever"
+        |> runIgnore
 
       let req = HttpServer.recordedRequest
       Expect.isSome req "request should be some"
@@ -72,37 +78,39 @@ let recorded =
       
       let body = Encoding.UTF8.GetString(req.Value.rawForm)
       Expect.equal body "some XML or whatever" "body should be equal"
+    }
 
-    testCase "all of the manually-set request headers get sent to the server" <| fun _ ->
-      Request.create Post (uriFor "/RecordRequest")
-      |> Request.setHeader (Accept "application/xml,text/html;q=0.3")
-      |> Request.setHeader (AcceptCharset "utf-8, utf-16;q=0.5")
-      |> Request.setHeader (AcceptDatetime "Thu, 31 May 2007 20:35:00 GMT")
-      |> Request.setHeader (AcceptLanguage "en-GB, en-US;q=0.1")
-      |> Request.setHeader (Authorization  "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==")
-      // HttpClient discards any connection header value that is not Keep-Alive/Close
-      // and overrides it with "Keep-Alive"
-      |> Request.setHeader (Connection "close")
-      |> Request.setHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==")
-      |> Request.setHeader (ContentType (ContentType.create("application", "json")))
-      |> Request.setHeader (Date (DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
-      |> Request.setHeader (From "user@example.com" )
-      |> Request.setHeader (IfMatch "\"737060cd8c284d8af7ad3082f209582d\"")
-      |> Request.setHeader (IfModifiedSince (DateTime(2000, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
-      |> Request.setHeader (IfNoneMatch "\"737060cd8c284d8af7ad3082f209582d\"")
-      |> Request.setHeader (IfRange "\"737060cd8c284d8af7ad3082f209582d\"")
-      |> Request.setHeader (MaxForwards 5)
-      |> Request.setHeader (Origin "http://www.mybot.com")
-      |> Request.setHeader (RequestHeader.Pragma "no-cache" )
-      |> Request.setHeader (ProxyAuthorization "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
-      |> Request.setHeader (Range {start= Some 0L; finish= Some 500L} )
-      |> Request.setHeader (Referer "http://en.wikipedia.org/" )
-      |> Request.setHeader (Upgrade "HTTP/2.0, SHTTP/1.3" )
-      |> Request.setHeader (UserAgent "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0")
-      |> Request.setHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)")
-      |> Request.setHeader (Warning "199 - \"Miscellaneous warning\"")
-      |> Request.setHeader (Custom ("X-Greeting", "Happy Birthday"))
-      |> runIgnore
+    testCaseAsync "all of the manually-set request headers get sent to the server" <| async {
+      do!
+        Request.create Post (uriFor "/RecordRequest")
+        |> Request.setHeader (Accept "application/xml,text/html;q=0.3")
+        |> Request.setHeader (AcceptCharset "utf-8, utf-16;q=0.5")
+        |> Request.setHeader (AcceptDatetime "Thu, 31 May 2007 20:35:00 GMT")
+        |> Request.setHeader (AcceptLanguage "en-GB, en-US;q=0.1")
+        |> Request.setHeader (Authorization  "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==")
+        // HttpClient discards any connection header value that is not Keep-Alive/Close
+        // and overrides it with "Keep-Alive"
+        |> Request.setHeader (Connection "close")
+        |> Request.setHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==")
+        |> Request.setHeader (ContentType (ContentType.create("application", "json")))
+        |> Request.setHeader (Date (DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
+        |> Request.setHeader (From "user@example.com" )
+        |> Request.setHeader (IfMatch "\"737060cd8c284d8af7ad3082f209582d\"")
+        |> Request.setHeader (IfModifiedSince (DateTime(2000, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
+        |> Request.setHeader (IfNoneMatch "\"737060cd8c284d8af7ad3082f209582d\"")
+        |> Request.setHeader (IfRange "\"737060cd8c284d8af7ad3082f209582d\"")
+        |> Request.setHeader (MaxForwards 5)
+        |> Request.setHeader (Origin "http://www.mybot.com")
+        |> Request.setHeader (RequestHeader.Pragma "no-cache" )
+        |> Request.setHeader (ProxyAuthorization "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" )
+        |> Request.setHeader (Range {start= Some 0L; finish= Some 500L} )
+        |> Request.setHeader (Referer "http://en.wikipedia.org/" )
+        |> Request.setHeader (Upgrade "HTTP/2.0, SHTTP/1.3" )
+        |> Request.setHeader (UserAgent "(X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0")
+        |> Request.setHeader (Via "1.0 fred, 1.1 example.com (Apache/1.1)")
+        |> Request.setHeader (Warning "199 - \"Miscellaneous warning\"")
+        |> Request.setHeader (Custom ("X-Greeting", "Happy Birthday"))
+        |> runIgnore
 
       let req = HttpServer.recordedRequest
       Expect.isSome req "request should be some"
@@ -136,15 +144,18 @@ let recorded =
       Expect.stringContains (req.Value |> getHeader "via") "1.1 example.com (Apache/1.1)" "via should be set"
       Expect.equal (req.Value |> getHeader "warning") "199 - \"Miscellaneous warning\"" "warning should be equal"
       Expect.equal (req.Value |> getHeader "x-greeting") "Happy Birthday" "x-greeting should be equal"
+    }
 
-    testCase "Content-Length header is set automatically for Posts with a body" <| fun _ ->
-      Request.create Post (uriFor "/RecordRequest")
-      |> Request.bodyString "Hi Mum"
-      |> runIgnore
+    testCaseAsync "Content-Length header is set automatically for Posts with a body" <| async {
+      do!
+        Request.create Post (uriFor "/RecordRequest")
+        |> Request.bodyString "Hi Mum"
+        |> runIgnore
 
       let req = HttpServer.recordedRequest
       Expect.isSome req "request should be some"
       Expect.equal (req.Value |> getHeader "content-length") "6" "content-length should be equal"
+    }
 
     // automatic decompression needs to be set at the HttpMessageHandler level
     // testCase "accept-encoding header is set automatically when decompression scheme is set" <| fun _ ->
@@ -157,58 +168,65 @@ let recorded =
     //   Expect.stringContains (req.Value |> getHeader "accept-encoding") "gzip" "accept-encoding should be set"
     //   Expect.stringContains (req.Value |> getHeader "accept-encoding") "deflate" "accept-encoding should be set"
 
-    testCase "if body character encoding is specified, encodes the request body with it" <| fun _ ->
-      Request.create Post (uriFor "/RecordRequest")
-      |> Request.bodyStringEncoded "¥§±Æ" Encoding.UTF8
-      |> runIgnore
+    testCaseAsync "if body character encoding is specified, encodes the request body with it" <| async {
+      do!
+        Request.create Post (uriFor "/RecordRequest")
+        |> Request.bodyStringEncoded "¥§±Æ" Encoding.UTF8
+        |> runIgnore
 
       Expect.equal (Encoding.UTF8.GetString(HttpServer.recordedRequest.Value.rawForm)) "¥§±Æ" "body should be equal"
+    }
   ]
 
 [<Tests>]
 let tests =
   testList "integration" [
-    testCase "when called on a non-existant page, returns 404" <| fun _ ->
-      use response = Request.create Get (uriFor "/NoPage") |> getResponse |> run
+    testCaseAsync "when called on a non-existant page, returns 404" <| async {
+      use! response = Request.create Get (uriFor "/NoPage") |> getResponse |> Alt.toAsync
       Expect.equal response.statusCode 404 "statusCode should be equal"
+    }
 
-    testCase "readResponseBodyAsString should return the entity body as a string" <| fun _ ->
-      let body =
+    testCaseAsync "readResponseBodyAsString should return the entity body as a string" <| async {
+      let! body =
         Request.create Get (uriFor "/GotBody")
         |> Request.responseAsString
-        |> run
+        |> Job.toAsync
       
       Expect.equal body "Check out my sexy body" "body should be equal"
+    }
 
-    testCase "readResponseBodyAsString should return an empty string when there is no body" <| fun _ ->
-      let body =
+    testCaseAsync "readResponseBodyAsString should return an empty string when there is no body" <| async {
+      let! body =
         Request.create Get (uriFor "/GoodStatusCode")
         |> Request.responseAsString
-        |> run
+        |> Job.toAsync
 
       Expect.equal body "" "body should be equal"
+    }
 
-    testCase "all details of the response should be available after a call to getResponse" <| fun _ ->
+    testCaseAsync "all details of the response should be available after a call to getResponse" <| async {
       let request = Request.create Get (uriFor "/AllTheThings")
-      use response = request |> getResponse |> run
+      use! response = request |> getResponse |> Alt.toAsync
       Expect.equal response.statusCode 202 "statusCode should be equal"
-      let body = Response.readBodyAsString response |> run
+      let! body = Response.readBodyAsString response |> Job.toAsync
       Expect.equal body "Some JSON or whatever" "body should be equal"
       Expect.equal response.contentLength (Some 21L) "contentLength should be equal"
       Expect.equal response.cookies.["cookie1"] "chocolate chip" "cookie should be equal"
       Expect.equal response.cookies.["cookie2"] "smarties" "cookie should be equal"
       Expect.equal response.headers.[ContentEncoding] "gzip" "contentEncoding should be equal"
       Expect.equal response.headers.[NonStandard("X-New-Fangled-Header")] "some value" "non standard header should be equal"
+    }
 
-    testCase "simplest possible response" <| fun _ ->
+    testCaseAsync "simplest possible response" <| async {
       let request = Request.create Get (uriFor "/NoCookies")
-      use response = request |> getResponse |> run
+      use! response = request |> getResponse |> Alt.toAsync
       Expect.equal response.statusCode 200 "statusCode should be equal"
 
       use ms = new MemoryStream()
       response.body.CopyTo ms // Windows workaround "this stream does not support seek"
       Expect.equal ms.Length 4L "stream length should be equal"
       Expect.isEmpty response.cookies "cookies should be empty"
+    }
 
     testCase "getResponseAsync, given a request with an invalid url, throws an exception" <| fun _ ->
       let doReq = fun () ->
@@ -218,8 +236,8 @@ let tests =
 
       Expect.throwsT<UriFormatException> doReq "should throw"
 
-    testCase "all of the response headers are available after a call to getResponse" <| fun _ ->
-      use resp = Request.create Get (uriFor "/AllHeaders") |> getResponse |> run
+    testCaseAsync "all of the response headers are available after a call to getResponse" <| async {
+      use! resp = Request.create Get (uriFor "/AllHeaders") |> getResponse |> Alt.toAsync
       Expect.equal resp.headers.[AccessControlAllowOrigin] "*" "should be equal"
       Expect.equal resp.headers.[AcceptRanges] "bytes" "should be equal"
       Expect.equal resp.headers.[Age] "12" "should be equal"
@@ -255,166 +273,197 @@ let tests =
       Expect.equal resp.headers.[WarningResponse] "199 Miscellaneous warning" "should be equal"
       Expect.equal resp.headers.[WWWAuthenticate] "Basic" "should be equal"
       Expect.equal resp.headers.[NonStandard("X-New-Fangled-Header")] "some value" "should be equal"
+    }
 
-    testCase "response charset SPECIFIED, is used regardless of Content-Type header" <| fun _ ->
-      let responseBodyString =
+    testCaseAsync "response charset SPECIFIED, is used regardless of Content-Type header" <| async {
+      let! responseBodyString =
         Request.create Get (uriFor "/MoonLanguageCorrectEncoding")
         |> Request.responseCharacterEncoding (Encoding.GetEncoding "utf-16")
         |> Request.responseAsString
-        |> run
+        |> Job.toAsync
 
       Expect.equal responseBodyString "迿ꞧ쒿" "body should be equal" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with utf-16
+    }
 
-    testCase "response charset IS NOT SPECIFIED, Content-Type header is used" <| fun _ ->
-      let responseBodyString =
+    testCaseAsync "response charset IS NOT SPECIFIED, Content-Type header is used" <| async {
+      let! responseBodyString =
         Request.create Get (uriFor "/MoonLanguageCorrectEncoding")
         |> Request.responseAsString
-        |> run
+        |> Job.toAsync
 
       Expect.equal responseBodyString "яЏ§§їДЙ" "body should be equal"
+    }
 
-    testCase "response charset IS NOT SPECIFIED, NO Content-Type header, body read by default as Latin 1" <| fun _ ->
+    testCaseAsync "response charset IS NOT SPECIFIED, NO Content-Type header, body read by default as Latin 1" <| async {
       let expected = "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
 
-      let response =
+      let! response =
         Request.create Get (uriFor "/MoonLanguageTextPlainNoEncoding")
         |> Request.responseAsString
-        |> run
+        |> Job.toAsync
 
       Expect.equal response expected "body should be equal"
 
-      let response = Request.create Get (uriFor "/MoonLanguageApplicationXmlNoEncoding") |> Request.responseAsString |> run
+      let! response = Request.create Get (uriFor "/MoonLanguageApplicationXmlNoEncoding") |> Request.responseAsString |> Job.toAsync
       Expect.equal response expected "body should be equal"
+    }
 
-    testCase "assumes utf8 encoding for invalid Content-Type charset when reading string" <| fun _ ->
+    testCaseAsync "assumes utf8 encoding for invalid Content-Type charset when reading string" <| async {
+      let req = Request.create Get (uriFor "/MoonLanguageInvalidEncoding")
       try
-        Request.create Get (uriFor "/MoonLanguageInvalidEncoding")
-        |> Request.responseAsString
-        |> run
-        |> ignore
+        let! _ =
+          req
+          |> Request.responseAsString
+          |> Job.toAsync
+
+        ()
       with :? ArgumentException as e ->
         Tests.failtest "should default to utf8"
+    }
 
     // .Net encoder doesn't like utf8, seems to need utf-8
-    testCase "if the response character encoding is specified as 'utf8', uses 'utf-8' instead" <| fun _ ->
-      let str =
+    testCaseAsync "if the response character encoding is specified as 'utf8', uses 'utf-8' instead" <| async {
+      let! str =
         Request.create Get (uriFor "/utf8")
         |> Request.responseAsString
-        |> run
+        |> Job.toAsync
 
       Expect.equal str "'Why do you hate me so much, Windows?!' - utf8" "body should be equal"
+    }
 
-    testCase "if the response character encoding is specified as 'utf16', uses 'utf-16' instead" <| fun _ ->
-      let str = Request.create Get (uriFor "/utf16") |> Request.responseAsString |> run
+    testCaseAsync "if the response character encoding is specified as 'utf16', uses 'utf-16' instead" <| async {
+      let! str = Request.create Get (uriFor "/utf16") |> Request.responseAsString |> Job.toAsync
 
       Expect.equal str "'Why are you so picky, Windows?!' - utf16" "body should be equal"
+    }
 
-    testCase "cookies are not kept during an automatic redirect" <| fun _ ->
-      use response =
+    testCaseAsync "cookies are not kept during an automatic redirect" <| async {
+      use! response =
         Request.create Get (uriFor "/CookieRedirect")
         |> getResponse
-        |> run
+        |> Alt.toAsync
 
       Expect.equal response.statusCode 200 "statusCode should be equal"
       Expect.equal (response.cookies.ContainsKey "cookie1") false "cookies should not contain key"
+    }
 
-    testCase "reading the body as bytes works properly" <| fun _ ->
-      use response =
+    testCaseAsync "reading the body as bytes works properly" <| async {
+      use! response =
         Request.create Get (uriFor "/Raw")
         |> getResponse
-        |> run
+        |> Alt.toAsync
       let expected =
         [| 98uy
            111uy
            100uy
            121uy |]
-      let actual = Response.readBodyAsBytes response |> run
+      let! actual = Response.readBodyAsBytes response |> Job.toAsync
 
       Expect.equal actual expected "bytes should be equal"
+    }
 
-    testCase "when there is no body, reading it as bytes gives an empty array" <| fun _ ->
-      use response = Request.create Get (uriFor "/GoodStatusCode") |> getResponse |> run
+    testCaseAsync "when there is no content-type, charset should be none" <| async {
+      use! response =
+        Request.create Get (uriFor "/NoContentType")
+        |> getResponse
+        |> Alt.toAsync
+      
+      Expect.isNone response.characterSet "characterSet should be none"
+    }
+
+    testCaseAsync "when there is no body, reading it as bytes gives an empty array" <| async {
+      use! response = Request.create Get (uriFor "/GoodStatusCode") |> getResponse |> Alt.toAsync
       use ms = new MemoryStream()
       response.body.CopyTo ms // Windows workaround "this stream does not support seek"
 
       Expect.equal ms.Length 0L "stream length should be 0"
+    }
 
-    testCase "readResponseBodyAsString can read the response body" <| fun _ ->
-      let body =
+    testCaseAsync "readResponseBodyAsString can read the response body" <| async {
+      let! body =
         Request.create Get (uriFor "/Raw")
         |> Request.responseAsString
-        |> run
+        |> Job.toAsync
 
       Expect.equal body "body" "body should be equal"
+    }
 
-    testCase "Closing the response body stream retrieved from getResponseAsync does not cause an exception" <| fun _ ->
-      use response =
+    testCaseAsync "Closing the response body stream retrieved from getResponseAsync does not cause an exception" <| async {
+      use! response =
         Request.create Get (uriFor "/Raw")
         |> getResponse
-        |> run
+        |> Alt.toAsync
 
       response.body.Close ()
+    }
 
-    testCase "Get method works" <| fun _ ->
-      use resp =
+    testCaseAsync "Get method works" <| async {
+      use! resp =
         Request.create Get (uriFor "/Get")
         |> getResponse
-        |> run
+        |> Alt.toAsync
 
       Expect.equal resp.statusCode 200 "statusCode should be equal"
+    }
 
-    testCase "Options method works" <| fun _ ->
-      use resp =
+    testCaseAsync "Options method works" <| async {
+      use! resp =
         Request.create Options (uriFor "/Options")
         |> getResponse
-        |> run
+        |> Alt.toAsync
 
       Expect.equal resp.statusCode 200 "statusCode should be equal"
+    }
 
-    testCase "Post method works" <| fun _ ->
-      use resp =
+    testCaseAsync "Post method works" <| async {
+      use! resp =
         Request.create Post (uriFor "/Post") 
         |> Request.bodyString "hi mum" // posts need a body in Nancy
         |> getResponse
-        |> run
+        |> Alt.toAsync
 
       Expect.equal resp.statusCode 200 "statusCode should be equal"
+    }
 
-    testCase "Patch method works" <| fun _ ->
-      use resp =
+    testCaseAsync "Patch method works" <| async {
+      use! resp =
         Request.create Patch (uriFor "/Patch")
           |> getResponse
-          |> run
+          |> Alt.toAsync
 
       Expect.equal resp.statusCode 200 "statusCode should be equal"
+    }
 
-    testCase "Head method works" <| fun _ ->
-      use resp =
+    testCaseAsync "Head method works" <| async {
+      use! resp =
         Request.create Head (uriFor "/Head")
         |> getResponse
-        |> run
+        |> Alt.toAsync
 
       Expect.equal resp.statusCode 200 "statusCode should be equal"
+    }
 
-    testCase "Delete method works" <| fun _ ->
-      use resp =
+    testCaseAsync "Delete method works" <| async {
+      use! resp =
         Request.create Delete (uriFor "/Delete")
         |> getResponse
-        |> run
+        |> Alt.toAsync
 
       Expect.equal resp.statusCode 200 "statusCode should be equal"
+    }
 
-    testCase "getResponse.ResponseUri should contain URI that responded to the request" <| fun _ ->
+    testCaseAsync "getResponse.ResponseUri should contain URI that responded to the request" <| async {
       // Is going to redirect to another route and return GET 200.
       let request =
         Request.create Post (uriFor "/Redirect")
         |> Request.bodyString "hi mum"
 
-      use resp = request |> getResponse |> run
+      use! resp = request |> getResponse |> Alt.toAsync
       Expect.equal resp.statusCode 200 "statusCode should be equal"
       Expect.equal (resp.responseUri.ToString()) (uriStringFor "/GoodStatusCode") "responseUri should be equal"
+    }
 
-    testCase "returns the uploaded file names" <| fun _ ->
+    testCaseAsync "returns the uploaded file names" <| async {
       let firstCt, secondCt =
         ContentType.parse "text/plain" |> Option.get,
         ContentType.parse "text/plain" |> Option.get
@@ -430,12 +479,13 @@ let tests =
             ]
             |> BodyForm)
 
-      let response = req |> Request.responseAsString |> run
+      let! response = req |> Request.responseAsString |> Job.toAsync
 
       for fileName in [ "file1.txt"; "file2.gif" ] do
         Expect.stringContains response fileName "response should contain filename"
+    }
 
-    testCase "multipart/mixed returns form values" <| fun _ ->
+    testCaseAsync "multipart/mixed returns form values" <| async {
       let firstCt, secondCt, thirdCt, fourthCt, fifthCt, fileContents =
         ContentType.parse "text/plain" |> Option.get,
         ContentType.parse "text/plain" |> Option.get,
@@ -459,7 +509,7 @@ let tests =
                 ])
           ])
 
-      let response = req |> Request.responseAsString |> run
+      let! response = req |> Request.responseAsString |> Job.toAsync
 
       let expected =
         [ "submit-name: Larry"
@@ -471,4 +521,5 @@ let tests =
         |> String.concat "\n"
 
       Expect.equal response expected "Response fields and files should match"
+    }
   ]

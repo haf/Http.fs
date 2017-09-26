@@ -122,6 +122,10 @@ let app =
 
       Filters.path "/Raw" >=> Successful.OK "body"
 
+      Filters.path "/NoContentType"
+        >=> Successful.OK "body "
+        >=> Writers.setHeader "Content-Type" ""
+
       Filters.path "/SlowResponse" >=> (fun ctx -> async {
         do! Async.Sleep(10000)
         return! Successful.OK "" ctx })
