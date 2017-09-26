@@ -332,6 +332,17 @@ let tests =
 
       Expect.equal actual expected "bytes should be equal"
 
+    testCase "reading the body as string works properly" <| fun _ ->
+      use response =
+        Request.create Get (uriFor "/Raw")
+        |> getResponse
+        |> run
+
+      let expected = "body"
+      let actual = response |> Response.readBodyAsString |> run
+
+      Expect.equal actual expected "strings should be equal"
+
     testCase "when there is no body, reading it as bytes gives an empty array" <| fun _ ->
       use response = Request.create Get (uriFor "/GoodStatusCode") |> getResponse |> run
       use ms = new MemoryStream()
