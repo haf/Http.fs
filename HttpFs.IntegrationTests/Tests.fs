@@ -332,16 +332,13 @@ let tests =
 
       Expect.equal actual expected "bytes should be equal"
 
-    testCase "reading the body as string works properly" <| fun _ ->
+    testCase "when there is no content-type, charset should be none" <| fun _ ->
       use response =
-        Request.create Get (uriFor "/Raw")
+        Request.create Get (uriFor "/NoContentType")
         |> getResponse
         |> run
-
-      let expected = "body"
-      let actual = response |> Response.readBodyAsString |> run
-
-      Expect.equal actual expected "strings should be equal"
+      
+      Expect.isNone response.characterSet "characterSet should be none"
 
     testCase "when there is no body, reading it as bytes gives an empty array" <| fun _ ->
       use response = Request.create Get (uriFor "/GoodStatusCode") |> getResponse |> run
