@@ -895,7 +895,7 @@ module Client =
   let tryGetResponse request =
     let prepare = job {
       use ms = new MemoryStream()
-      let! requestMessage = request |> toHttpRequestMessage HttpFsState.empty ms
+      use! requestMessage = request |> toHttpRequestMessage HttpFsState.empty ms
       let! response = requestMessage |> getResponseNoException request.httpClient
 
       match response with
