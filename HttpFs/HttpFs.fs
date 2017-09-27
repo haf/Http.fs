@@ -990,7 +990,7 @@ module Client =
       { request with cookiesEnabled = false }
     
     /// Disables automatic following of redirects, which is enabled by default
-    let autoFollowRedirectsDisabled request =
+    let disableAutoFollowRedirects request =
       { request with httpClient = defaultHttpClient false }
 
     /// Adds a header, defined as a RequestHeader
