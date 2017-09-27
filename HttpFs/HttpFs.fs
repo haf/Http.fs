@@ -631,7 +631,7 @@ module Client =
 
   module internal DotNetWrapper =
     open System.Collections.Generic
-    let defaultHttpClient =
+    let defaultHttpClient allowAutoRedirect =
       // the handler cannot be changed after the first request (you get an exception).
       // kept internal
 
@@ -639,6 +639,7 @@ module Client =
       // this stops it from stripping "Cookie" headers we set out of requests and will stop
       // cookies being implicitly shared across requests
       let handler = new HttpClientHandler(UseCookies = false)
+      handler.AllowAutoRedirect <- allowAutoRedirect
       let client = new HttpClient(handler)
       client.DefaultRequestHeaders.Clear()
       client
@@ -962,7 +963,7 @@ module Client =
         cookies                   = Map.empty
         responseCharacterEncoding = None
         proxy                     = None
-        httpClient                = defaultHttpClient }
+        httpClient                = defaultHttpClient true }
 
     let createWithClient client method url =
       { create method url with httpClient = client }
@@ -987,6 +988,10 @@ module Client =
     /// Disables cookies, which are enabled by default
     let cookiesDisabled request =
       { request with cookiesEnabled = false }
+    
+    /// Disables automatic following of redirects, which is enabled by default
+    let autoFollowRedirectsDisabled request =
+      { request with httpClient = defaultHttpClient false }
 
     /// Adds a header, defined as a RequestHeader
     /// The current implementation doesn't allow you to add a single header multiple
