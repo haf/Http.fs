@@ -1,6 +1,8 @@
 ![Http.fs logo](https://raw.githubusercontent.com/relentless/Http.fs/master/docs/files/img/logo_small.png) Http.fs
 =======
 
+## Maintainers wanted – ping @haf to talk
+
 A gloriously functional HTTP client library for F#! NuGet name:
 `Http.fs`.
 
