@@ -25,6 +25,8 @@ module internal Prelude =
     let bytes (s : string) =
       Encoding.ASCII.GetBytes s
 
+  let b2i = function | true -> 1 | false -> 0
+
 
 module Client =
 
@@ -213,6 +215,7 @@ module Client =
     | ContentMD5 of string
     | ContentType of ContentType
     | Date of DateTime
+    | DoNotTrack of bool
     | Expect of int
     | From of string
     | IfMatch of string
@@ -242,6 +245,7 @@ module Client =
       | ContentMD5 x -> "Content-MD5", x
       | ContentType x -> "Content-Type", x.ToString()
       | Date dt -> "Date", dt.ToString("R")
+      | DoNotTrack dnt -> "DNT", (dnt |> b2i |> string)
       | Expect i -> "Expect", i.ToString()
       | From x -> "From", x
       | IfMatch x -> "If-Match", x
@@ -647,6 +651,7 @@ module Client =
                 | RequestHeader.ContentMD5 value   -> add "Content-MD5" value
                 | RequestHeader.ContentType value  -> webRequest.ContentType <- value.ToString()
                 | RequestHeader.Date value         -> webRequest.Date <- value
+                | DoNotTrack value                 -> add "DNT" (value |> b2i |> string)
                 | Expect value                     -> webRequest.Expect <- value.ToString()
                 | From value                       -> add "From" value
                 | IfMatch value                    -> add "If-Match" value
