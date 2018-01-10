@@ -1,24 +1,22 @@
-redirects: on
 source https://api.nuget.org/v3/index.json
-
-nuget Expecto ~> 5
-nuget Hopac
-nuget FSharp.Core ~> 4
-nuget FsUnit ~> 1.2
-nuget Http.fs ~> 4
-nuget NuGet.CommandLine
-nuget OpenCover ~> 4
-nuget Suave ~> 2
-nuget System.Net.Http ~> 4
-nuget System.Text.Encoding.CodePages ~> 4
+redirects: on
 
 github haf/YoLo YoLo.fs
 github logary/logary src/Logary.Facade/Facade.fs
 
+nuget Hopac ~> 0.3.23
+nuget FSharp.Core !~> 4.1.18
+nuget System.Net.Http !~> 4.3.2
+nuget System.Text.Encoding.CodePages !~> 4.4
+
 group UnitTests
-    redirects: on
-    source https://api.nuget.org/v3/index.json
-    nuget Hopac
-    nuget Expecto ~> 5
-    nuget FSharp.Core ~> 4
-    nuget Suave.Testing ~> 2
+  source https://api.nuget.org/v3/index.json
+  redirects: on
+  nuget Expecto
+  nuget Suave.Testing ~> 2.3.0-beta3
+
+group build
+  source https://api.nuget.org/v3/index.json
+  nuget FAKE
+  nuget FSharp.Compiler.Tools
+  github fsharp/FAKE modules/Octokit/Octokit.fsx

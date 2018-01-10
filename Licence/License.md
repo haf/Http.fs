@@ -1,5 +1,6 @@
 The MIT License (MIT)
 
+Copyright (c) 2018 Henrik Feldt and contributors
 Copyright (c) 2014 Grant Crofton and contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

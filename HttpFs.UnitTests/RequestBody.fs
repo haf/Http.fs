@@ -205,7 +205,7 @@ let bodyFormatting =
       
       Expect.equal encoded "user_name=%C3%85sa+den+R%C3%B6de&user_pass=Bovi%C4%87" "Should encode Swedish properly"
 
-    testCase "can format urlencoded data" <| fun _ ->
+    testCase "can format urlencoded data (2)" <| fun _ ->
       // http://www.url-encode-decode.com/
       // https://unspecified.wordpress.com/2008/07/08/browser-uri-encoding-the-best-we-can-do/
       // http://stackoverflow.com/questions/912811/what-is-the-proper-way-to-url-encode-unicode-characters

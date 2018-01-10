@@ -1,14 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Name>HttpFs.UnitTests</Name>
     <AssemblyName>HttpFs.UnitTests</AssemblyName>
+    <Name>HttpFs.UnitTests</Name>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AssemblyVersionInfo.fs" />
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Expect.fs" />
     <Compile Include="Api.fs" />
     <Compile Include="RequestBody.fs" />

@@ -1,18 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Name>HttpFs</Name>
     <AssemblyName>HttpFs</AssemblyName>
-    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <OtherFlags Condition="'$(AssemblyStrongName)' != ''">--keyfile:../Tools/HttpFs.snk</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PackageId>Http.fs</PackageId>
-    <Authors>Grant Crofton, Henrik Feldt</Authors>
-    <Description>A simple, functional HTTP client library for F#</Description>
-    <PackageProjectUrl>https://github.com/relentless/Http.fs</PackageProjectUrl>
+    <PackageId>HttpFs</PackageId>
+    <Version>5.0</Version>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\paket-files\haf\YoLo\YoLo.fs">
@@ -23,13 +15,12 @@
       <Paket>True</Paket>
       <Link>paket-files/Facade.fs</Link>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AssemblyVersionInfo.fs" />
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="HttpFs.fs" />
+    <PackageReference Include="FSharp.Core" Version="4.1.18" />
   </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework) == 'net45'">
-    <Reference Include="System.Net.Http" />
+  <ItemGroup Condition="'$(TargetFramework)'!='net461'">
+    <PackageReference Include="System.Diagnostics.FileVersionInfo" Version="4.3.0" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

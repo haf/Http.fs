@@ -1,6 +1,6 @@
-Expecto
 FSharp.Core
 Hopac
-Suave
 System.Text.Encoding.CodePages
 System.Net.Http
+group UnitTests
+Expecto
