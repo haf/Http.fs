@@ -92,7 +92,7 @@ Target "Pack" (fun _ ->
         ] |> String.concat " "
 
     DotNetCli.RunCommand id
-        ("pack HttpFs/HttpFs.fsproj -c "+configuration + " -o ../bin " + (packParameters "HttpFs"))
+        ("pack HttpFs/HttpFs.fsproj -c "+configuration + " -o ../bin " + (packParameters "Http.fs"))
 )
 
 Target "Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = "bin" }))
