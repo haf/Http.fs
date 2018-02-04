@@ -5,15 +5,11 @@ github haf/YoLo YoLo.fs
 github logary/logary src/Logary.Facade/Facade.fs
 
 nuget Hopac ~> 0.3.23
-nuget FSharp.Core !~> 4.1.18
-nuget System.Net.Http !~> 4.3.2
-nuget System.Text.Encoding.CodePages !~> 4.4
-
-group UnitTests
-  source https://api.nuget.org/v3/index.json
-  redirects: on
-  nuget Expecto
-  nuget Suave.Testing ~> 2.3.0-beta3
+nuget FSharp.Core ~> 4.2.3
+nuget System.Net.Http ~> 4.3.2
+nuget System.Text.Encoding.CodePages ~> 4.4
+nuget Expecto ~> 5.1.2
+nuget Suave.Testing ~> 2
 
 group build
   source https://api.nuget.org/v3/index.json

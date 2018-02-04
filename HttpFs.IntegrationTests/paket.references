@@ -2,5 +2,5 @@ FSharp.Core
 Hopac
 System.Text.Encoding.CodePages
 System.Net.Http
-group UnitTests
 Expecto
+Suave.Testing

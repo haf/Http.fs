@@ -7,7 +7,7 @@ install:
   - cmd: bundle install
 
 build_script:
-  - cmd: bundle exec rake
+  - cmd: build.cmd
 
 artifacts:
  - path: build\pkg\*.nupkg

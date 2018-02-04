@@ -1,5 +1,3 @@
-group UnitTests
-    Expecto
-    FSharp.Core
-    Hopac
-    Suave.Testing
+Hopac
+Expecto
+Suave.Testing
