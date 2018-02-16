@@ -1,3 +1,2 @@
-#### 5.0 — 2018-01-10
-* Move to FAKE, thanks @haf
-* .Net Core 2.0 support, thanks @haf
+#### 5.0.1 — 2018-02-16
+* Better cookie handling

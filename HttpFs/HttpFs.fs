@@ -797,15 +797,56 @@ module Client =
     let getResponseNoException (httpClient: HttpClient) (request : HttpRequestMessage) : Alt<Choice<HttpResponseMessage,exn>> =
       let get = Alt.fromTask (fun cts -> httpClient.SendAsync(request, cts))
       Alt.tryIn get (Choice1Of2 >> Job.result) (Choice2Of2 >> Job.result)
-      
+
+    let createCookie(requestUri: Uri) (cookieParts:string[]) =
+      let removePrefix (prefix:string) (str:string) =
+            if str.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            then str.Substring(prefix.Length)
+            else str
+      let cookie = Cookie()
+      cookieParts |> Array.iteri(fun i cookiePart ->
+                let cookiePart = cookiePart.Trim()
+                if i = 0 then
+                    let firstEqual = cookiePart.IndexOf '='
+                    if firstEqual > -1 then
+                        cookie.Name <- cookiePart.Substring(0, firstEqual)
+                        cookie.Value <- cookiePart.Substring(firstEqual + 1)
+                    else
+                        cookie.Name <- cookiePart                    
+
+                elif cookiePart.StartsWith("path", StringComparison.OrdinalIgnoreCase) then
+                    let kvp = cookiePart.Split '='
+                    if kvp.Length > 1 && kvp.[1] <> "" && kvp.[1] <> "/" then
+                        cookie.Path <- kvp.[1]
+                elif cookiePart.StartsWith("domain", StringComparison.OrdinalIgnoreCase) then
+                    let kvp = cookiePart.Split '='
+                    if kvp.Length > 1 then
+                        let domain =
+                            kvp.[1]
+                            // remove spurious domain prefixes
+                            |> removePrefix "http://"
+                            |> removePrefix "https://"
+                        if domain <> "" then
+                            cookie.Domain <- domain
+                elif cookiePart.Equals("secure", StringComparison.OrdinalIgnoreCase) then
+                    cookie.Secure <- true
+                elif cookiePart.Equals("httponly", StringComparison.OrdinalIgnoreCase) then
+                    cookie.HttpOnly <- true
+      )
+      if cookie.Domain = "" then
+        cookie.Domain <- requestUri.Host
+      cookie  
     let getCookiesAsMap (response: HttpResponseMessage) =
       let uri = response.RequestMessage.RequestUri
-      let container = new System.Net.CookieContainer()
+      let container = System.Net.CookieContainer()
 
       let tryCookies = ref (new List<string>() :> IEnumerable<string>)
       if response.Headers.TryGetValues("Set-Cookie", tryCookies) then
         tryCookies.Value
-        |> Seq.iter(fun c -> container.SetCookies(response.RequestMessage.RequestUri, c))
+        |> Seq.iter(fun cookie -> cookie.Split ';'
+                                  |> createCookie response.RequestMessage.RequestUri
+                                  |> container.Add               
+                    )
 
         let cookies = container.GetCookies(uri)
         let cookieArray = Array.zeroCreate cookies.Count

@@ -347,6 +347,15 @@ let tests =
       Expect.equal (response.cookies.ContainsKey "cookie1") false "cookies should not contain key"
     }
 
+    testCaseAsync "cookies with invalid path" <| async {
+      use! response =
+        Request.create Get (uriFor "/CookieInvalidPath")
+        |> getResponse
+        |> Alt.toAsync
+
+      Expect.equal response.statusCode 200 "statusCode should be equal"
+    }
+
     testCaseAsync "reading the body as bytes works properly" <| async {
       use! response =
         Request.create Get (uriFor "/Raw")

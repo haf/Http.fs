@@ -6,6 +6,7 @@ open System.Threading
 open System.Text
 open Suave
 open Suave.Operators
+open Suave.Logging
 
 let mutable recordedRequest = None
 
@@ -117,6 +118,11 @@ let app =
         >=> Cookie.setCookie (HttpCookie.createKV "cookie1" "baboon")
         >=> Writers.setHeader "Location" (uriStringFor "/NoCookies")
         >=> Writers.setStatus HTTP_307
+      
+      Filters.path "/CookieInvalidPath"
+        >=> Cookie.setCookie (HttpCookie.create "cookie1" "baboon" None (Some "/Invalid") None true true None )
+        >=> Successful.OK ""
+
 
       Filters.path "/NoCookies" >=> Successful.OK "body"
 
