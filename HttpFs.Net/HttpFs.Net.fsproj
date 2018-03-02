@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>HttpFs</AssemblyName>
-    <PackageId>Http.fs</PackageId>
+    <AssemblyName>HttpFs.Net</AssemblyName>
+    <PackageId>HttpFs.Net</PackageId>
     <Version>5.0.1</Version>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
   </PropertyGroup>
@@ -16,11 +16,14 @@
       <Link>paket-files/Facade.fs</Link>
     </Compile>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="HttpFs.fs" />
+    <Compile Include="HttpFs.Net.fs" />
     <PackageReference Include="FSharp.Core" Version="4.1.18" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'!='net461'">
     <PackageReference Include="System.Diagnostics.FileVersionInfo" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HttpFs.Core\HttpFs.Core.fsproj" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

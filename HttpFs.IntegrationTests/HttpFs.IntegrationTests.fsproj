@@ -18,7 +18,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HttpFs\HttpFs.fsproj" />
+    <ProjectReference Include="..\HttpFs.Core\HttpFs.Core.fsproj" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework) == 'net461'">
     <Reference Include="System.Net.Http">

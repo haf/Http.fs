@@ -5,15 +5,15 @@ open System.Reflection
 [<assembly: AssemblyTitleAttribute("HttpFs.IntegrationTests")>]
 [<assembly: AssemblyProductAttribute("HttpFs.IntegrationTests")>]
 [<assembly: AssemblyCopyrightAttribute("Copyright © 2018")>]
-[<assembly: AssemblyDescriptionAttribute("A simple, functional HTTP client library for F#")>]
-[<assembly: AssemblyVersionAttribute("5.0.1")>]
-[<assembly: AssemblyFileVersionAttribute("5.0.1")>]
+[<assembly: AssemblyDescriptionAttribute("Core types used by HttpFs runners")>]
+[<assembly: AssemblyVersionAttribute("0.0.0")>]
+[<assembly: AssemblyFileVersionAttribute("0.0.0")>]
 do ()
 
 module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyTitle = "HttpFs.IntegrationTests"
     let [<Literal>] AssemblyProduct = "HttpFs.IntegrationTests"
     let [<Literal>] AssemblyCopyright = "Copyright © 2018"
-    let [<Literal>] AssemblyDescription = "A simple, functional HTTP client library for F#"
-    let [<Literal>] AssemblyVersion = "5.0.1"
-    let [<Literal>] AssemblyFileVersion = "5.0.1"
+    let [<Literal>] AssemblyDescription = "Core types used by HttpFs runners"
+    let [<Literal>] AssemblyVersion = "0.0.0"
+    let [<Literal>] AssemblyFileVersion = "0.0.0"

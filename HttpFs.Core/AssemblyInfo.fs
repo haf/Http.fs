@@ -2,8 +2,8 @@
 namespace System
 open System.Reflection
 
-[<assembly: AssemblyTitleAttribute("HttpFs.UnitTests")>]
-[<assembly: AssemblyProductAttribute("HttpFs.UnitTests")>]
+[<assembly: AssemblyTitleAttribute("HttpFs.Core")>]
+[<assembly: AssemblyProductAttribute("HttpFs.Core")>]
 [<assembly: AssemblyCopyrightAttribute("Copyright © 2018")>]
 [<assembly: AssemblyDescriptionAttribute("Core types used by HttpFs runners")>]
 [<assembly: AssemblyVersionAttribute("0.0.0")>]
@@ -11,8 +11,8 @@ open System.Reflection
 do ()
 
 module internal AssemblyVersionInformation =
-    let [<Literal>] AssemblyTitle = "HttpFs.UnitTests"
-    let [<Literal>] AssemblyProduct = "HttpFs.UnitTests"
+    let [<Literal>] AssemblyTitle = "HttpFs.Core"
+    let [<Literal>] AssemblyProduct = "HttpFs.Core"
     let [<Literal>] AssemblyCopyright = "Copyright © 2018"
     let [<Literal>] AssemblyDescription = "Core types used by HttpFs runners"
     let [<Literal>] AssemblyVersion = "0.0.0"

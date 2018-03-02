@@ -2,8 +2,8 @@
 namespace System
 open System.Reflection
 
-[<assembly: AssemblyTitleAttribute("HttpFs")>]
-[<assembly: AssemblyProductAttribute("HttpFs")>]
+[<assembly: AssemblyTitleAttribute("HttpFs.Net")>]
+[<assembly: AssemblyProductAttribute("HttpFs.Net")>]
 [<assembly: AssemblyCopyrightAttribute("Copyright © 2018")>]
 [<assembly: AssemblyDescriptionAttribute("A simple, functional HTTP client library for F#")>]
 [<assembly: AssemblyVersionAttribute("5.0.1")>]
@@ -11,8 +11,8 @@ open System.Reflection
 do ()
 
 module internal AssemblyVersionInformation =
-    let [<Literal>] AssemblyTitle = "HttpFs"
-    let [<Literal>] AssemblyProduct = "HttpFs"
+    let [<Literal>] AssemblyTitle = "HttpFs.Net"
+    let [<Literal>] AssemblyProduct = "HttpFs.Net"
     let [<Literal>] AssemblyCopyright = "Copyright © 2018"
     let [<Literal>] AssemblyDescription = "A simple, functional HTTP client library for F#"
     let [<Literal>] AssemblyVersion = "5.0.1"

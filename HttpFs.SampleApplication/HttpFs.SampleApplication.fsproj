@@ -15,7 +15,7 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HttpFs\HttpFs.fsproj" />
+    <ProjectReference Include="..\HttpFs.Core\HttpFs.Core.fsproj" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

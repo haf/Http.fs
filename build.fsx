@@ -4,33 +4,52 @@ open System
 open Fake
 
 Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
+
+type ProjectInfo =
+    { Release : ReleaseNotesHelper.ReleaseNotes
+      Description : string
+      Tags : string
+      Authors : string
+      Owners : string }
+
+let httpFsCoreInfo =
+    { Release = IO.File.ReadAllLines "HttpFs.Core/RELEASE_NOTES.md" |> ReleaseNotesHelper.parseReleaseNotes
+      Description = "Core types used by HttpFs runners"
+      Tags = "http fsharp client functional"
+      Authors = "Henrik Feldt"
+      Owners = "Henrik Feldt" }
+
+let httpFsNetInfo =
+    { Release = IO.File.ReadAllLines "HttpFs.Net/RELEASE_NOTES.md" |> ReleaseNotesHelper.parseReleaseNotes
+      Description = "A simple, functional HTTP client library for F#"
+      Tags = "http fsharp client functional"
+      Authors = "Henrik Feldt"
+      Owners = "Henrik Feldt" }
+
 let configuration = environVarOrDefault "Configuration" "Release"
-let release = IO.File.ReadAllLines "RELEASE_NOTES.md" |> ReleaseNotesHelper.parseReleaseNotes
-let description = "A simple, functional HTTP client library for F#"
-let tags = "http fsharp client functional"
-let authors = "Henrik Feldt"
-let owners = "Henrik Feldt"
 let projectUrl = "https://github.com/haf/Http.fs"
 let iconUrl = "https://raw.githubusercontent.com/haf/Http.fs/releases/v4.x/docs/files/img/logo.png"
 let licenceUrl = "https://github.com/haf/Http.fs/blob/master/Licence/License.md"
 let copyright = sprintf "Copyright \169 %i" DateTime.Now.Year
+
 
 Target "Clean" (fun _ -> !!"./**/bin/" ++ "./**/obj/" |> CleanDirs)
 
 open AssemblyInfoFile
 Target "AssemblyInfo" (fun _ ->
 
-    [ "HttpFs"
-      "HttpFs.UnitTests"
-      "HttpFs.IntegrationTests"
+    [ "HttpFs.Core", httpFsCoreInfo
+      "HttpFs.Net", httpFsNetInfo
+      "HttpFs.UnitTests", httpFsCoreInfo
+      "HttpFs.IntegrationTests", httpFsCoreInfo
     ]
-    |> List.iter (fun product ->
+    |> List.iter (fun (product, projectInfo) ->
         [ Attribute.Title product
           Attribute.Product product
           Attribute.Copyright copyright
-          Attribute.Description description
-          Attribute.Version release.AssemblyVersion
-          Attribute.FileVersion release.AssemblyVersion
+          Attribute.Description projectInfo.Description
+          Attribute.Version projectInfo.Release.AssemblyVersion
+          Attribute.FileVersion projectInfo.Release.AssemblyVersion
         ] |> CreateFSharpAssemblyInfo (product+"/AssemblyInfo.fs")
     )
 )
@@ -42,11 +61,13 @@ Target "PaketFiles" (fun _ ->
 
 Target "ProjectVersion" (fun _ ->
     [
-        "HttpFs/HttpFs.fsproj"
+        "HttpFs.Core/HttpFs.Core.fsproj", httpFsCoreInfo.Release.NugetVersion
+        "HttpFs.Net/HttpFs.Net.fsproj", httpFsNetInfo.Release.NugetVersion
     ]
-    |> List.iter (fun file ->
-        XMLHelper.XmlPoke file "Project/PropertyGroup/Version/text()" release.NugetVersion)
+    |> List.iter (fun (file, version) ->
+        XMLHelper.XmlPoke file "Project/PropertyGroup/Version/text()" version)
 )
+
 let build project framework =
     DotNetCli.Build (fun p ->
     { p with
@@ -78,21 +99,21 @@ Target "Pack" (fun _ ->
             "--no-build"
             "--no-restore"
             sprintf "/p:Title=\"%s\"" name
-            "/p:PackageVersion=" + release.NugetVersion
-            sprintf "/p:Authors=\"%s\"" authors
-            sprintf "/p:Owners=\"%s\"" owners
+            "/p:PackageVersion=" + httpFsCoreInfo.Release.NugetVersion
+            sprintf "/p:Authors=\"%s\"" httpFsCoreInfo.Authors
+            sprintf "/p:Owners=\"%s\"" httpFsCoreInfo.Owners
             "/p:PackageRequireLicenseAcceptance=false"
-            sprintf "/p:Description=\"%s\"" (description.Replace(",",""))
-            sprintf "/p:PackageReleaseNotes=\"%O\"" ((toLines release.Notes).Replace(",",""))
+            sprintf "/p:Description=\"%s\"" (httpFsCoreInfo.Description.Replace(",",""))
+            sprintf "/p:PackageReleaseNotes=\"%O\"" ((toLines httpFsCoreInfo.Release.Notes).Replace(",",""))
             sprintf "/p:Copyright=\"%s\"" copyright
-            sprintf "/p:PackageTags=\"%s\"" tags
+            sprintf "/p:PackageTags=\"%s\"" httpFsCoreInfo.Tags
             sprintf "/p:PackageProjectUrl=\"%s\"" projectUrl
             sprintf "/p:PackageIconUrl=\"%s\"" iconUrl
             sprintf "/p:PackageLicenseUrl=\"%s\"" licenceUrl
         ] |> String.concat " "
 
     DotNetCli.RunCommand id
-        ("pack HttpFs/HttpFs.fsproj -c "+configuration + " -o ../bin " + (packParameters "Http.fs"))
+        ("pack HttpFs.Core/HttpFs.Core.fsproj -c "+configuration + " -o ../bin " + (packParameters "HttpFs.Core"))
 )
 
 Target "Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = "bin" }))
@@ -108,18 +129,18 @@ Target "Release" (fun _ ->
         |> function None -> ("ssh://github.com/"+gitOwnerName) | Some s -> s.Split().[0]
 
     Git.Staging.StageAll ""
-    Git.Commit.Commit "" (sprintf "Bump version to %s" release.NugetVersion)
+    Git.Commit.Commit "" (sprintf "Bump version to %s" httpFsCoreInfo.Release.NugetVersion)
     Git.Branches.pushBranch "" remote (Git.Information.getBranchName "")
 
-    Git.Branches.tag "" release.NugetVersion
-    Git.Branches.pushTag "" remote release.NugetVersion
+    Git.Branches.tag "" httpFsCoreInfo.Release.NugetVersion
+    Git.Branches.pushTag "" remote httpFsCoreInfo.Release.NugetVersion
 
     let user = getUserInput "Github Username: "
     let pw = getUserPassword "Github Password: "
 
     Octokit.createClient user pw
-    |> Octokit.createDraft gitOwner gitName release.NugetVersion
-        (Option.isSome release.SemVer.PreRelease) release.Notes
+    |> Octokit.createDraft gitOwner gitName httpFsCoreInfo.Release.NugetVersion
+        (Option.isSome httpFsCoreInfo.Release.SemVer.PreRelease) httpFsCoreInfo.Release.Notes
     |> Octokit.releaseDraft
     |> Async.RunSynchronously
 )

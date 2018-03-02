@@ -1,4 +1,4 @@
-namespace HttpFs
+namespace HttpFs.Core
 
 open System
 open System.Diagnostics
@@ -6,7 +6,6 @@ open System.IO
 open System.Net.Http
 open System.Text
 open System.Runtime.CompilerServices
-open Hopac
 
 [<assembly: InternalsVisibleTo "HttpFs.IntegrationTests">]
 [<assembly: InternalsVisibleTo "HttpFs.UnitTests">]
@@ -408,20 +407,20 @@ module Client =
         //     yield x.EntityBody |> Option.get
       } |> String.concat Environment.NewLine
 
-  let defaultLogger =
-    HttpFs.Logging.Log.create "HttpFs"
+  // let defaultLogger =
+  //   HttpFs.Logging.Log.create "HttpFs"
 
-  type HttpFsState =
-    { random      : Random
-      cryptRandom : RandomNumberGenerator
-      logger      : HttpFs.Logging.Logger }
+  // type HttpFsState =
+  //   { random      : Random
+  //     cryptRandom : RandomNumberGenerator
+  //     logger      : HttpFs.Logging.Logger }
 
-    /// Will re-generate random CLR per-app-domain -- create your own state for
-    /// deterministic boundary generation (or anything else needing random).
-    static member empty =
-      { random      = Random()
-        cryptRandom = RandomNumberGenerator.Create()
-        logger      = defaultLogger }
+  //   /// Will re-generate random CLR per-app-domain -- create your own state for
+  //   /// deterministic boundary generation (or anything else needing random).
+  //   static member empty =
+  //     { random      = Random()
+  //       cryptRandom = RandomNumberGenerator.Create()
+  //       logger      = defaultLogger }
 
   /// The header you tried to add was already there, see issue #64.
   exception DuplicateHeader of RequestHeader
@@ -460,7 +459,7 @@ module Client =
     let getQueryString request =
       if Map.isEmpty request.queryStringItems then ""
       else
-        let items = 
+        let items =
           Map.toList request.queryStringItems
           |> List.collect (fun (k, vs) -> vs |> List.map (fun v -> k,v))
         String.Concat [ uriEncode items ]
@@ -472,83 +471,46 @@ module Client =
       |> fun base64 -> "Basic " + base64
       |> Authorization
 
-    let generateBoundary =
-      let boundaryChars = "abcdefghijklmnopqrstuvwxyz+-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      let boundaryLen = 30
-      fun clientState ->
-          let rnd = clientState.random
-          let sb = StringBuilder(boundaryLen)
-          for i in 0 .. boundaryLen - 1 do
-              sb.Append (boundaryChars.[rnd.Next(boundaryChars.Length)]) |> ignore
-          sb.ToString()
+    // let generateBoundary =
+    //   let boundaryChars = "abcdefghijklmnopqrstuvwxyz+-/':ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    //   let boundaryLen = 30
+    //   fun clientState ->
+    //       let rnd = clientState.random
+    //       let sb = StringBuilder(boundaryLen)
+    //       for i in 0 .. boundaryLen - 1 do
+    //           sb.Append (boundaryChars.[rnd.Next(boundaryChars.Length)]) |> ignore
+    //       sb.ToString()
 
     let escapeQuotes (s : string) =
         // https://github.com/rack/rack/issues/323#issuecomment-3609743
         s.Replace("\"", "\\\"")
 
-    module StreamWriters =
-      let writeBytes bs (output : Stream) =
-        Job.awaitUnitTask (output.WriteAsync(bs, 0, bs.Length))
+    // let generateFileData (encoding : Encoding) contentType contents = seq {
+    //   match contentType, contents with
+    //   | { typ = "text"; subtype = _ }, Plain text ->
+    //     yield writeLineAscii ""
+    //     yield writeLineUtf8 text
 
-      let writeBytesLine bs (output : Stream) =
-        job {
-          do! writeBytes bs output
-          do! Job.awaitUnitTask (output.WriteAsync (ASCII.bytes CRLF, 0, 2))
-        }
+    //   | { typ = "application"; subtype = subtype }, Plain text
+    //     when List.exists ((=) (subtype.Split('+') |> Seq.last)) ["json"; "xml"] ->
+    //     yield writeLineAscii ""
+    //     yield writeLineUtf8 text
 
-      /// Writes a string and CRLF as ASCII
-      let writeLineAscii string : Stream -> Job<unit> =
-        String.Concat [ string; CRLF ] |> ASCII.bytes |> writeBytes
+    //   | _, Plain text ->
+    //     yield writeLineAscii "Content-Transfer-Encoding: base64"
+    //     yield writeLineAscii ""
+    //     yield writeLineAscii (text |> encoding.GetBytes |> Convert.ToBase64String)
 
-      /// Writes a string as ASCII
-      let writeAscii : string -> Stream -> Job<unit> =
-        ASCII.bytes >> writeBytes
+    //   | _, Binary bytes ->
+    //     yield writeLineAscii "Content-Transfer-Encoding: binary"
+    //     yield writeLineAscii ""
+    //     yield writeBytesLine bytes
 
-      /// Writes a string and CRLF as UTF8
-      let writeLineUtf8 string =
-        String.Concat [ string; CRLF ] |> UTF8.bytes |> writeBytes
-
-      /// Writes a string as UTF8
-      let writeUtf8 : string -> Stream -> Job<unit> =
-        UTF8.bytes >> writeBytes
-
-      let writeStream (input : Stream) (output : Stream) =
-        Job.awaitUnitTask (input.CopyToAsync output)
-
-      let writeStreamLine input output =
-        job {
-          do! writeStream input output
-          do! Job.awaitUnitTask (output.WriteAsync (ASCII.bytes CRLF, 0, 2))
-        }
-
-    open StreamWriters
-
-    let generateFileData (encoding : Encoding) contentType contents = seq {
-      match contentType, contents with
-      | { typ = "text"; subtype = _ }, Plain text ->
-        yield writeLineAscii ""
-        yield writeLineUtf8 text
-
-      | { typ = "application"; subtype = subtype }, Plain text 
-        when List.exists ((=) (subtype.Split('+') |> Seq.last)) ["json"; "xml"] ->
-        yield writeLineAscii ""
-        yield writeLineUtf8 text
-
-      | _, Plain text ->
-        yield writeLineAscii "Content-Transfer-Encoding: base64"
-        yield writeLineAscii ""
-        yield writeLineAscii (text |> encoding.GetBytes |> Convert.ToBase64String)
-
-      | _, Binary bytes ->
-        yield writeLineAscii "Content-Transfer-Encoding: binary"
-        yield writeLineAscii ""
-        yield writeBytesLine bytes
-
-      | _, StreamData stream ->
-        yield writeLineAscii "Content-Transfer-Encoding: binary"
-        yield writeLineAscii ""
-        yield writeStreamLine stream
-    }
+    //   | _, StreamData stream ->
+    //     yield writeLineAscii "Content-Transfer-Encoding: binary"
+    //     yield writeLineAscii ""
+    //     yield writeStreamLine stream
+    // }
 
     let generateContentDispos value (kvs : (string * string) list) =
         let formatKv = function
@@ -556,76 +518,76 @@ module Client =
         String.concat "; " [ yield sprintf "Content-Disposition: %s" value
                              yield! (kvs |> List.map formatKv) ]
 
-    let generateFormData state (encoding : Encoding) boundary formData =
-      let rec generateFormDataInner boundary values isMultiFile = [
-        match values with
-        | [] ->
-          yield writeLineAscii (sprintf "--%s--" boundary)
-        | h :: rest ->
-          yield writeLineAscii (sprintf "--%s" boundary)
-          match h with
-          | FormFile (name, (fileName, contentType, contents)) ->
-            let dispos = if isMultiFile then "file" else "form-data"
-            yield writeLineUtf8 (generateContentDispos dispos
-                                  [ if not isMultiFile then yield "name", name
-                                    yield "filename", fileName ])
-            yield writeLineUtf8 (sprintf "Content-Type: %O" contentType)
-            yield! generateFileData encoding contentType contents
+    // let generateFormData state (encoding : Encoding) boundary formData =
+    //   let rec generateFormDataInner boundary values isMultiFile = [
+    //     match values with
+    //     | [] ->
+    //       yield writeLineAscii (sprintf "--%s--" boundary)
+    //     | h :: rest ->
+    //       yield writeLineAscii (sprintf "--%s" boundary)
+    //       match h with
+    //       | FormFile (name, (fileName, contentType, contents)) ->
+    //         let dispos = if isMultiFile then "file" else "form-data"
+    //         yield writeLineUtf8 (generateContentDispos dispos
+    //                               [ if not isMultiFile then yield "name", name
+    //                                 yield "filename", fileName ])
+    //         yield writeLineUtf8 (sprintf "Content-Type: %O" contentType)
+    //         yield! generateFileData encoding contentType contents
 
-          | MultipartMixed (name, files) ->
-            let boundary' = generateBoundary state
-            yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=\"%s\"" boundary')
-            yield writeLineUtf8 (generateContentDispos "form-data" [ "name", name ])
-            yield writeLineUtf8 ""
-            // remap the multi-files to single files and recursively call myself
-            let files' = files |> List.map (fun f -> FormFile (name, f))
-            yield! generateFormDataInner boundary' files' true
+    //       | MultipartMixed (name, files) ->
+    //         let boundary' = generateBoundary state
+    //         yield writeLineAscii (sprintf "Content-Type: multipart/mixed; boundary=\"%s\"" boundary')
+    //         yield writeLineUtf8 (generateContentDispos "form-data" [ "name", name ])
+    //         yield writeLineUtf8 ""
+    //         // remap the multi-files to single files and recursively call myself
+    //         let files' = files |> List.map (fun f -> FormFile (name, f))
+    //         yield! generateFormDataInner boundary' files' true
 
-          | NameValue (name, value) ->
-            yield writeLineAscii (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
-            yield writeLineAscii ""
-            yield writeLineUtf8 value
-          yield! generateFormDataInner boundary rest isMultiFile
-      ]
-      generateFormDataInner boundary formData false
+    //       | NameValue (name, value) ->
+    //         yield writeLineAscii (sprintf "Content-Disposition: form-data; name=\"%s\"" (escapeQuotes name))
+    //         yield writeLineAscii ""
+    //         yield writeLineUtf8 value
+    //       yield! generateFormDataInner boundary rest isMultiFile
+    //   ]
+    //   generateFormDataInner boundary formData false
 
-    let private formatBodyUrlencoded formData =
-      [ formData
-        |> List.map (function
-            | NameValue (k, v) -> k, v
-            | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
-        |> uriEncode
-        // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
-        // and none-the-less; they will map 1-1 with the UTF8 set if the server
-        // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
-        |> ISOLatin1.GetBytes
-        |> writeBytes
-      ]
+    // let private formatBodyUrlencoded formData =
+    //   [ formData
+    //     |> List.map (function
+    //         | NameValue (k, v) -> k, v
+    //         | x -> failwith "programming error: expected all formData to be NameValue as per 'formatBody'.")
+    //     |> uriEncode
+    //     // after URI encoding, we represent all bytes in ASCII (subset of Latin1)
+    //     // and none-the-less; they will map 1-1 with the UTF8 set if the server
+    //     // interpret Content-Type: ...; charset=utf8 as 'raw bytes' of the body.
+    //     |> ISOLatin1.GetBytes
+    //     |> writeBytes
+    //   ]
 
-    let formatBody (clientState : HttpFsState) =
-      // we may actually change the content type if it's wrong
-      //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
-      function
-      | userCt, _, BodyRaw raw ->
-        userCt, [ writeBytes raw ]
+    // let formatBody (clientState : HttpFsState) =
+    //   // we may actually change the content type if it's wrong
+    //   //: ContentType option * Encoding * RequestBody -> ContentType option * byte [] =
+    //   function
+    //   | userCt, _, BodyRaw raw ->
+    //     userCt, [ writeBytes raw ]
 
-      | userCt, _, BodyString str ->
-        userCt, [ writeUtf8 str ]
+    //   | userCt, _, BodyString str ->
+    //     userCt, [ writeUtf8 str ]
 
-      | userCt, _, BodyForm [] ->
-        userCt, [ writeBytes [||] ]
+    //   | userCt, _, BodyForm [] ->
+    //     userCt, [ writeBytes [||] ]
 
-      | userCt, encoding, BodyForm formData ->
-        let onlyNameValues =
-          formData |> List.forall (function | NameValue _ -> true | _ -> false)
+    //   | userCt, encoding, BodyForm formData ->
+    //     let onlyNameValues =
+    //       formData |> List.forall (function | NameValue _ -> true | _ -> false)
 
-        if onlyNameValues then
-          ContentType.parse "application/x-www-form-urlencoded",
-          formatBodyUrlencoded formData
-        else
-          let boundary = generateBoundary clientState
-          ContentType.create("multipart", "form-data", boundary=boundary) |> Some,
-          generateFormData clientState encoding boundary formData
+    //     if onlyNameValues then
+    //       ContentType.parse "application/x-www-form-urlencoded",
+    //       formatBodyUrlencoded formData
+    //     else
+    //       let boundary = generateBoundary clientState
+    //       ContentType.create("multipart", "form-data", boundary=boundary) |> Some,
+    //       generateFormData clientState encoding boundary formData
 
   open Impl
 
@@ -812,7 +774,7 @@ module Client =
                         cookie.Name <- cookiePart.Substring(0, firstEqual)
                         cookie.Value <- cookiePart.Substring(firstEqual + 1)
                     else
-                        cookie.Name <- cookiePart                    
+                        cookie.Name <- cookiePart
 
                 elif cookiePart.StartsWith("path", StringComparison.OrdinalIgnoreCase) then
                     let kvp = cookiePart.Split '='
@@ -835,7 +797,7 @@ module Client =
       )
       if cookie.Domain = "" then
         cookie.Domain <- requestUri.Host
-      cookie  
+      cookie
     let getCookiesAsMap (response: HttpResponseMessage) =
       let uri = response.RequestMessage.RequestUri
       let container = System.Net.CookieContainer()
@@ -845,7 +807,7 @@ module Client =
         tryCookies.Value
         |> Seq.iter(fun cookie -> cookie.Split ';'
                                   |> createCookie response.RequestMessage.RequestUri
-                                  |> container.Add               
+                                  |> container.Add
                     )
 
         let cookies = container.GetCookies(uri)
@@ -945,7 +907,7 @@ module Client =
         return Alt.once <| Choice1Of2 { resp with expectedEncoding = request.responseCharacterEncoding }
       | Choice2Of2 x -> return Alt.once <| Choice2Of2 x
     }
-    
+
     Alt.prepare prepare
 
   /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
@@ -972,7 +934,7 @@ module Client =
 
           | Some enc ->
             enc
-        
+
         use sr = new StreamReader(response.body, charset)
         return! sr.ReadToEndAsync()
       }
@@ -1056,7 +1018,7 @@ module Client =
     /// Adds the provided QueryString record onto the request URL.
     /// Multiple items can be appended.
     let queryStringItem (name : QueryStringName) (value : QueryStringValue) request =
-      { request with queryStringItems = 
+      { request with queryStringItems =
                         match request.queryStringItems |> Map.tryFind name with
                         | None -> request.queryStringItems |> Map.add name [value]
                         | Some vs -> request.queryStringItems |> Map.add name (value::vs) }
