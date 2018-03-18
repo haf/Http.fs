@@ -13,3 +13,5 @@ paket-files/
 .vs/
 build/
 *.orig
+paket.exe
+
