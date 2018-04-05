@@ -258,7 +258,7 @@ if that was important.
 
 If you want to read a bit more about why using HttpWebRequest sucks, check out
 [my blog entry introducing
-Http.fs](http://www.relentlessdevelopment.net/2013/11/15/web-requests-in-f-now-easy-introducing-http-fs/).
+Http.fs](https://relentlessdevelopment.wordpress.com/2013/11/15/web-requests-in-f-now-easy-introducing-http-fs/).
 
 ## What other kick-ass open source libraries are involved? ##
 
