@@ -47,6 +47,18 @@ let firstCt, secondCt, thirdCt, fourthCt =
     ContentType.create("application", "octet-stream"),
     ContentType.create("image", "gif")
 
+let httpClientWithNoRedirects () =
+    let handler = new HttpClientHandler(UseCookies = false)
+    handler.AllowAutoRedirect <- false
+    let client = new HttpClient(handler)
+    client.DefaultRequestHeaders.Clear()
+    client
+
+// we can trivially extend request to add convenience functions for common operations
+module Request =
+    let autoFollowRedirectsDisabled h = 
+        { h with httpClient = httpClientWithNoRedirects () }
+
 let request =
     Request.createUrl Post "https://example.com"
     |> Request.queryStringItem "search" "jeebus"
@@ -222,8 +234,9 @@ HttpWebRequest handles redirects automatically by default, it doesn't maintain
 the cookies set during the redirect. (See [this CodeProject article about
 it](http://www.codeproject.com/Articles/49243/Handling-Cookies-with-Redirects-and-HttpWebRequest)).
 
-The solution is to set 'withAutoFollowRedirectsDisabled' on your request -
-although this does mean you'll have to handle the redirection yourself.
+The solution is to set 'autoFollowRedirectsDisabled' on your request -
+although this does mean you'll have to handle the redirection yourself. See the 
+code in [this section](#How-do-I-use-it) for implementation details.
 
   * Does it support proxies?
 
