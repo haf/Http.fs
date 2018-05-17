@@ -460,7 +460,7 @@ module Client =
     let getQueryString request =
       if Map.isEmpty request.queryStringItems then ""
       else
-        let items = 
+        let items =
           Map.toList request.queryStringItems
           |> List.collect (fun (k, vs) -> vs |> List.map (fun v -> k,v))
         String.Concat [ uriEncode items ]
@@ -529,7 +529,7 @@ module Client =
         yield writeLineAscii ""
         yield writeLineUtf8 text
 
-      | { typ = "application"; subtype = subtype }, Plain text 
+      | { typ = "application"; subtype = subtype }, Plain text
         when List.exists ((=) (subtype.Split('+') |> Seq.last)) ["json"; "xml"] ->
         yield writeLineAscii ""
         yield writeLineUtf8 text
@@ -793,9 +793,14 @@ module Client =
       reader.ReadToEnd()
 
     /// Uses the HttpClient to send the HttpRequestMessage and get the response.
-
     let getResponseNoException (httpClient: HttpClient) (request : HttpRequestMessage) : Alt<Choice<HttpResponseMessage,exn>> =
       let get = Alt.fromTask (fun cts -> httpClient.SendAsync(request, cts))
+      Alt.tryIn get (Choice1Of2 >> Job.result) (Choice2Of2 >> Job.result)
+
+    /// Uses the HttpClient to send the HttpRequestMessage and get the response headers.
+    /// For responses of type text/event-stream we should not attempt to read the entire response right away.
+    let getEventSourceResponseNoException (httpClient: HttpClient) (request : HttpRequestMessage) : Alt<Choice<HttpResponseMessage,exn>> =
+      let get = Alt.fromTask (fun cts -> httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts))
       Alt.tryIn get (Choice1Of2 >> Job.result) (Choice2Of2 >> Job.result)
 
     let createCookie(requestUri: Uri) (cookieParts:string[]) =
@@ -812,7 +817,7 @@ module Client =
                         cookie.Name <- cookiePart.Substring(0, firstEqual)
                         cookie.Value <- cookiePart.Substring(firstEqual + 1)
                     else
-                        cookie.Name <- cookiePart                    
+                        cookie.Name <- cookiePart
 
                 elif cookiePart.StartsWith("path", StringComparison.OrdinalIgnoreCase) then
                     let kvp = cookiePart.Split '='
@@ -835,7 +840,7 @@ module Client =
       )
       if cookie.Domain = "" then
         cookie.Domain <- requestUri.Host
-      cookie  
+      cookie
     let getCookiesAsMap (response: HttpResponseMessage) =
       let uri = response.RequestMessage.RequestUri
       let container = System.Net.CookieContainer()
@@ -845,7 +850,7 @@ module Client =
         tryCookies.Value
         |> Seq.iter(fun cookie -> cookie.Split ';'
                                   |> createCookie response.RequestMessage.RequestUri
-                                  |> container.Add               
+                                  |> container.Add
                     )
 
         let cookies = container.GetCookies(uri)
@@ -945,7 +950,22 @@ module Client =
         return Alt.once <| Choice1Of2 { resp with expectedEncoding = request.responseCharacterEncoding }
       | Choice2Of2 x -> return Alt.once <| Choice2Of2 x
     }
-    
+
+    Alt.prepare prepare
+
+  let tryGetEventSourceResponse request =
+    let prepare = job {
+      use ms = new MemoryStream()
+      use! requestMessage = request |> toHttpRequestMessage HttpFsState.empty ms
+      let! response = requestMessage |> getEventSourceResponseNoException request.httpClient
+
+      match response with
+      | Choice1Of2 x ->
+        let! resp = Response.ofHttpResponseMessage x
+        return Alt.once <| Choice1Of2 { resp with expectedEncoding = request.responseCharacterEncoding }
+      | Choice2Of2 x -> return Alt.once <| Choice2Of2 x
+    }
+
     Alt.prepare prepare
 
   /// Sends the HTTP request and returns the full response as a Response record, asynchronously.
@@ -954,6 +974,13 @@ module Client =
       | Choice1Of2 resp -> resp
       | Choice2Of2 exn -> raise <| new Exception("Failed to get response", exn)
     tryGetResponse request
+    |> Alt.afterFun getResponseOrFail
+
+  let getEventSourceResponse request =
+    let getResponseOrFail = function
+      | Choice1Of2 resp -> resp
+      | Choice2Of2 exn -> raise <| new Exception("Failed to get response", exn)
+    tryGetEventSourceResponse request
     |> Alt.afterFun getResponseOrFail
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -972,7 +999,7 @@ module Client =
 
           | Some enc ->
             enc
-        
+
         use sr = new StreamReader(response.body, charset)
         return! sr.ReadToEndAsync()
       }
@@ -1056,7 +1083,7 @@ module Client =
     /// Adds the provided QueryString record onto the request URL.
     /// Multiple items can be appended.
     let queryStringItem (name : QueryStringName) (value : QueryStringValue) request =
-      { request with queryStringItems = 
+      { request with queryStringItems =
                         match request.queryStringItems |> Map.tryFind name with
                         | None -> request.queryStringItems |> Map.add name [value]
                         | Some vs -> request.queryStringItems |> Map.add name (value::vs) }
