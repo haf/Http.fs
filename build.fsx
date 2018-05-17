@@ -95,34 +95,47 @@ Target "Pack" (fun _ ->
         ("pack HttpFs/HttpFs.fsproj -c "+configuration + " -o ../bin " + (packParameters "Http.fs"))
 )
 
-Target "Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = "bin" }))
+let envReq key =
+    let value = Environment.GetEnvironmentVariable key
+    if String.IsNullOrWhiteSpace value then failwith "GITHUB_TOKEN env var is missing."
+    value
+
+Target "GuardEnv" (fun _ ->
+    ignore (envReq "GITHUB_TOKEN")
+    ignore (envReq "NUGET_KEY"))
+
+Target "Push" (fun _ ->
+    Paket.Push (fun p -> { p with WorkingDir = "bin" 
+                                  ApiKey = envReq "NUGET_KEY"
+                         }))
 
 #load "paket-files/build/fsharp/FAKE/modules/Octokit/Octokit.fsx"
 Target "Release" (fun _ ->
     let gitOwner = "haf"
-    let gitName = "expecto"
+    let gitName = "Http.fs"
     let gitOwnerName = gitOwner + "/" + gitName
     let remote =
         Git.CommandHelper.getGitResult "" "remote -v"
         |> Seq.tryFind (fun s -> s.EndsWith "(push)" && s.Contains gitOwnerName)
-        |> function None -> ("ssh://github.com/"+gitOwnerName) | Some s -> s.Split().[0]
+        |> function None -> ("git@github.com:"+gitOwnerName) | Some s -> s.Split().[0]
 
     Git.Staging.StageAll ""
     Git.Commit.Commit "" (sprintf "Bump version to %s" release.NugetVersion)
     Git.Branches.pushBranch "" remote (Git.Information.getBranchName "")
 
-    Git.Branches.tag "" release.NugetVersion
-    Git.Branches.pushTag "" remote release.NugetVersion
+    let tag = sprintf "v%O" release.SemVer
+    Git.Branches.tag "" tag
+    Git.Branches.pushTag "" remote tag
 
-    let user = getUserInput "Github Username: "
-    let pw = getUserPassword "Github Password: "
-
-    Octokit.createClient user pw
+    Octokit.createClientWithToken (Environment.GetEnvironmentVariable "GITHUB_TOKEN")
     |> Octokit.createDraft gitOwner gitName release.NugetVersion
         (Option.isSome release.SemVer.PreRelease) release.Notes
     |> Octokit.releaseDraft
     |> Async.RunSynchronously
 )
+
+"GuardEnv" ==> "Push"
+"GuardEnv" ==> "Release"
 
 Target "All" ignore
 
