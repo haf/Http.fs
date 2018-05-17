@@ -1129,6 +1129,7 @@ module Client =
 module Composition =
 
   open Hopac.Infixes
+  open HttpFs.Logging
   open Client
   open System.Diagnostics
 
