@@ -1,11 +1,5 @@
 image: Visual Studio 2017
 
-install:
-  - cmd: set PATH=C:\Ruby22\bin;%PATH%
-  - cmd: gem sources -r https://rubygems.org/
-  - cmd: gem install bundler --no-ri --no-rdoc --source https://rubygems.org/
-  - cmd: bundle install
-
 build_script:
   - cmd: build.cmd
 
