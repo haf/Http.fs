@@ -128,8 +128,7 @@ Target "Release" (fun _ ->
     Git.Branches.pushTag "" remote tag
 
     Octokit.createClientWithToken (Environment.GetEnvironmentVariable "GITHUB_TOKEN")
-    |> Octokit.createDraft gitOwner gitName release.NugetVersion
-        (Option.isSome release.SemVer.PreRelease) release.Notes
+    |> Octokit.createDraft gitOwner gitName tag (Option.isSome release.SemVer.PreRelease) release.Notes
     |> Octokit.releaseDraft
     |> Async.RunSynchronously
 )
