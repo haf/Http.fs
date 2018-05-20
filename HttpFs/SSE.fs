@@ -128,10 +128,7 @@ module SSE =
     Seq.scan (fun (s, _) l -> interpret s l) init lines
     |> Seq.choose snd
 
-//   let streamer (resp: Response) =
-//     let charset = Encoding.UTF8
-//     let sr = new System.IO.StreamReader(resp.body, charset)
-//     Job.fromTask sr.ReadLineAsync
+  /// Stateful streaming
   type Streamer = {
     read: Job<Streamer * Event>
   }
