@@ -983,6 +983,16 @@ module Client =
     tryGetEventSourceResponse request
     |> Alt.afterFun getResponseOrFail
 
+  let getEventSource request =
+    getEventSourceResponse request
+    |> Alt.afterFun (fun resp ->
+      let streamer =
+        let charset = Encoding.UTF8
+        let sr = new System.IO.StreamReader(resp.body, charset)
+        Job.fromTask sr.ReadLineAsync
+      SSE.streamEvents streamer
+    )
+
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Response =
     let readBodyAsString (response : Response) : Job<string> =

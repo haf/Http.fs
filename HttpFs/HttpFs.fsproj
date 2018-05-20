@@ -16,6 +16,7 @@
       <Link>paket-files/Facade.fs</Link>
     </Compile>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="SSE.fs" />
     <Compile Include="HttpFs.fs" />
     <PackageReference Include="FSharp.Core" Version="4.1.18" />
   </ItemGroup>
