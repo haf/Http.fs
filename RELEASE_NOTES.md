@@ -1,3 +1,6 @@
+#### 5.1.1 — 2018-05-20
+* SSE improvements and tests
+
 #### 5.1.0 — 2018-05-17
 * Support SSE
 
