@@ -137,10 +137,10 @@ module SSE =
     let rec inner s =
       streamer
       >>- interpret s
-      >>= function (s, eo) ->
-            match eo with
-            | Some e ->
-              Job.result ( { read = inner s }, e)
-            | None ->
-              inner s
+      >>= fun (s, eo) ->
+        match eo with
+        | Some e ->
+          Job.result ( { read = inner s }, e)
+        | None ->
+          inner s
     inner initialState

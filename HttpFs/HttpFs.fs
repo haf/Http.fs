@@ -1171,13 +1171,13 @@ module Composition =
 
   let timerFilter (state: HttpFsState): JobFilter<Request, Response> =
     around (fun () -> Stopwatch.StartNew())
-           (fun sw -> sw.Stop(); Message.gauge sw.ElapsedTicks "ticks" |> state.logger.logSimple)
+           (fun sw -> sw.Stop(); Message.gauge sw.Elapsed.TotalSeconds "seconds" |> state.logger.logSimple)
 
   let timerFilterNamed (state: HttpFsState) (name): JobFilter<Request, Response> =
     around (fun () -> Stopwatch.StartNew())
            (fun sw ->
              sw.Stop()
-             Message.gauge sw.ElapsedTicks "ticks"
+             Message.gauge sw.Elapsed.TotalSeconds "seconds"
              |> Message.setName name
              |> state.logger.logSimple)
 

@@ -4,25 +4,22 @@
     <AssemblyName>HttpFs.UnitTests</AssemblyName>
     <Name>HttpFs.UnitTests</Name>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0;net471</TargetFrameworks>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Testing.fs" />
     <Compile Include="Expect.fs" />
     <Compile Include="Api.fs" />
     <Compile Include="RequestBody.fs" />
     <Compile Include="SendingStreams.fs" />
     <Compile Include="SSE.fs" />
     <Compile Include="Program.fs" />
-    <None Include="app.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="paket.references" />
     <None Include="pix.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\HttpFs\HttpFs.fsproj" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />

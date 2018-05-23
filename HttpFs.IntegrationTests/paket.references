@@ -3,4 +3,4 @@ Hopac
 System.Text.Encoding.CodePages
 System.Net.Http
 Expecto
-Suave.Testing
+Suave

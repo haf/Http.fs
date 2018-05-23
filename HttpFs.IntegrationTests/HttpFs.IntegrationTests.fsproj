@@ -4,27 +4,22 @@
     <Name>HttpFs.IntegrationTests</Name>
     <AssemblyName>HttpFs.IntegrationTests</AssemblyName>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0;net471</TargetFrameworks>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
+
   <ItemGroup>
+    <Compile Include="Testing.fs" />
     <Compile Include="HttpServer.fs" />
     <Compile Include="Tests.fs" />
     <Compile Include="Program.fs" />
     <None Include="sample-form-post.fsx" />
-    <None Include="app.config" />
     <None Include="paket.references" />
     <Content Include="cat-stare.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\HttpFs\HttpFs.fsproj" />
   </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework) == 'net461'">
-    <Reference Include="System.Net.Http">
-      <HintPath>..\..\packages\System.Net.Http\lib\net46\System.Net.Http.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-  </ItemGroup>
+
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

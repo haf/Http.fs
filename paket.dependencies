@@ -1,15 +1,14 @@
 source https://api.nuget.org/v3/index.json
-redirects: on
 
 github haf/YoLo YoLo.fs
 github logary/logary src/Logary.Facade/Facade.fs
 
 nuget Hopac ~> 0.3.23
-nuget FSharp.Core ~> 4.2.3
-nuget System.Net.Http ~> 4.3.2
+nuget FSharp.Core
+nuget Suave
+nuget System.Net.Http
 nuget System.Text.Encoding.CodePages ~> 4.4
-nuget Expecto ~> 5.1.2
-nuget Suave.Testing ~> 2
+nuget Expecto
 
 group build
   source https://api.nuget.org/v3/index.json

@@ -57,18 +57,18 @@ let build project framework =
 
 Target "BuildTest" (fun _ ->
     build "HttpFs.UnitTests/HttpFs.UnitTests.fsproj" "netcoreapp2.0"
-    build "HttpFs.UnitTests/HttpFs.UnitTests.fsproj" "net461"
+    build "HttpFs.UnitTests/HttpFs.UnitTests.fsproj" "net471"
     build "HttpFs.IntegrationTests/HttpFs.IntegrationTests.fsproj" "netcoreapp2.0"
-    build "HttpFs.IntegrationTests/HttpFs.IntegrationTests.fsproj" "net461"
+    build "HttpFs.IntegrationTests/HttpFs.IntegrationTests.fsproj" "net471"
 )
 
 Target "RunTest" (fun _ ->
     DotNetCli.RunCommand id ("HttpFs.UnitTests/bin/"+configuration+"/netcoreapp2.0/HttpFs.UnitTests.dll --summary --sequenced")
-    //Shell.Exec ("HttpFs.UnitTests/bin/"+configuration+"/net461/HttpFs.UnitTests.exe","--summary --sequenced")
+    //Shell.Exec ("HttpFs.UnitTests/bin/"+configuration+"/net471/HttpFs.UnitTests.exe","--summary --sequenced")
     //|> fun r -> if r<>0 then failwith "HttpFs.UnitTests.exe failed"
 
     DotNetCli.RunCommand id ("HttpFs.IntegrationTests/bin/"+configuration+"/netcoreapp2.0/HttpFs.IntegrationTests.dll --summary --sequenced")
-    //Shell.Exec ("HttpFs.IntegrationTests/bin/"+configuration+"/net461/HttpFs.IntegrationTests.exe","--summary --sequenced")
+    //Shell.Exec ("HttpFs.IntegrationTests/bin/"+configuration+"/net471/HttpFs.IntegrationTests.exe","--summary --sequenced")
     //|> fun r -> if r<>0 then failwith "HttpFs.IntegrationTests.exe failed"
 )
 

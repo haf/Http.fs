@@ -53,7 +53,7 @@ task :compile => [:versioning, :restore, :assembly_info] do |b|
                     "dotnet build HttpFs -c #{Configuration} --no-restore --framework net45") or exit(1)
     system "dotnet", %W|build HttpFs -c #{Configuration} --no-restore --framework netstandard2.0|
     Kernel.system({"FrameworkPathOverride" => "#{ENV["MONO_BASE_PATH"]}/4.5/"},
-                    "dotnet build HttpFs.IntegrationTests -c #{Configuration} --no-restore --framework net461") or exit(1)
+                    "dotnet build HttpFs.IntegrationTests -c #{Configuration} --no-restore --framework net471") or exit(1)
     system "dotnet", %W|build HttpFs.UnitTests -c #{Configuration} --no-restore --framework netcoreapp2.0|
     system "dotnet", %W|build HttpFs.IntegrationTests -c #{Configuration} --no-restore --framework netcoreapp2.0|
   else
@@ -71,7 +71,7 @@ end
 namespace :tests do
   task :integration do
     Kernel.system({"TEST_PORT" => "2345"}, "dotnet run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework netcoreapp2.0")
-    system "HttpFs.IntegrationTests/bin/#{Configuration}/net461/HttpFs.IntegrationTests.exe", clr_command: true
+    system "HttpFs.IntegrationTests/bin/#{Configuration}/net471/HttpFs.IntegrationTests.exe", clr_command: true
   end
   task :unit do
     system "dotnet", %W|run -p HttpFs.UnitTests -c #{Configuration} --no-restore --no-build|
