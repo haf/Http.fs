@@ -6,10 +6,9 @@ description A simple, functional HTTP client library for F#
 projectUrl https://github.com/relentless/Http.fs
 
 dependencies
-  framework: net45
+  framework: net471
     FSharp.Core >= LOCKEDVERSION
     Hopac >= LOCKEDVERSION
-    System.Net.Http >= LOCKEDVERSION
   framework: netstandard2.0
     FSharp.Core >= LOCKEDVERSION
     Hopac >= LOCKEDVERSION
@@ -17,5 +16,5 @@ dependencies
 files
   bin/Release/netstandard2.0/HttpFs.dll ==> lib/netstandard2.0
   bin/Release/netstandard2.0/HttpFs.xml ==> lib/netstandard2.0
-  bin/Release/net45/HttpFs.dll ==> lib/net45
-  bin/Release/net45/HttpFs.xml ==> lib/net45
+  bin/Release/net471/HttpFs.dll ==> lib/net471
+  bin/Release/net471/HttpFs.xml ==> lib/net471
