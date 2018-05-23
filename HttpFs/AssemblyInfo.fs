@@ -6,8 +6,8 @@ open System.Reflection
 [<assembly: AssemblyProductAttribute("HttpFs")>]
 [<assembly: AssemblyCopyrightAttribute("Copyright © 2018")>]
 [<assembly: AssemblyDescriptionAttribute("A simple, functional HTTP client library for F#")>]
-[<assembly: AssemblyVersionAttribute("5.1.1")>]
-[<assembly: AssemblyFileVersionAttribute("5.1.1")>]
+[<assembly: AssemblyVersionAttribute("5.2.0")>]
+[<assembly: AssemblyFileVersionAttribute("5.2.0")>]
 do ()
 
 module internal AssemblyVersionInformation =
@@ -15,5 +15,5 @@ module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyProduct = "HttpFs"
     let [<Literal>] AssemblyCopyright = "Copyright © 2018"
     let [<Literal>] AssemblyDescription = "A simple, functional HTTP client library for F#"
-    let [<Literal>] AssemblyVersion = "5.1.1"
-    let [<Literal>] AssemblyFileVersion = "5.1.1"
+    let [<Literal>] AssemblyVersion = "5.2.0"
+    let [<Literal>] AssemblyFileVersion = "5.2.0"
