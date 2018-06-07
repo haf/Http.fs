@@ -645,8 +645,9 @@ module Client =
 
     /// Sets headers on HttpRequestMessage.
     /// Mutates HttpRequestMessage.
-    let setHeaders (headers : RequestHeader list) (request : HttpRequestMessage) =
-      let add (k : string) (v: string) = request.Headers.Add (k, v)
+    let setHeaders (headers: RequestHeader list) (request: HttpRequestMessage) =
+      let add (k: string) (v: string) = request.Headers.Add (k, v)
+      let addf (k: string) (v: string) = request.Headers.TryAddWithoutValidation(k, v) |> ignore
       // in .NET full, HttpRequestMessage cannot have the Content property with HttpMethods that do not support content, or it fails with an exception,
       // so request.Content can be null. this is acutally NOT the case in .NET Core, where it does not throw an exception when content is set with a GET method
       let addContent (add: HttpContent -> unit) = if not <| isNull request.Content then add request.Content
@@ -655,7 +656,7 @@ module Client =
                 | AcceptCharset value              -> add "Accept-Charset" value
                 | AcceptDatetime value             -> add "Accept-Datetime" value
                 | AcceptLanguage value             -> add "Accept-Language" value
-                | Authorization value              -> add "Authorization" value
+                | Authorization value              -> addf "Authorization" value
                 | RequestHeader.Connection value   -> add "Connection" value
                 | RequestHeader.ContentMD5 value   -> addContent (fun c ->
                                                         // this is to work around a mono bug.

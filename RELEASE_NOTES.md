@@ -1,3 +1,6 @@
+#### 5.2.1 — 2018-06-07
+* Allow adding Authorization header without HttpClient validating it.
+
 #### 5.2.0 — 2018-05-20
 * Bump compilation target to net471 due to https://github.com/dotnet/corefx/issues/23306 and so many other errors stemming from this
 * Suave.Testing is now a file in each unit test project
