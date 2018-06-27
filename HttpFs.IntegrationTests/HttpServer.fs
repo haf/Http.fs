@@ -52,19 +52,19 @@ let app =
       Filters.path "/MoonLanguageTextPlainNoEncoding"
         >=> Writers.setHeader "Content-Type" "text/plain"
         >=> warbler (fun _ ->
-            Encoding.GetEncoding("windows-1251").GetBytes("яЏ§§їДЙ")
+            Encoding.UTF8.GetBytes("яЏ§§їДЙ")
             |> Successful.ok)
 
       Filters.path "/MoonLanguageApplicationXmlNoEncoding"
         >=> Writers.setHeader "Content-Type" "application/xml"
         >=> warbler (fun _ ->
-            Encoding.GetEncoding("windows-1251").GetBytes("яЏ§§їДЙ")
+            Encoding.UTF8.GetBytes("яЏ§§їДЙ")
             |> Successful.ok)
 
       Filters.path "/MoonLanguageInvalidEncoding"
         >=> Writers.setHeader "Content-Type" "text/plain; charset=Ninky-Nonk"
         >=> warbler (fun _ ->
-          Encoding.GetEncoding("windows-1251").GetBytes("яЏ§§їДЙ")
+          Encoding.UTF8.GetBytes("яЏ§§їДЙ")
           |> Successful.ok)
 
       Filters.path "/utf8"

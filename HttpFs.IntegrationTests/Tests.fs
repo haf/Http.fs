@@ -294,8 +294,8 @@ let tests =
       Expect.equal responseBodyString "яЏ§§їДЙ" "body should be equal"
     }
 
-    testCaseAsync "response charset IS NOT SPECIFIED, NO Content-Type header, body read by default as Latin 1" <| async {
-      let expected = "ÿ§§¿ÄÉ" // "яЏ§§їДЙ" (as encoded with windows-1251) decoded with ISO-8859-1 (Latin 1)
+    testCaseAsync "response charset IS NOT SPECIFIED, NO Content-Type header, body read by default as UTF8" <| async {
+      let expected = "яЏ§§їДЙ"
 
       let! response =
         Request.create Get (uriFor "/MoonLanguageTextPlainNoEncoding")

@@ -1003,7 +1003,7 @@ module Client =
           | None ->
             match response.characterSet with
             | None ->
-              ISOLatin1 // TODO: change to UTF-8
+              Encoding.UTF8
             | Some responseCharset ->
               try Encoding.GetEncoding(mapEncoding responseCharset)
               with _ -> Encoding.UTF8

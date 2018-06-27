@@ -1,3 +1,6 @@
+#### 5.3.0 — 2018-06-27
+* Default non-specified charsets to UTF8 rather than Latin 1.
+
 #### 5.2.1 — 2018-06-07
 * Allow adding Authorization header without HttpClient validating it.
 
