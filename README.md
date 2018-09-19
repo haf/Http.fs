@@ -5,7 +5,7 @@ A gloriously functional HTTP client library for F#! NuGet name:
 `Http.fs`.
 
 .Net build (AppVeyor): [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/s3xy4lk0novh549h?svg=true)](https://ci.appveyor.com/project/haf/http-fs)
-Mono build (Travis CI): [![Travis Build status](https://travis-ci.org/haf/Http.fs.svg?branch=releases%2Fv4.x)](https://travis-ci.org/haf/Http.fs)
+Mono build (Travis CI): [![Travis Build Status](https://travis-ci.org/haf/Http.fs.svg?branch=master)](https://travis-ci.org/haf/Http.fs)
 NuGet package: [![NuGet](http://img.shields.io/nuget/v/Http.fs.svg?style=flat)](http://www.nuget.org/packages/Http.fs/)
 
 ## How do I use it? ##
