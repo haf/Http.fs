@@ -237,28 +237,10 @@ Yes, as of version 1.2.0.  This actually sets the Connection header (to
 default), the Connection header will only be set on the first request, not
 subsequent ones.
 
-## Why on earth would you make such a thing? ##
+## Why?
 
-This came out of a side project which involved working with HTTP, and I wasn't
-really enjoying using HttpWebRequest from F#, so I started making wrapper
-functions - which eventually turned into this.
+Simplicity for F# programmers. An abstract, immutable API that you can build better abstractions beneath (if needed).
 
-The sort of things I wanted my module to do differently from HttpWebRequest
-include:
-
-  * usable idiomatically from F#, e.g. immutable types
-  * consistent handling of headers (including all the standard ones)
-  * easier to use, e.g. no streams
-  * sensible defaults
-  * built-in async
-
-It isn't intended as a high-performance library, usability from F# has been the
-goal. It shouldn't be much worse than HttpWebRequest, but you'd have to test it
-if that was important.
-
-If you want to read a bit more about why using HttpWebRequest sucks, check out
-[my blog entry introducing
-Http.fs](https://relentlessdevelopment.wordpress.com/2013/11/15/web-requests-in-f-now-easy-introducing-http-fs/).
 
 ## What other kick-ass open source libraries are involved? ##
 
@@ -272,15 +254,12 @@ However, for testing a couple of other things are used:
   * [FsUnit](https://github.com/fsharp/FsUnit) for unit testing
   * [NancyFX](http://nancyfx.org/) to create a web server for integration testing
 
-And for building, there's also:
-
-  * [Albacore](https://github.com/albacore/albacore)
-
 That's about it.
 Happy requesting!
 
-Grant Crofton and Henrik Feldt
-@relentlessdev, @haf
+Henrik Feldt – @haf
+
+Originally built by Grant Crofton.
 
 ## Post Scriptum
 
