@@ -223,20 +223,7 @@ Http.fs attempts to follow [Semantic Versioning](http://semver.org/), which defi
 
   * How does it work?
 
-Http.fs currently uses
-[HttpWebRequest](http://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.aspx)/[Response](http://msdn.microsoft.com/en-us/library/system.net.httpwebresponse.aspx)
-under the hood.
-
-  * Why are my cookies not getting set?
-
-Perhaps the response is a redirect (a 302 or similar) - unfortunately, although
-HttpWebRequest handles redirects automatically by default, it doesn't maintain
-the cookies set during the redirect. (See [this CodeProject article about
-it](http://www.codeproject.com/Articles/49243/Handling-Cookies-with-Redirects-and-HttpWebRequest)).
-
-The solution is to set 'autoFollowRedirectsDisabled' on your request -
-although this does mean you'll have to handle the redirection yourself. See the 
-code in [this section](#How-do-I-use-it) for implementation details.
+Http.fs currently uses HttpClient under the hood.
 
   * Does it support proxies?
 
