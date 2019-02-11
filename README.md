@@ -65,8 +65,6 @@ let request =
     |> Request.basicAuthentication "myUsername" "myPassword" // UTF8-encoded
     |> Request.setHeader (UserAgent "Chrome or summat")
     |> Request.setHeader (Custom ("X-My-Header", "hi mum"))
-    |> Request.autoDecompression DecompressionScheme.GZip
-    |> Request.autoFollowRedirectsDisabled
     |> Request.cookie (Cookie.create("session", "123", path="/"))
     |> Request.bodyString "This body will make heads turn"
     |> Request.bodyStringEncoded "Check out my sexy foreign body" (Encoding.UTF8)
@@ -91,8 +89,7 @@ let request =
                 "cute-cat.gif", fourthCt, Binary (File.ReadAllBytes (pathOf "cat-stare.gif")) // => binary
           ])
     ])
-    |> Request.responseCharacterEncoding Encoding.UTF8
-    |> Request.keepAlive false
+    |> Request.responseCharacterEncoding Encoding.UTF8    
     |> Request.proxy {
           Address = "proxy.com";
           Port = 8080;
@@ -137,7 +134,7 @@ So you can do the old download-multiple-sites-in-parallel thing:
   "http://www.wikipedia.com"
   "http://www.stackoverflow.com"]
 |> List.map (createRequestSimple Get)
-|> List.map (Request.responseAsString) // this takes care to dispose (req, body)
+| > List.map (Request.responseAsString) // this takes care to dispose (req, body)
 |> Job.conCollect
 |> Job.map (printfn "%s")
 |> start
@@ -165,19 +162,9 @@ response.Headers.[ContentTypeResponse]
 
 ## Building
 
-[Install the build tools](https://github.com/Albacore/albacore#getting-started)
-and then run `bundle` and then `bundle exec rake`. This does a few things:
-
- 1. Downloads albacore (the `bundle` command)
- 2. Executes the Rakefile
+ 1. Download the source code
+ 2. Execute the build.sh (linux & macos) or build.cmd (windows)
  
-   1. Downloads all nugets
-   1. Downloads all github file references
-   1. Generates assembly info
-   1. Compiles the code
-   1. Runs the tests
-   1. Generates nugets
-
 ## Examples ##
 
 Check out *HttpClient.SampleApplication*, which contains a program demonstrating
