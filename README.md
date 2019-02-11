@@ -65,6 +65,7 @@ let request =
     |> Request.basicAuthentication "myUsername" "myPassword" // UTF8-encoded
     |> Request.setHeader (UserAgent "Chrome or summat")
     |> Request.setHeader (Custom ("X-My-Header", "hi mum"))
+    |> Request.autoFollowRedirectsDisabled
     |> Request.cookie (Cookie.create("session", "123", path="/"))
     |> Request.bodyString "This body will make heads turn"
     |> Request.bodyStringEncoded "Check out my sexy foreign body" (Encoding.UTF8)
