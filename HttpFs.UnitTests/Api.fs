@@ -44,6 +44,11 @@ let api =
       let header = (validRequest |> Request.setHeader expected).headers |> Map.find expected.Key
       Expect.equal header expected "should set header"
 
+    testCase "withHeader ContentEncoding adds Content-Encoding header to the request" <| fun _ ->
+      let expected = ContentEncoding "foobar"
+      let header = (validRequest |> setHeader expected).headers |> Map.find expected.Key
+      Expect.equal header expected "should set header"
+
     testCase "multiple headers of different types can be added, including custom headers with different names" <| fun _ ->
       let headers = 
         validRequest

@@ -93,6 +93,7 @@ let recorded =
         |> Request.setHeader (Connection "close")
         |> Request.setHeader (ContentMD5 "Q2hlY2sgSW50ZWdyaXR5IQ==")
         |> Request.setHeader (ContentType (ContentType.create("application", "json")))
+        |> Request.setHeader (RequestHeader.ContentEncoding "foobar")
         |> Request.setHeader (Date (DateTime(1999, 12, 31, 11, 59, 59, DateTimeKind.Utc)))
         |> Request.setHeader (From "user@example.com" )
         |> Request.setHeader (IfMatch "\"737060cd8c284d8af7ad3082f209582d\"")
@@ -125,6 +126,7 @@ let recorded =
       Expect.stringContains ((req.Value |> getHeader "connection").ToLowerInvariant()) "close" "connection should be set"
       Expect.equal (req.Value |> getHeader "content-md5") "Q2hlY2sgSW50ZWdyaXR5IQ==" "content-md5 should be equal"
       Expect.equal (req.Value |> getHeader "content-type") "application/json" "content-type should be equal"
+      Expect.equal (req.Value |> getHeader "content-encoding") "foobar" "content-encoding should be equal"
       Expect.equal (req.Value |> getHeader "date") "Fri, 31 Dec 1999 11:59:59 GMT" "date should be equal"
       Expect.equal (req.Value |> getHeader "from") "user@example.com" "from should be equal"
       Expect.equal (req.Value |> getHeader "if-match") "\"737060cd8c284d8af7ad3082f209582d\"" "if-match should be equal"
@@ -213,7 +215,7 @@ let tests =
       Expect.equal response.contentLength (Some 21L) "contentLength should be equal"
       Expect.equal response.cookies.["cookie1"] "chocolate chip" "cookie should be equal"
       Expect.equal response.cookies.["cookie2"] "smarties" "cookie should be equal"
-      Expect.equal response.headers.[ContentEncoding] "gzip" "contentEncoding should be equal"
+      Expect.equal response.headers.[ResponseHeader.ContentEncoding] "gzip" "contentEncoding should be equal"
       Expect.equal response.headers.[NonStandard("X-New-Fangled-Header")] "some value" "non standard header should be equal"
     }
 
@@ -244,7 +246,7 @@ let tests =
       Expect.equal resp.headers.[Allow] "GET, HEAD" "should be equal"
       Expect.equal resp.headers.[CacheControl] "max-age=3600" "should be equal"
       Expect.equal resp.headers.[ResponseHeader.Connection] "close" "should be equal"
-      Expect.equal resp.headers.[ContentEncoding] "gzip" "should be equal"
+      Expect.equal resp.headers.[ResponseHeader.ContentEncoding] "gzip" "should be equal"
       Expect.equal resp.headers.[ContentLanguage] "EN-gb" "should be equal"
       Expect.equal resp.headers.[ContentLocation] "/index.htm" "should be equal"
       Expect.equal resp.headers.[ContentMD5Response] "Q2hlY2sgSW50ZWdyaXR5IQ==" "should be equal"
