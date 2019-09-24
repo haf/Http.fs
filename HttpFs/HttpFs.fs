@@ -52,6 +52,7 @@ module Client =
     | Trace
     | Patch
     | Connect
+    | Other of string
 
   // Same as System.Net.DecompressionMethods, but I didn't want to expose that
   type DecompressionScheme =
@@ -445,6 +446,7 @@ module Client =
       | Trace -> "TRACE"
       | Connect -> "CONNECT"
       | Patch   -> "PATCH"
+      | Other verb -> verb.ToUpperInvariant()
 
     /// URI encoding: for each byte in the byte-representation of the string,
     /// print the %xx character as an ASCII character, for transfer.
@@ -756,7 +758,14 @@ module Client =
         |> Option.fold setHeader request
 
       job {
-        if request.method = Post || request.method = Put || request.method = Patch then
+        let supportsBody = function
+            | HttpMethod.Post 
+            | HttpMethod.Put 
+            | HttpMethod.Patch 
+            | HttpMethod.Other _ -> true
+            | _ -> false
+
+        if request.method |> supportsBody then
           do! contentStream |> tryWriteBody request.method writers
           contentStream.Position <- 0L
           message.Content <- new StreamContent(contentStream)
