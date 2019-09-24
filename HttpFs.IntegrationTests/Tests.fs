@@ -461,6 +461,15 @@ let tests =
       Expect.equal resp.statusCode 200 "statusCode should be equal"
     }
 
+    testCaseAsync "Other method works" <| async {
+        use! resp = 
+          Request.create (HttpMethod.Other "OTHER") (uriFor "/Other")
+          |> getResponse
+          |> Alt.toAsync
+    
+        Expect.equal resp.statusCode 200 "status code should be equal"
+    }
+
     testCaseAsync "getResponse.ResponseUri should contain URI that responded to the request" <| async {
       // Is going to redirect to another route and return GET 200.
       let request =

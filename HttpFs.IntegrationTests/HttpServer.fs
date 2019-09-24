@@ -182,6 +182,8 @@ let app =
     Filters.PUT >=> Filters.path "/Put" >=> Successful.OK ""
 
     Filters.PATCH >=> Filters.path "/Patch" >=> Successful.OK ""
+
+    Filters.method (HttpMethod.OTHER "OTHER") >=> Filters.path "/Other" >=> Successful.OK ""
   ]
 
 type SuaveTestServer() =
