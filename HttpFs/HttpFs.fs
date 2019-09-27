@@ -215,6 +215,7 @@ module Client =
     | Connection of string
     | ContentMD5 of string
     | ContentType of ContentType
+    | ContentEncoding of string
     | Date of DateTime
     | Expect of int
     | From of string
@@ -244,6 +245,7 @@ module Client =
       | Connection x -> "Connection", x
       | ContentMD5 x -> "Content-MD5", x
       | ContentType x -> "Content-Type", x.ToString()
+      | ContentEncoding x -> "Content-Encoding", x.ToString()
       | Date dt -> "Date", dt.ToString("R")
       | Expect i -> "Expect", i.ToString()
       | From x -> "From", x
@@ -670,6 +672,9 @@ module Client =
                 | RequestHeader.ContentType value  -> addContent (fun c ->
                                                         c.Headers.Remove("Content-Type") |> ignore
                                                         c.Headers.TryAddWithoutValidation("Content-Type", value.ToString()) |> ignore)
+                | RequestHeader.ContentEncoding value  -> addContent (fun c ->
+                                                        c.Headers.Remove("Content-Encoding") |> ignore
+                                                        c.Headers.TryAddWithoutValidation("Content-Encoding", value.ToString()) |> ignore)
                 | RequestHeader.Date value         -> add "Date" <| value.ToUniversalTime().ToString("r")
                 | Expect value                     -> add "Expect" <| value.ToString()
                 | From value                       -> add "From" value
@@ -880,7 +885,7 @@ module Client =
       | "Allow"                       -> Some(Allow)
       | "Cache-Control"               -> Some(CacheControl)
       | "Connection"                  -> Some(ResponseHeader.Connection)
-      | "Content-Encoding"            -> Some(ContentEncoding)
+      | "Content-Encoding"            -> Some(ResponseHeader.ContentEncoding)
       | "Content-Language"            -> Some(ContentLanguage)
       | "Content-Length"              -> Some(ContentLength)
       | "Content-Location"            -> Some(ContentLocation)
