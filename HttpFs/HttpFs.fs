@@ -767,6 +767,7 @@ module Client =
             | HttpMethod.Post 
             | HttpMethod.Put 
             | HttpMethod.Patch 
+            | HttpMethod.Delete
             | HttpMethod.Other _ -> true
             | _ -> false
 

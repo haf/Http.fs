@@ -1,3 +1,8 @@
+#### 5.4.0 — 2018-06-27
+* Delete verb now supports body
+* Support for custom http method
+* ContentEncoding request header
+
 #### 5.3.0 — 2018-06-27
 * Default non-specified charsets to UTF8 rather than Latin 1.
 

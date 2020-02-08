@@ -177,7 +177,12 @@ let app =
 
     Filters.OPTIONS >=> Filters.path "/Options" >=> Successful.OK ""
 
-    Filters.DELETE >=> Filters.path "/Delete" >=> Successful.OK ""
+    Filters.DELETE >=> choose [
+      Filters.path "/Delete" >=> Successful.OK ""
+      Filters.path "/DeleteWithBody" >=> request (fun r -> 
+          recordedRequest <- Some r
+          Successful.OK "")
+    ]
 
     Filters.PUT >=> Filters.path "/Put" >=> Successful.OK ""
 

@@ -463,6 +463,17 @@ let tests =
       Expect.equal resp.statusCode 200 "statusCode should be equal"
     }
 
+    testCaseAsync "Delete method with body works" <| async {
+       let! resp =
+        Request.create Delete (uriFor "/DeleteWithBody")
+        |> Request.bodyString "Hi mum"
+        |> getResponse
+        |> Alt.toAsync
+      
+      let req = HttpServer.recordedRequest in
+      Expect.equal (req.Value |> getHeader "content-length") "6" "content-length should be equal"
+    }
+
     testCaseAsync "Other method works" <| async {
         use! resp = 
           Request.create (HttpMethod.Other "OTHER") (uriFor "/Other")
