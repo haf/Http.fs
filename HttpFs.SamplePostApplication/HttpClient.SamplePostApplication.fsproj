@@ -4,7 +4,7 @@
     <Name>HttpFs.SamplePostApplication</Name>
     <AssemblyName>HttpFs.SamplePostApplication</AssemblyName>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net471</TargetFrameworks>
+    <TargetFrameworks>net7.0;net471</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>

@@ -9,12 +9,12 @@ dependencies
   framework: net471
     FSharp.Core >= LOCKEDVERSION
     Hopac >= LOCKEDVERSION
-  framework: netstandard2.0
+  framework: netstandard2.1
     FSharp.Core >= LOCKEDVERSION
     Hopac >= LOCKEDVERSION
 
 files
-  bin/Release/netstandard2.0/HttpFs.dll ==> lib/netstandard2.0
-  bin/Release/netstandard2.0/HttpFs.xml ==> lib/netstandard2.0
+  bin/Release/netstandard2.1/HttpFs.dll ==> lib/netstandard2.1
+  bin/Release/netstandard2.1/HttpFs.xml ==> lib/netstandard2.1
   bin/Release/net471/HttpFs.dll ==> lib/net471
   bin/Release/net471/HttpFs.xml ==> lib/net471

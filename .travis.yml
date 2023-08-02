@@ -1,7 +1,7 @@
 language: csharp
 dist: trusty
 env: MONO_BASE_PATH=/usr/lib/mono/
-dotnet: 2.0.0
+dotnet: 7.0.0
 mono:
   - 5.2.0
   - latest # => "stable release"

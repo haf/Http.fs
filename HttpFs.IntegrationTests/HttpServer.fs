@@ -123,6 +123,9 @@ let app =
         >=> Cookie.setCookie (HttpCookie.create "cookie1" "baboon" None (Some "/Invalid") None true true None )
         >=> Successful.OK ""
 
+      Filters.path "/CookieNonAscii"
+        >=> Cookie.setCookie (HttpCookie.createKV "cookie1" "яЏ§§їДЙ")
+        >=> Successful.OK "body"
 
       Filters.path "/NoCookies" >=> Successful.OK "body"
 

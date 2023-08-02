@@ -70,7 +70,7 @@ end
 
 namespace :tests do
   task :integration do
-    Kernel.system({"TEST_PORT" => "2345"}, "dotnet run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework netcoreapp2.0")
+    Kernel.system({"TEST_PORT" => "2345"}, "dotnet run -p HttpFs.IntegrationTests -c #{Configuration} --no-restore --no-build --framework net7.0")
     system "HttpFs.IntegrationTests/bin/#{Configuration}/net471/HttpFs.IntegrationTests.exe", clr_command: true
   end
   task :unit do
