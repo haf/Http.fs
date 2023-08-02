@@ -358,6 +358,16 @@ let tests =
       Expect.equal response.statusCode 200 "statusCode should be equal"
     }
 
+    testCaseAsync "cookies non ascii chars" <| async {
+      use! response =
+        Request.create Get (uriFor "/CookieNonAscii")
+        |> getResponse
+        |> Alt.toAsync
+
+      Expect.equal response.statusCode 200 "statusCode should be equal"
+      Expect.equal (response.cookies.ContainsKey "cookie1") true "should be present"
+    }
+
     testCaseAsync "reading the body as bytes works properly" <| async {
       use! response =
         Request.create Get (uriFor "/Raw")

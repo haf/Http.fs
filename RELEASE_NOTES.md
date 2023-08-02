@@ -1,3 +1,5 @@
+#### 5.4.1 — 2023-08-02
+* netstandard 2.1 upgrade
 #### 5.4.0 — 2018-06-27
 * Delete verb now supports body
 * Support for custom http method

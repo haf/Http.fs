@@ -4,7 +4,7 @@
     <AssemblyName>HttpFs.UnitTests</AssemblyName>
     <Name>HttpFs.UnitTests</Name>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net471</TargetFrameworks>
+    <TargetFrameworks>net7.0;net471</TargetFrameworks>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
